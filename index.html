@@ -1,587 +1,494 @@
-<!DOCTYPE html>
-<html>
+// Apps Script entry
+function doGet(e) {
+    // Jika ada parameter action, handle sebagai API call
+    if (e.parameter.action) {
+        const result = handleRequest(e.parameter);
+        return ContentService.createTextOutput(JSON.stringify(result))
+            .setMimeType(ContentService.MimeType.JSON)
+            .addHeader('Access-Control-Allow-Origin', '*');
+    }
+    
+    // Jika tidak ada action, return HTML page
+    return HtmlService.createTemplateFromFile('index').evaluate()
+        .setTitle("Kas Kedai Nongki")
+        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kedai Nongki</title>
-    <style>
-        /* ==== GLOBAL STYLE ==== */
-        body {
-            margin: 0;
-            font-family: "Segoe UI", Roboto, sans-serif;
-            background: #f5f5f5;
-            color: #333;
+// Handle OPTIONS requests for CORS preflight
+function doOptions(e) {
+    return ContentService.createTextOutput('')
+        .setMimeType(ContentService.MimeType.TEXT)
+        .addHeader('Access-Control-Allow-Origin', '*')
+        .addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        .addHeader('Access-Control-Allow-Headers', 'Content-Type')
+        .addHeader('Access-Control-Max-Age', '3600');
+}
+
+function doPost(e) {
+    try {
+        // Process the POST request
+        if (e.postData.type === "application/json") {
+            const data = JSON.parse(e.postData.contents);
+            const result = handleRequest(data);
+            return ContentService.createTextOutput(JSON.stringify(result))
+                .setMimeType(ContentService.MimeType.JSON)
+                .addHeader('Access-Control-Allow-Origin', '*');
+        } else {
+            const result = {success: false, error: "Invalid content type"};
+            return ContentService.createTextOutput(JSON.stringify(result))
+                .setMimeType(ContentService.MimeType.JSON)
+                .addHeader('Access-Control-Allow-Origin', '*');
         }
+    } catch (error) {
+        const result = {success: false, error: error.toString()};
+        return ContentService.createTextOutput(JSON.stringify(result))
+            .setMimeType(ContentService.MimeType.JSON)
+            .addHeader('Access-Control-Allow-Origin', '*');
+    }
+}
 
-        header {
-            background: #3a3a3a;
-            color: white;
-            padding: 15px 20px;
-            font-size: 20px;
-            font-weight: bold;
-            letter-spacing: 1px;
-        }
-
-        nav {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding: 12px 20px;
-            background: #e0e0e0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin;
-        }
-        nav::-webkit-scrollbar { height: 6px; }
-        nav::-webkit-scrollbar-thumb { background: #c7c7c7; border-radius: 3px; }
-
-        nav button {
-            background: #3a3a3a;
-            color: white;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: 0.2s;
-            flex: 0 0 auto;
-            white-space: nowrap;
-        }
-        nav button:hover { background: #555; }
-        nav button.active { background: #1f1f1f; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.15); }
-        nav button:focus { outline: 2px solid #8ab4f8; outline-offset: 2px; }
-
-        /* Table base */
-        .table-wrap { display: block; overflow-x: auto; }
-        table.clean { border-collapse: separate; border-spacing: 0; }
-        table.clean th, table.clean td { border: 1px solid #e6e6e6; }
-        table.clean th.right, table.clean td.right { text-align: right; }
-        table.clean tr:nth-child(even) td { background: #fafafa; }
-        table thead th { position: sticky; top: 0; z-index: 1; }
-
-        /* Responsive stacked tables */
-        @media (max-width: 680px) {
-            table.responsive thead { display: none; }
-            table.responsive tr { display: block; border: 1px solid #e6e6e6; border-radius: 8px; margin-bottom: 10px; padding: 6px; }
-            table.responsive td { display: flex; justify-content: space-between; align-items: center; border: none; border-bottom: 1px dashed #eee; padding: 8px 6px; text-align: left; }
-            table.responsive td:last-child { border-bottom: none; }
-            table.responsive td::before { content: attr(data-label); font-weight: 600; color: #666; margin-right: 12px; }
-            table.responsive td.right { justify-content: space-between; }
-        }
-
-        /* Inputs and selects */
-        input[type="number"] { text-align: right; }
-        input, select { touch-action: manipulation; }
-        input:focus, select:focus { outline: 2px solid #8ab4f8; outline-offset: 1px; }
-
-        .container {
-            padding: 20px;
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        .card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        h2 {
-            margin-top: 0;
-            font-size: 20px;
-            color: #444;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 12px;
-            overflow-x: auto;
-            display: block;
-        }
-
-        /* Responsive helpers */
-        .table-wrap { display: block; overflow-x: auto; }
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
-
-        table th,
-        table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
-        }
-
-        table th {
-            background: #f0f0f0;
-        }
-
-        /* Transaksi clean styles */
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px;
-            margin-bottom: 10px;
-        }
-        .form-grid .field input,
-        .form-grid .field select { width: 100%; box-sizing: border-box; }
-        .form-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
-
-        @media (min-width: 768px) {
-            .form-grid { grid-template-columns: repeat(2, minmax(240px, 1fr)); }
-        }
-        @media (min-width: 1024px) {
-            .form-grid { grid-template-columns: repeat(4, minmax(220px, 1fr)); }
-        }
-
-        @media (max-width: 768px) {
-            header { font-size: 18px; padding: 12px 16px; }
-            nav { padding: 10px 16px; }
-            .card { padding: 16px; }
-            .container { padding: 16px; }
-            .form-grid { grid-template-columns: 1fr; }
-            table th, table td { font-size: 14px; padding: 6px; }
-        }
-
-        @media (max-width: 480px) {
-            nav button { padding: 8px 12px; }
-            h2 { font-size: 18px; }
-            .summary { font-size: 14px; }
-        }
-        .form-grid .field label {
-            display: block;
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 4px;
-        }
-        table.clean th.right, table.clean td.right { text-align: right; }
-        table.clean tr:nth-child(even) td { background: #fafafa; }
-        table.clean { border-collapse: separate; border-spacing: 0; }
-        table.clean th, table.clean td { border: 1px solid #e6e6e6; }
-        .section-note { font-size: 12px; color: #777; margin-top: 6px; }
-
-        input,
-        select {
-            padding: 8px;
-            margin: 5px 0;
-            border-radius: 6px;
-            border: 1px solid #bbb;
-            width: 100%;
-        }
-
-        button.submit {
-            margin-top: 8px;
-            background: #4a4a4a;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-
-
-        button.submit:hover {
-            background: #666;
-        }
-
-        /* Dashboard filter buttons */
-        .filter-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-        .filter-btn {
-            background: #ffffff;
-            color: #333;
-            border: 1px solid #ccc;
-            padding: 7px 12px;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: background 0.2s, color 0.2s, border-color 0.2s;
-        }
-        .filter-btn:hover { background: #f3f3f3; }
-        .filter-btn.active { background: #3a3a3a; color: #fff; border-color: #3a3a3a; }
-
-        .hidden {
-            display: none;
-        }
-
-        .summary {
-            font-size: 16px;
-            margin-top: 12px;
-        }
-    </style>
-</head>
-
-<body>
-    <header>📊 Kas Kedai Nongki</header>
-
-    <nav>
-        <button onclick="showSection('dashboard')">Dashboard</button>
-        <button onclick="showSection('transaksi')">Transaksi</button>
-        <button onclick="showSection('produk')">Produk</button>
-        <button onclick="showSection('stok')">Stok</button>
-        <button onclick="showSection('laporan')">Laporan</button>
-    </nav>
-
-    <div class="container">
-
+function handleRequest(params) {
+    try {
+        let result = {};
         
-
-
-        <!-- DASHBOARD -->
-        <div id="dashboard" class="card">
-            <h2>Dashboard</h2>
-            <div id="dashboardContent">Loading...</div>
-        </div>
-
-        <!-- TRANSAKSI -->
-        <div id="transaksi" class="card hidden">
-            <h2>Transaksi</h2>
+        switch (params.action) {
+            case 'getDashboard':
+                result = getDashboard();
+                break;
+            case 'getDashboardRange':
+                result = getDashboardRange(params.start, params.end);
+                break;
+            case 'getTransaksi':
+                result = getTransaksi();
+                break;
+            case 'getLast10Transaksi':
+                result = getLast10Transaksi();
+                break;
+            case 'addTransaksi':
+                addTransaksi(params);
+                result = {success: true};
+                break;
+            case 'editTransaksi':
+                editTransaksi(params);
+                result = {success: true};
+                break;
+            case 'deleteTransaksi':
+                deleteTransaksi(params.index);
+                result = {success: true};
+                break;
+            case 'getProduk':
+                result = getProduk();
+                break;
+            case 'addProduk':
+                addProduk(params.id, params.nama, params.harga);
+                result = {success: true};
+                break;
+            case 'getStok':
+                result = getStok();
+                break;
+            case 'addStok':
+                addStok(params.id, params.jumlah);
+                result = {success: true};
+                break;
+            case 'getLaporan':
+                result = getLaporan(params.start, params.end);
+                break;
+            case 'exportLaporanPDF':
+                result = exportLaporanPDF(params.start, params.end);
+                break;
+            case 'exportLaporanPDFInline':
+                result = exportLaporanPDFInline(params.start, params.end);
+                break;
+            case 'exportLaporanExcel':
+                result = exportLaporanExcel(params.start, params.end);
+                break;
+            default:
+                result = {success: false, error: 'Unknown action: ' + params.action};
+        }
+        
+        return ContentService.createTextOutput(JSON.stringify(result))
+            .setMimeType(ContentService.MimeType.JSON);
             
-            <form onsubmit="addTransaksi(event)">
-                <div class="form-grid">
-                    <div class="field">
-                        <label>Tanggal</label>
-                        <input type="date" id="tglTransaksi" required>
-                    </div>
-                    <div class="field">
-                        <label>Keterangan</label>
-                        <input type="text" id="ketTransaksi" placeholder="Contoh: Beli es" required>
-                    </div>
-                    <div class="field">
-                        <label>Kategori</label>
-                        <select id="katTransaksi">
-                            <option>Pemasukan</option>
-                            <option>Pengeluaran</option>
-                        </select>
-                    </div>
-                    <div class="field">
-                        <label>Nominal Tunai</label>
-                        <input type="number" id="tunai" placeholder="0">
-                    </div>
-                    <div class="field">
-                        <label>Nominal Non Tunai</label>
-                        <input type="number" id="nonTunai" placeholder="0">
-                    </div>
-                </div>
-                <div class="form-actions">
-                    <button type="submit" class="submit">Tambah</button>
-                    <div class="section-note">Isi salah satu dari Tunai atau Non Tunai.</div>
-                </div>
-            </form>
+    } catch (error) {
+        return ContentService.createTextOutput(JSON.stringify({success: false, error: error.toString()}))
+            .setMimeType(ContentService.MimeType.JSON);
+    }
+}
 
-            <!-- 10 terakhir -->
-            <table id="tableTransaksi" class="clean responsive"></table>
-        </div>
+function include(filename) {
+    return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
 
 
-        <!-- PRODUK -->
-        <div id="produk" class="card hidden">
-            <h2>Produk</h2>
-            <form onsubmit="addProduk(event)">
-            <div class="form-grid">
-                <div class="field">
-                <label>ID Produk</label>
-                <input type="text" id="idProduk" placeholder="ID Produk" required>
-                </div>
-                <div class="field">
-                <label>Nama Produk</label>
-                <input type="text" id="namaProduk" placeholder="Nama Produk" required>
-                </div>
-                <div class="field">
-                <label>Harga</label>
-                <input type="number" id="hargaProduk" placeholder="Harga" required>
-                </div>
-            </div>
-            <button type="submit" class="submit">Tambah</button>
-            </form>
-            <table id="tableProduk" class="clean responsive"></table>
-        </div>
+
+// === KONFIGURASI SHEET ===
+const SHEETS = {
+    transaksi: {
+        name: "Transaksi",
+        headers: ["Tanggal", "Keterangan", "Kategori", "Tunai", "Non Tunai"]
+    },
+    produk: {
+        name: "Produk",
+        headers: ["ID", "Nama", "Harga"]
+    },
+    stok: {
+        name: "Stok",
+        headers: ["ID Produk", "Jumlah"]
+    }
+};
+
+// Buat sheet jika belum ada + set header
+function initSheet(type) {
+    try {
+        const cfg = SHEETS[type];
+        const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+        let sheet = spreadsheet.getSheetByName(cfg.name);
         
-        <!-- STOK -->
-        <div id="stok" class="card hidden">
-            <h2>Stok</h2>
-            <form onsubmit="addStok(event)">
-            <div class="form-grid">
-                <div class="field">
-                <label>ID Produk</label>
-                <input type="text" id="stokID" placeholder="ID Produk" required>
-                </div>
-                <div class="field">
-                <label>Jumlah</label>
-                <input type="number" id="stokJumlah" placeholder="Jumlah" required>
-                </div>
-            </div>
-            <button type="submit" class="submit">Tambah</button>
-            </form>
-            <table id="tableStok" class="clean responsive"></table>
-        </div>
-        
+        if (!sheet) {
+            sheet = spreadsheet.insertSheet(cfg.name);
+            sheet.appendRow(cfg.headers);
+        } else {
+            const firstRow = sheet.getRange(1, 1, 1, cfg.headers.length).getValues()[0];
+            if (firstRow.join("") === "") {
+                sheet.getRange(1, 1, 1, cfg.headers.length).setValues([cfg.headers]);
+            }
+        }
+        return sheet;
+    } catch (error) {
+        console.error("Error in initSheet:", error);
+        throw error;
+    }
+}
 
-        <!-- LAPORAN -->
-        <div id="laporan" class="card hidden">
-            <h2>Laporan</h2>
-            <form onsubmit="loadLaporan(event)">
-                <label>Dari: <input type="date" id="startDate" required></label>
-                <label>Sampai: <input type="date" id="endDate" required></label>
-                <button type="submit" class="submit">Tampilkan</button>
-                <button type="button" class="submit" onclick="exportPDF()">Export PDF</button>
-                <button type="button" class="submit" onclick="exportExcel()">Export Excel</button>
-            </form>
-            <div id="laporanContent"></div>
-        </div>
+// === DASHBOARD ===
+function getDashboard() {
+    const sheet = initSheet("transaksi");
+    const data = sheet.getDataRange().getValues();
+    let tunai = 0, nonTunai = 0;
 
-    </div>
+    for (let i = 1; i < data.length; i++) {
+        tunai += Number(data[i][3]) || 0;
+        nonTunai += Number(data[i][4]) || 0;
+    }
 
-    <div id="toast" class="toast"></div>
+    return {
+        tunai: tunai,
+        nonTunai: nonTunai,
+        total: tunai + nonTunai
+    };
+}
 
-    <script>
-        // ==== KONFIG API ====
-        // INSTRUKSI DEPLOYMENT:
-        // 1. Upload code.gs ke Google Apps Script (script.google.com)
-        // 2. Deploy sebagai Web App dengan akses "Anyone"
-        // 3. Copy URL deployment dan ganti API_URL di bawah ini
-        // 4. Upload index.html sebagai HTML file di Apps Script
-        const API_URL = "https://script.google.com/macros/s/AKfycbyritIXMpQyMZ1a_-j-UEjb2Hl9GTt8v7wGQA6a0AwX0nIJ6biw7ripbdLwCZOhp-9B/exec"; // ganti dengan URL Web App kamu
+// Dashboard over a date range
+function getDashboardRange(startDate, endDate) {
+    const transaksiSheet = initSheet("transaksi");
+    const data = transaksiSheet.getDataRange().getValues();
 
-        // ==== HELPER ====
-        function showSection(id) {
-            document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
-            // nav active state
-            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-            const activeBtn = document.querySelector(`nav button[onclick="showSection('${id}')"]`);
-            if (activeBtn) activeBtn.classList.add('active');
-            if (id === 'dashboard') loadDashboard();
-            if (id === 'transaksi') loadTransaksi();
-            if (id === 'produk') loadProduk();
-            if (id === 'stok') loadStok();
+    const start = new Date(startDate + "T00:00:00");
+    const end = new Date(endDate + "T23:59:59");
+
+    let pemasukan = 0;
+    let pengeluaran = 0;
+    let tunaiIn = 0, tunaiOut = 0, nonTunaiIn = 0, nonTunaiOut = 0;
+    let count = 0;
+    let sumTransaksi = 0;
+
+    const recent = [];
+
+    for (let i = 1; i < data.length; i++) {
+        const tgl = data[i][0];
+        const ket = data[i][1];
+        const kat = data[i][2];
+        const tunai = Number(data[i][3]) || 0;
+        const nonTunai = Number(data[i][4]) || 0;
+
+        let tglObj = tgl instanceof Date && !isNaN(tgl) ? tgl : new Date(tgl);
+        if (!(tglObj >= start && tglObj <= end)) continue;
+
+        const totalBaris = tunai + nonTunai;
+        if (kat === 'Pemasukan') {
+            pemasukan += totalBaris;
+            tunaiIn += tunai;
+            nonTunaiIn += nonTunai;
+        } else if (kat === 'Pengeluaran') {
+            pengeluaran += totalBaris;
+            tunaiOut += tunai;
+            nonTunaiOut += nonTunai;
+        }
+        count += 1;
+        sumTransaksi += totalBaris;
+
+        recent.push([
+            Utilities.formatDate(tglObj, Session.getScriptTimeZone(), "yyyy-MM-dd"),
+            ket, kat, tunai, nonTunai
+        ]);
+    }
+
+    // sort recent by date desc using original order by scanning backwards is simpler
+    recent.sort((a, b) => (a[0] < b[0] ? 1 : a[0] > b[0] ? -1 : 0));
+    // If startDate is sentinel (all), return all recents; else limit to 10
+    const recentOutput = (startDate === '2000-01-01') ? recent : recent.slice(0, 10);
+
+    const kasTotal = tunaiIn - tunaiOut;
+    const nonKasTotal = nonTunaiIn - nonTunaiOut;
+
+    // Low stock (top 5 ascending)
+    const stokSheet = initSheet("stok");
+    const stokValues = stokSheet.getLastRow() > 1 ? stokSheet.getRange(2, 1, stokSheet.getLastRow() - 1, 2).getValues() : [];
+    stokValues.sort((a, b) => (Number(a[1]) || 0) - (Number(b[1]) || 0));
+    const lowStock = stokValues.slice(0, 5);
+
+    return {
+        kpi: {
+            pemasukan: pemasukan,
+            pengeluaran: pengeluaran,
+            labaBersih: pemasukan - pengeluaran,
+            jumlahTransaksi: count,
+            rataRataTransaksi: count ? Math.round(sumTransaksi / count) : 0,
+            kas: kasTotal,
+            nonKas: nonKasTotal
+        },
+        recent: recentOutput,
+        lowStock: lowStock
+    };
+}
+
+
+// Edit transaksi berdasarkan index (dihitung dari bawah)
+function editTransaksi(data) {
+    const sheet = initSheet("transaksi");
+    const lastRow = sheet.getLastRow();
+    const row = lastRow - data.rowIndex; // karena kita reverse di frontend
+
+    sheet.getRange(row, 1, 1, 5).setValues([[data.tgl, data.ket, data.kat, data.tunai, data.nonTunai]]);
+}
+
+// Hapus transaksi
+function deleteTransaksi(index) {
+    const sheet = initSheet("transaksi");
+    const lastRow = sheet.getLastRow();
+    const row = lastRow - index;
+    
+    // Ensure we don't delete header row
+    if (row > 1) {
+        sheet.deleteRow(row);
+    }
+}
+
+
+// === TRANSAKSI ===
+// Ambil semua transaksi
+function getTransaksi() {
+    const sheet = initSheet("transaksi");
+    const lastRow = sheet.getLastRow();
+    const lastCol = sheet.getLastColumn();
+
+    if (lastRow <= 1) return [];
+
+    const values = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+    return values.filter(row => row.some(cell => cell !== null && cell !== ''));
+}
+
+
+
+// 10 transaksi terakhir
+function getLast10Transaksi() {
+    const all = getTransaksi();
+    const last10 = all.slice(-10).reverse();
+    return last10;
+}
+
+
+
+function addTransaksi(data) {
+    const sheet = initSheet("transaksi");
+    sheet.appendRow([data.tgl, data.ket, data.kat, data.tunai, data.nonTunai]);
+}
+
+// === PRODUK ===
+function getProduk() {
+    const sheet = initSheet("produk");
+    const values = sheet.getRange(2, 1, sheet.getLastRow() - 1, 3).getValues();
+    return values.map(row => Array.from(row));
+}
+
+function addProduk(id, nama, harga) {
+    const sheet = initSheet("produk");
+    sheet.appendRow([id, nama, harga]);
+}
+
+// === STOK ===
+function getStok() {
+    const sheet = initSheet("stok");
+    const values = sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getValues();
+    return values.map(row => Array.from(row));
+}
+
+function addStok(id, jumlah) {
+    const sheet = initSheet("stok");
+    sheet.appendRow([id, jumlah]);
+}
+
+// === LAPORAN ===
+function getLaporan(startDate, endDate) {
+    const sheet = initSheet("transaksi");
+    const data = sheet.getDataRange().getValues();
+
+    let result = [];
+    let totalTunai = 0, totalNonTunai = 0;
+
+    // pastikan range tanggal
+    const start = new Date(startDate + "T00:00:00");
+    const end = new Date(endDate + "T23:59:59");
+
+    for (let i = 1; i < data.length; i++) {
+        let tgl = data[i][0];
+        let ket = data[i][1];
+        let kat = data[i][2];
+        let tunai = Number(data[i][3]) || 0;
+        let nonTunai = Number(data[i][4]) || 0;
+
+        // normalisasi tanggal (Google Sheets bisa simpan Date object atau string)
+        let tglObj;
+        if (Object.prototype.toString.call(tgl) === "[object Date]" && !isNaN(tgl)) {
+            tglObj = tgl; // sudah Date
+        } else {
+            tglObj = new Date(tgl);
         }
 
-        function showToast(msg, type = "success") {
-            const x = document.getElementById("toast");
-            x.innerText = msg;
-            x.className = `toast show ${type}`;
-            setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
+        if (tglObj >= start && tglObj <= end) {
+            result.push([
+                Utilities.formatDate(tglObj, Session.getScriptTimeZone(), "dd/MM/yyyy"),
+                ket,
+                kat,
+                tunai,
+                nonTunai
+            ]);
+            totalTunai += tunai;
+            totalNonTunai += nonTunai;
         }
+    }
 
-        function formatRupiah(val) {
-            const n = Number(val) || 0;
-            return 'Rp ' + n.toLocaleString('id-ID');
-        }
+    return {
+        data: result,
+        totalTunai: totalTunai,
+        totalNonTunai: totalNonTunai,
+        total: totalTunai + totalNonTunai
+    };
+}
 
-        // ==== DASHBOARD ====
-        function loadDashboard(range = 'today') {
-            const now = new Date();
-            const pad = (n) => String(n).padStart(2, '0');
-            const toDateStr = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+// Export Laporan helpers
+function buildLaporanSheet_(startDate, endDate) {
+    const laporan = getLaporan(startDate, endDate);
+    const ss = SpreadsheetApp.create(`Laporan ${startDate} s.d. ${endDate}`);
+    const sh = ss.getActiveSheet();
+    sh.setName('Laporan');
 
-            let start = new Date(now);
-            let end = new Date(now);
-            if (range === 'all') start = new Date('2000-01-01T00:00:00');
-            const startStr = toDateStr(start);
-            const endStr = toDateStr(end);
+    // Title
+    const title = `Laporan Kas Kedai Nongki (${startDate} s.d. ${endDate})`;
+    sh.getRange(1, 1).setValue(title);
+    sh.getRange(1, 1, 1, 5).merge();
+    sh.getRange(1, 1).setFontSize(14).setFontWeight('bold').setHorizontalAlignment('center');
 
-            fetch(`${API_URL}?action=getDashboardRange&start=${startStr}&end=${endStr}`)
-                .then(res => res.json())
-                .then(res => {
-                    const k = res.kpi;
-                    const recent = res.recent || [];
-                    const low = res.lowStock || [];
+    // Header
+    const headers = [["Tanggal", "Keterangan", "Kategori", "Tunai", "Non Tunai"]];
+    sh.getRange(2, 1, 1, headers[0].length)
+        .setValues(headers)
+        .setFontWeight('bold')
+        .setHorizontalAlignment('center')
+        .setBackground('#f0f0f0');
 
-                    const barTotal = Math.max(1, Math.abs(k.kas) + Math.abs(k.nonKas));
-                    const kasPct = Math.round(Math.abs(k.kas) * 100 / barTotal);
-                    const nonKasPct = 100 - kasPct;
+    // Data
+    if (laporan.data.length > 0) {
+        sh.getRange(3, 1, laporan.data.length, 5).setValues(laporan.data);
+        // Formats
+        sh.getRange(3, 1, laporan.data.length, 1).setNumberFormat("dd/MM/yyyy");
+        sh.getRange(3, 4, Math.max(1, laporan.data.length), 2).setNumberFormat("[$Rp-421] #,##0");
+        sh.getRange(3, 1, laporan.data.length, 5).setWrap(false);
+        // Borders
+        const tableRange = sh.getRange(2, 1, laporan.data.length + 1, 5);
+        tableRange.setBorder(true, true, true, true, true, true, '#cccccc', SpreadsheetApp.BorderStyle.SOLID);
 
-                    let recentHtml = recent.length ? recent.map(r => `<tr>
-                        <td data-label="Tanggal">${r[0]}</td>
-                        <td data-label="Keterangan">${r[1]}</td>
-                        <td data-label="Kategori">${r[2]}</td>
-                        <td class='right' data-label="Tunai">${formatRupiah(r[3])}</td>
-                        <td class='right' data-label="Non Tunai">${formatRupiah(r[4])}</td>
-                    </tr>`).join('') : `<tr><td colspan="5">Tidak ada transaksi</td></tr>`;
-                    let lowHtml = low.length ? low.map(r => `<tr>
-                        <td data-label="ID Produk">${r[0]}</td>
-                        <td class='right' data-label="Jumlah">${r[1]}</td>
-                    </tr>`).join('') : `<tr><td colspan="2">Semua stok aman</td></tr>`;
+        // Totals block
+        const last = laporan.data.length + 3;
+        sh.getRange(last, 1, 3, 5).setValues([
+            ["", "", "Total Tunai", laporan.totalTunai, ""],
+            ["", "", "Total Non Tunai", "", laporan.totalNonTunai],
+            ["", "", "Total", laporan.totalTunai + laporan.totalNonTunai, ""]
+        ]).setFontWeight('bold');
+        sh.getRange(last, 4, 3, 2).setNumberFormat("[$Rp-421] #,##0");
+    } else {
+        // Empty state nicely
+        sh.getRange(3, 1).setValue('Tidak ada data pada rentang tanggal ini').setItalic(true);
+        sh.getRange(3, 1, 1, 5).merge();
+    }
 
-                    document.getElementById("dashboardContent").innerHTML = `
-        <div class="filter-buttons">
-          <button class="filter-btn" data-range="today" onclick="setDashboardRange(this)">Hari ini</button>
-          <button class="filter-btn" data-range="all" onclick="setDashboardRange(this)">Keseluruhan</button>
-        </div>
-        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px;">
-          <div class="card"><b>Pemasukan</b><div>${formatRupiah(k.pemasukan)}</div></div>
-          <div class="card"><b>Pengeluaran</b><div>${formatRupiah(k.pengeluaran)}</div></div>
-          <div class="card"><b>Laba Bersih</b><div>${formatRupiah(k.labaBersih)}</div></div>
-          <div class="card"><b>Jumlah Transaksi</b><div>${k.jumlahTransaksi}</div></div>
-          <div class="card"><b>Rata-rata Transaksi</b><div>${formatRupiah(k.rataRataTransaksi)}</div></div>
-          <div class="card"><b>Kas vs Non-Tunai</b>
-            <div style="height:12px; background:#eee; border-radius:6px; overflow:hidden; margin-top:6px;">
-              <div style="height:100%; width:${kasPct}%; background:#2e7d32; float:left"></div>
-              <div style="height:100%; width:${nonKasPct}%; background:#1976d2; float:left"></div>
-            </div>
-            <div style="display:flex; justify-content:space-between; font-size:12px; margin-top:4px;">
-              <span>Kas: ${formatRupiah(k.kas)}</span>
-              <span>Non Tunai: ${formatRupiah(k.nonKas)}</span>
-            </div>
-          </div>
-        </div>
-        <div class="dashboard-grid" style="margin-top:12px;">
-          <div class="card"><b>Transaksi Terbaru</b>
-            <div class="table-wrap"><table class='clean responsive'><tr><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th>Tunai</th><th>Non Tunai</th></tr>${recentHtml}</table></div>
-          </div>
-          <div class="card"><b>Stok Menipis</b>
-            <div class="table-wrap"><table class='clean responsive'><tr><th>ID Produk</th><th>Jumlah</th></tr>${lowHtml}</table></div>
-          </div>
-        </div>`;
-                })
-                .catch(() => document.getElementById("dashboardContent").innerHTML = "Error loading dashboard data");
-        }
+    // Alignments
+    sh.getRange(3, 2, Math.max(1, laporan.data.length), 2).setHorizontalAlignment('left');
+    sh.getRange(3, 4, Math.max(1, laporan.data.length), 2).setHorizontalAlignment('right');
 
-        function setDashboardRange(btn) {
-            const range = btn.getAttribute('data-range');
-            loadDashboard(range);
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        }
+    // Freeze header row
+    sh.setFrozenRows(2);
 
-        // ==== TRANSAKSI ====
-        function loadTransaksi() {
-            fetch(`${API_URL}?action=getLast10Transaksi`)
-                .then(res => res.json())
-                .then(data => {
-                    let html = "<tr><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th class='right'>Tunai</th><th class='right'>Non Tunai</th></tr>";
-                    if (data && data.length > 0) {
-                        data.forEach(r => {
-                            html += `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class='right'>${formatRupiah(r[3])}</td><td class='right'>${formatRupiah(r[4])}</td></tr>`;
-                        });
-                    } else html += "<tr><td colspan='5'>Tidak ada data transaksi</td></tr>";
-                    document.getElementById("tableTransaksi").innerHTML = html;
-                })
-                .catch(() => document.getElementById("tableTransaksi").innerHTML = "<tr><td colspan='5'>Error loading data</td></tr>");
-        }
+    // Column widths
+    sh.autoResizeColumns(1, 5);
+    sh.setColumnWidths(1, 1, 110);
+    sh.setColumnWidths(2, 1, 220);
 
-        function addTransaksi(e) {
-            e.preventDefault();
-            const data = {
-                action: "addTransaksi",
-                tgl: document.getElementById("tglTransaksi").value,
-                ket: document.getElementById("ketTransaksi").value,
-                kat: document.getElementById("katTransaksi").value,
-                tunai: document.getElementById("tunai").value,
-                nonTunai: document.getElementById("nonTunai").value
-            };
-            fetch(API_URL, { method: "POST", body: JSON.stringify(data), headers: { "Content-Type": "application/json" } })
-                .then(res => res.json())
-                .then(r => {
-                    if (r.success) {
-                        showToast("✅ Transaksi berhasil ditambahkan!");
-                        loadTransaksi();
-                    } else showToast("❌ Gagal menambah transaksi", "error");
-                })
-                .catch(err => { showToast("❌ Gagal koneksi", "error"); console.error(err); });
-        }
+    return ss;
+}
 
-        // ==== PRODUK ====
-        function loadProduk() {
-            fetch(`${API_URL}?action=getProduk`)
-                .then(r => r.json())
-                .then(data => {
-                    let html = "<tr><th>ID</th><th>Nama</th><th>Harga</th></tr>";
-                    data.forEach(r => { html += `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`; });
-                    document.getElementById("tableProduk").innerHTML = html;
-                });
-        }
+function exportLaporanPDF(startDate, endDate) {
+    const ss = buildLaporanSheet_(startDate, endDate);
+    const sheet = ss.getActiveSheet();
+    SpreadsheetApp.flush();
 
-        function addProduk(e) {
-            e.preventDefault();
-            const data = {
-                action: "addProduk",
-                id: document.getElementById("idProduk").value,
-                nama: document.getElementById("namaProduk").value,
-                harga: document.getElementById("hargaProduk").value
-            };
-            fetch(API_URL, { method: "POST", body: JSON.stringify(data), headers: { "Content-Type": "application/json" } })
-                .then(r => r.json())
-                .then(() => loadProduk());
-        }
+    const exportUrl = `https://docs.google.com/spreadsheets/d/${ss.getId()}/export?` +
+        `format=pdf&` +
+        `portrait=true&` +
+        `scale=2&` + // fit to width
+        `size=A4&` +
+        `sheetnames=false&` +
+        `printtitle=false&` +
+        `pagenumbers=true&` +
+        `gridlines=false&` +
+        `fzr=true&` +
+        `top_margin=0.5&bottom_margin=0.5&left_margin=0.5&right_margin=0.5&` +
+        `horizontal_alignment=CENTER&` +
+        `gid=${sheet.getSheetId()}`;
 
-        // ==== STOK ====
-        function loadStok() {
-            fetch(`${API_URL}?action=getStok`)
-                .then(r => r.json())
-                .then(data => {
-                    let html = "<tr><th>ID Produk</th><th>Jumlah</th></tr>";
-                    data.forEach(r => { html += `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`; });
-                    document.getElementById("tableStok").innerHTML = html;
-                });
-        }
+    const token = ScriptApp.getOAuthToken();
+    const resp = UrlFetchApp.fetch(exportUrl, { headers: { Authorization: `Bearer ${token}` } });
+    const blob = resp.getBlob().setName(ss.getName() + '.pdf');
 
-        function addStok(e) {
-            e.preventDefault();
-            const data = { action: "addStok", id: document.getElementById("stokID").value, jumlah: document.getElementById("stokJumlah").value };
-            fetch(API_URL, { method: "POST", body: JSON.stringify(data), headers: { "Content-Type": "application/json" } })
-                .then(r => r.json())
-                .then(() => loadStok());
-        }
+    const pdfFile = DriveApp.createFile(blob);
+    DriveApp.getFileById(ss.getId()).setTrashed(true);
+    return { url: pdfFile.getUrl(), fileId: pdfFile.getId() };
+}
 
-        // ==== LAPORAN ====
-        function loadLaporan(e) {
-            e.preventDefault();
-            const start = document.getElementById("startDate").value;
-            const end = document.getElementById("endDate").value;
-            fetch(`${API_URL}?action=getLaporan&start=${start}&end=${end}`)
-                .then(r => r.json())
-                .then(res => {
-                    let html = "<table class='clean responsive'><tr><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th>Tunai</th><th>Non Tunai</th></tr>";
-                    res.data.forEach(r => {
-                        html += `<tr>
-                            <td data-label="Tanggal">${r[0]}</td>
-                            <td data-label="Keterangan">${r[1]}</td>
-                            <td data-label="Kategori">${r[2]}</td>
-                            <td class='right' data-label="Tunai">${formatRupiah(r[3])}</td>
-                            <td class='right' data-label="Non Tunai">${formatRupiah(r[4])}</td>
-                        </tr>`;
-                    });
-                    html += "</table>";
-                    html += `<div>Total Tunai: ${formatRupiah(res.totalTunai)}</div>`;
-                    html += `<div>Total Non Tunai: ${formatRupiah(res.totalNonTunai)}</div>`;
-                    html += `<div><b>Total: ${formatRupiah(res.total)}</b></div>`;
-                    document.getElementById("laporanContent").innerHTML = html;
-                });
-        }
+// Return PDF as base64 for direct download in browser
+function exportLaporanPDFInline(startDate, endDate) {
+    const ss = buildLaporanSheet_(startDate, endDate);
+    const sheet = ss.getActiveSheet();
+    SpreadsheetApp.flush();
 
-        function exportPDF() {
-            const start = document.getElementById("startDate").value;
-            const end = document.getElementById("endDate").value;
-            fetch(`${API_URL}?action=exportLaporanPDFInline&start=${start}&end=${end}`)
-                .then(r => r.json())
-                .then(res => {
-                    const link = document.createElement('a');
-                    link.href = `data:${res.mime};base64,${res.base64}`;
-                    link.download = res.filename;
-                    link.click();
-                });
-        }
+    const exportUrl = `https://docs.google.com/spreadsheets/d/${ss.getId()}/export?` +
+        `format=pdf&portrait=true&scale=2&size=A4&sheetnames=false&printtitle=false&` +
+        `pagenumbers=false&gridlines=true&fzr=false&gid=${sheet.getSheetId()}`;
 
-        function exportExcel() {
-            const start = document.getElementById("startDate").value;
-            const end = document.getElementById("endDate").value;
-            fetch(`${API_URL}?action=exportLaporanExcel&start=${start}&end=${end}`)
-                .then(r => r.json())
-                .then(res => window.open(res.url, "_blank"));
-        }
+    const token = ScriptApp.getOAuthToken();
+    const resp = UrlFetchApp.fetch(exportUrl, { headers: { Authorization: `Bearer ${token}` } });
+    const blob = resp.getBlob().setName(ss.getName() + '.pdf');
+    const base64 = Utilities.base64Encode(blob.getBytes());
 
-        // ==== INIT ====
-        loadDashboard();
-        // set nav active to Dashboard on load
-        const firstNavBtn = document.querySelector("nav button[onclick=\"showSection('dashboard')\"]");
-        if (firstNavBtn) firstNavBtn.classList.add('active');
-        setTimeout(() => { document.querySelector('.filter-btn[data-range="today"]')?.classList.add('active'); }, 0);
-    </script>
-</body>
+    DriveApp.getFileById(ss.getId()).setTrashed(true);
+    return { filename: ss.getName() + '.pdf', mime: 'application/pdf', base64: base64 };
+}
 
-</html>
+function exportLaporanExcel(startDate, endDate) {
+    const ss = buildLaporanSheet_(startDate, endDate);
+    SpreadsheetApp.flush();
+    const blob = DriveApp.getFileById(ss.getId()).getAs(MimeType.MICROSOFT_EXCEL);
+    const xlsx = DriveApp.createFile(blob).setName(ss.getName() + '.xlsx');
+    DriveApp.getFileById(ss.getId()).setTrashed(true);
+    return { url: xlsx.getUrl(), fileId: xlsx.getId() };
+}
