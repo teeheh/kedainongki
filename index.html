@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kedai Nongki</title>
+    <style>
+        /* (CSS sama seperti sebelumnya, tidak diubah) */
+    </style>
+</head>
+
+<body>
+    <header>📊 Kas Kedai Nongki</header>
+
+    <nav>
+        <button onclick="showSection('dashboard')">Dashboard</button>
+        <button onclick="showSection('transaksi')">Transaksi</button>
+        <button onclick="showSection('produk')">Produk</button>
+        <button onclick="showSection('stok')">Stok</button>
+        <button onclick="showSection('laporan')">Laporan</button>
+    </nav>
+
+    <div class="container">
+        <!-- ... (HTML Form dan Table sama seperti sebelumnya) ... -->
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // ==== KONFIG API ====
+        // INSTRUKSI DEPLOYMENT:
+        // 1. Upload code.gs ke Google Apps Script (script.google.com)
+        // 2. Deploy sebagai Web App dengan akses "Anyone"
+        // 3. Copy URL deployment dan ganti API_URL di bawah ini
+        // 4. Upload index.html sebagai HTML file di Apps Script
+        const API_URL = "https://script.google.com/macros/s/AKfycbwq3j4mqFiYmhe16PJzud7ocdvHpjKfkSzWVpmZBHKfeP9PTDAmYqbextSI6EWdMztr/exec"; // ganti dengan URL Web App kamu
+
+        // ==== HELPER ====
+        function showSection(id) {
+            document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            if (id === 'dashboard') loadDashboard();
+            if (id === 'transaksi') loadTransaksi();
+            if (id === 'produk') loadProduk();
+            if (id === 'stok') loadStok();
+        }
+
+        function showToast(msg, type = "success") {
+            const x = document.getElementById("toast");
+            x.innerText = msg;
+            x.className = `toast show ${type}`;
+            setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
+        }
+
+        function formatRupiah(val) {
+            const n = Number(val) || 0;
+            return 'Rp ' + n.toLocaleString('id-ID');
+        }
+
+        // ==== DASHBOARD ====
+        function loadDashboard(range = 'today') {
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            const toDateStr = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+            let start = new Date(now);
+            let end = new Date(now);
+            if (range === 'all') start = new Date('2000-01-01T00:00:00');
+            const startStr = toDateStr(start);
+            const endStr = toDateStr(end);
+
+            fetch(`${API_URL}?action=getDashboardRange&start=${startStr}&end=${endStr}`)
+                .then(res => res.json())
+                .then(res => {
+                    const k = res.kpi;
+                    const recent = res.recent || [];
+                    const low = res.lowStock || [];
+
+                    const barTotal = Math.max(1, Math.abs(k.kas) + Math.abs(k.nonKas));
+                    const kasPct = Math.round(Math.abs(k.kas) * 100 / barTotal);
+                    const nonKasPct = 100 - kasPct;
+
+                    let recentHtml = recent.length ? recent.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${formatRupiah(r[3])}</td><td>${formatRupiah(r[4])}</td></tr>`).join('') : `<tr><td colspan="5">Tidak ada transaksi</td></tr>`;
+                    let lowHtml = low.length ? low.map(r => `<tr><td>${r[0]}</td><td style="text-align:right">${r[1]}</td></tr>`).join('') : `<tr><td colspan="2">Semua stok aman</td></tr>`;
+
+                    document.getElementById("dashboardContent").innerHTML = `
+        <div class="filter-buttons">
+          <button class="filter-btn" data-range="today" onclick="setDashboardRange(this)">Hari ini</button>
+          <button class="filter-btn" data-range="all" onclick="setDashboardRange(this)">Keseluruhan</button>
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px;">
+          <div class="card"><b>Pemasukan</b><div>${formatRupiah(k.pemasukan)}</div></div>
+          <div class="card"><b>Pengeluaran</b><div>${formatRupiah(k.pengeluaran)}</div></div>
+          <div class="card"><b>Laba Bersih</b><div>${formatRupiah(k.labaBersih)}</div></div>
+          <div class="card"><b>Jumlah Transaksi</b><div>${k.jumlahTransaksi}</div></div>
+          <div class="card"><b>Rata-rata Transaksi</b><div>${formatRupiah(k.rataRataTransaksi)}</div></div>
+          <div class="card"><b>Kas vs Non-Tunai</b>
+            <div style="height:12px; background:#eee; border-radius:6px; overflow:hidden; margin-top:6px;">
+              <div style="height:100%; width:${kasPct}%; background:#2e7d32; float:left"></div>
+              <div style="height:100%; width:${nonKasPct}%; background:#1976d2; float:left"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-top:4px;">
+              <span>Kas: ${formatRupiah(k.kas)}</span>
+              <span>Non Tunai: ${formatRupiah(k.nonKas)}</span>
+            </div>
+          </div>
+        </div>
+        <div class="dashboard-grid" style="margin-top:12px;">
+          <div class="card"><b>Transaksi Terbaru</b>
+            <div class="table-wrap"><table><tr><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th>Tunai</th><th>Non Tunai</th></tr>${recentHtml}</table></div>
+          </div>
+          <div class="card"><b>Stok Menipis</b>
+            <div class="table-wrap"><table><tr><th>ID Produk</th><th>Jumlah</th></tr>${lowHtml}</table></div>
+          </div>
+        </div>`;
+                })
+                .catch(() => document.getElementById("dashboardContent").innerHTML = "Error loading dashboard data");
+        }
+
+        function setDashboardRange(btn) {
+            const range = btn.getAttribute('data-range');
+            loadDashboard(range);
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        // ==== TRANSAKSI ====
+        function loadTransaksi() {
+            fetch(`${API_URL}?action=getLast10Transaksi`)
+                .then(res => res.json())
+                .then(data => {
+                    let html = "<tr><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th class='right'>Tunai</th><th class='right'>Non Tunai</th></tr>";
+                    if (data && data.length > 0) {
+                        data.forEach(r => {
+                            html += `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class='right'>${formatRupiah(r[3])}</td><td class='right'>${formatRupiah(r[4])}</td></tr>`;
+                        });
+                    } else html += "<tr><td colspan='5'>Tidak ada data transaksi</td></tr>";
+                    document.getElementById("tableTransaksi").innerHTML = html;
+                })
+                .catch(() => document.getElementById("tableTransaksi").innerHTML = "<tr><td colspan='5'>Error loading data</td></tr>");
+        }
+
+        function addTransaksi(e) {
+            e.preventDefault();
+            const data = {
+                action: "addTransaksi",
+                tgl: document.getElementById("tglTransaksi").value,
+                ket: document.getElementById("ketTransaksi").value,
+                kat: document.getElementById("katTransaksi").value,
+                tunai: document.getElementById("tunai").value,
+                nonTunai: document.getElementById("nonTunai").value
+            };
+            fetch(API_URL, { method: "POST", body: JSON.stringify(data), headers: { "Content-Type": "application/json" } })
+                .then(res => res.json())
+                .then(r => {
+                    if (r.success) {
+                        showToast("✅ Transaksi berhasil ditambahkan!");
+                        loadTransaksi();
+                    } else showToast("❌ Gagal menambah transaksi", "error");
+                })
+                .catch(err => { showToast("❌ Gagal koneksi", "error"); console.error(err); });
+        }
+
+        // ==== PRODUK ====
+        function loadProduk() {
+            fetch(`${API_URL}?action=getProduk`)
+                .then(r => r.json())
+                .then(data => {
+                    let html = "<tr><th>ID</th><th>Nama</th><th>Harga</th></tr>";
+                    data.forEach(r => { html += `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`; });
+                    document.getElementById("tableProduk").innerHTML = html;
+                });
+        }
+
+        function addProduk(e) {
+            e.preventDefault();
+            const data = {
+                action: "addProduk",
+                id: document.getElementById("idProduk").value,
+                nama: document.getElementById("namaProduk").value,
+                harga: document.getElementById("hargaProduk").value
+            };
+            fetch(API_URL, { method: "POST", body: JSON.stringify(data), headers: { "Content-Type": "application/json" } })
+                .then(r => r.json())
+                .then(() => loadProduk());
+        }
+
+        // ==== STOK ====
+        function loadStok() {
+            fetch(`${API_URL}?action=getStok`)
+                .then(r => r.json())
+                .then(data => {
+                    let html = "<tr><th>ID Produk</th><th>Jumlah</th></tr>";
+                    data.forEach(r => { html += `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`; });
+                    document.getElementById("tableStok").innerHTML = html;
+                });
+        }
+
+        function addStok(e) {
+            e.preventDefault();
+            const data = { action: "addStok", id: document.getElementById("stokID").value, jumlah: document.getElementById("stokJumlah").value };
+            fetch(API_URL, { method: "POST", body: JSON.stringify(data), headers: { "Content-Type": "application/json" } })
+                .then(r => r.json())
+                .then(() => loadStok());
+        }
+
+        // ==== LAPORAN ====
+        function loadLaporan(e) {
+            e.preventDefault();
+            const start = document.getElementById("startDate").value;
+            const end = document.getElementById("endDate").value;
+            fetch(`${API_URL}?action=getLaporan&start=${start}&end=${end}`)
+                .then(r => r.json())
+                .then(res => {
+                    let html = "<table><tr><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th>Tunai</th><th>Non Tunai</th></tr>";
+                    res.data.forEach(r => {
+                        html += `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${formatRupiah(r[3])}</td><td>${formatRupiah(r[4])}</td></tr>`;
+                    });
+                    html += "</table>";
+                    html += `<div>Total Tunai: ${formatRupiah(res.totalTunai)}</div>`;
+                    html += `<div>Total Non Tunai: ${formatRupiah(res.totalNonTunai)}</div>`;
+                    html += `<div><b>Total: ${formatRupiah(res.total)}</b></div>`;
+                    document.getElementById("laporanContent").innerHTML = html;
+                });
+        }
+
+        function exportPDF() {
+            const start = document.getElementById("startDate").value;
+            const end = document.getElementById("endDate").value;
+            fetch(`${API_URL}?action=exportLaporanPDFInline&start=${start}&end=${end}`)
+                .then(r => r.json())
+                .then(res => {
+                    const link = document.createElement('a');
+                    link.href = `data:${res.mime};base64,${res.base64}`;
+                    link.download = res.filename;
+                    link.click();
+                });
+        }
+
+        function exportExcel() {
+            const start = document.getElementById("startDate").value;
+            const end = document.getElementById("endDate").value;
+            fetch(`${API_URL}?action=exportLaporanExcel&start=${start}&end=${end}`)
+                .then(r => r.json())
+                .then(res => window.open(res.url, "_blank"));
+        }
+
+        // ==== INIT ====
+        loadDashboard();
+        setTimeout(() => { document.querySelector('.filter-btn[data-range="today"]')?.classList.add('active'); }, 0);
+    </script>
+</body>
+
+</html>
