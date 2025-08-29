@@ -29,7 +29,15 @@
             gap: 10px;
             padding: 12px 20px;
             background: #e0e0e0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
         }
+        nav::-webkit-scrollbar { height: 6px; }
+        nav::-webkit-scrollbar-thumb { background: #c7c7c7; border-radius: 3px; }
 
         nav button {
             background: #3a3a3a;
@@ -39,11 +47,35 @@
             border-radius: 8px;
             cursor: pointer;
             transition: 0.2s;
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+        nav button:hover { background: #555; }
+        nav button.active { background: #1f1f1f; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.15); }
+        nav button:focus { outline: 2px solid #8ab4f8; outline-offset: 2px; }
+
+        /* Table base */
+        .table-wrap { display: block; overflow-x: auto; }
+        table.clean { border-collapse: separate; border-spacing: 0; }
+        table.clean th, table.clean td { border: 1px solid #e6e6e6; }
+        table.clean th.right, table.clean td.right { text-align: right; }
+        table.clean tr:nth-child(even) td { background: #fafafa; }
+        table thead th { position: sticky; top: 0; z-index: 1; }
+
+        /* Responsive stacked tables */
+        @media (max-width: 680px) {
+            table.responsive thead { display: none; }
+            table.responsive tr { display: block; border: 1px solid #e6e6e6; border-radius: 8px; margin-bottom: 10px; padding: 6px; }
+            table.responsive td { display: flex; justify-content: space-between; align-items: center; border: none; border-bottom: 1px dashed #eee; padding: 8px 6px; text-align: left; }
+            table.responsive td:last-child { border-bottom: none; }
+            table.responsive td::before { content: attr(data-label); font-weight: 600; color: #666; margin-right: 12px; }
+            table.responsive td.right { justify-content: space-between; }
         }
 
-        nav button:hover {
-            background: #555;
-        }
+        /* Inputs and selects */
+        input[type="number"] { text-align: right; }
+        input, select { touch-action: manipulation; }
+        input:focus, select:focus { outline: 2px solid #8ab4f8; outline-offset: 1px; }
 
         .container {
             padding: 20px;
@@ -241,7 +273,7 @@
             </form>
 
             <!-- 10 terakhir -->
-            <table id="tableTransaksi" class="clean"></table>
+            <table id="tableTransaksi" class="clean responsive"></table>
         </div>
 
 
@@ -265,7 +297,7 @@
             </div>
             <button type="submit" class="submit">Tambah</button>
             </form>
-            <table id="tableProduk" class="clean"></table>
+            <table id="tableProduk" class="clean responsive"></table>
         </div>
         
         <!-- STOK -->
@@ -284,7 +316,7 @@
             </div>
             <button type="submit" class="submit">Tambah</button>
             </form>
-            <table id="tableStok" class="clean"></table>
+            <table id="tableStok" class="clean responsive"></table>
         </div>
         
 
@@ -318,6 +350,10 @@
         function showSection(id) {
             document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
+            // nav active state
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+            const activeBtn = document.querySelector(`nav button[onclick="showSection('${id}')"]`);
+            if (activeBtn) activeBtn.classList.add('active');
             if (id === 'dashboard') loadDashboard();
             if (id === 'transaksi') loadTransaksi();
             if (id === 'produk') loadProduk();
@@ -359,8 +395,17 @@
                     const kasPct = Math.round(Math.abs(k.kas) * 100 / barTotal);
                     const nonKasPct = 100 - kasPct;
 
-                    let recentHtml = recent.length ? recent.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${formatRupiah(r[3])}</td><td>${formatRupiah(r[4])}</td></tr>`).join('') : `<tr><td colspan="5">Tidak ada transaksi</td></tr>`;
-                    let lowHtml = low.length ? low.map(r => `<tr><td>${r[0]}</td><td style="text-align:right">${r[1]}</td></tr>`).join('') : `<tr><td colspan="2">Semua stok aman</td></tr>`;
+                    let recentHtml = recent.length ? recent.map(r => `<tr>
+                        <td data-label="Tanggal">${r[0]}</td>
+                        <td data-label="Keterangan">${r[1]}</td>
+                        <td data-label="Kategori">${r[2]}</td>
+                        <td class='right' data-label="Tunai">${formatRupiah(r[3])}</td>
+                        <td class='right' data-label="Non Tunai">${formatRupiah(r[4])}</td>
+                    </tr>`).join('') : `<tr><td colspan="5">Tidak ada transaksi</td></tr>`;
+                    let lowHtml = low.length ? low.map(r => `<tr>
+                        <td data-label="ID Produk">${r[0]}</td>
+                        <td class='right' data-label="Jumlah">${r[1]}</td>
+                    </tr>`).join('') : `<tr><td colspan="2">Semua stok aman</td></tr>`;
 
                     document.getElementById("dashboardContent").innerHTML = `
         <div class="filter-buttons">
@@ -386,10 +431,10 @@
         </div>
         <div class="dashboard-grid" style="margin-top:12px;">
           <div class="card"><b>Transaksi Terbaru</b>
-            <div class="table-wrap"><table><tr><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th>Tunai</th><th>Non Tunai</th></tr>${recentHtml}</table></div>
+            <div class="table-wrap"><table class='clean responsive'><tr><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th>Tunai</th><th>Non Tunai</th></tr>${recentHtml}</table></div>
           </div>
           <div class="card"><b>Stok Menipis</b>
-            <div class="table-wrap"><table><tr><th>ID Produk</th><th>Jumlah</th></tr>${lowHtml}</table></div>
+            <div class="table-wrap"><table class='clean responsive'><tr><th>ID Produk</th><th>Jumlah</th></tr>${lowHtml}</table></div>
           </div>
         </div>`;
                 })
@@ -491,9 +536,15 @@
             fetch(`${API_URL}?action=getLaporan&start=${start}&end=${end}`)
                 .then(r => r.json())
                 .then(res => {
-                    let html = "<table><tr><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th>Tunai</th><th>Non Tunai</th></tr>";
+                    let html = "<table class='clean responsive'><tr><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th>Tunai</th><th>Non Tunai</th></tr>";
                     res.data.forEach(r => {
-                        html += `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${formatRupiah(r[3])}</td><td>${formatRupiah(r[4])}</td></tr>`;
+                        html += `<tr>
+                            <td data-label="Tanggal">${r[0]}</td>
+                            <td data-label="Keterangan">${r[1]}</td>
+                            <td data-label="Kategori">${r[2]}</td>
+                            <td class='right' data-label="Tunai">${formatRupiah(r[3])}</td>
+                            <td class='right' data-label="Non Tunai">${formatRupiah(r[4])}</td>
+                        </tr>`;
                     });
                     html += "</table>";
                     html += `<div>Total Tunai: ${formatRupiah(res.totalTunai)}</div>`;
@@ -526,6 +577,9 @@
 
         // ==== INIT ====
         loadDashboard();
+        // set nav active to Dashboard on load
+        const firstNavBtn = document.querySelector("nav button[onclick=\"showSection('dashboard')\"]");
+        if (firstNavBtn) firstNavBtn.classList.add('active');
         setTimeout(() => { document.querySelector('.filter-btn[data-range="today"]')?.classList.add('active'); }, 0);
     </script>
 </body>
