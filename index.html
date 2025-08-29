@@ -6,7 +6,179 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kedai Nongki</title>
     <style>
-        /* (CSS sama seperti sebelumnya, tidak diubah) */
+        /* ==== GLOBAL STYLE ==== */
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        header {
+            background: #3a3a3a;
+            color: white;
+            padding: 15px 20px;
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 12px 20px;
+            background: #e0e0e0;
+        }
+
+        nav button {
+            background: #3a3a3a;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        nav button:hover {
+            background: #555;
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 20px;
+            color: #444;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            overflow-x: auto;
+            display: block;
+        }
+
+        /* Responsive helpers */
+        .table-wrap { display: block; overflow-x: auto; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+
+        table th,
+        table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        table th {
+            background: #f0f0f0;
+        }
+
+        /* Transaksi clean styles */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .form-grid .field input,
+        .form-grid .field select { width: 100%; box-sizing: border-box; }
+        .form-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+
+        @media (min-width: 768px) {
+            .form-grid { grid-template-columns: repeat(2, minmax(240px, 1fr)); }
+        }
+        @media (min-width: 1024px) {
+            .form-grid { grid-template-columns: repeat(4, minmax(220px, 1fr)); }
+        }
+
+        @media (max-width: 768px) {
+            header { font-size: 18px; padding: 12px 16px; }
+            nav { padding: 10px 16px; }
+            .card { padding: 16px; }
+            .container { padding: 16px; }
+            .form-grid { grid-template-columns: 1fr; }
+            table th, table td { font-size: 14px; padding: 6px; }
+        }
+
+        @media (max-width: 480px) {
+            nav button { padding: 8px 12px; }
+            h2 { font-size: 18px; }
+            .summary { font-size: 14px; }
+        }
+        .form-grid .field label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        table.clean th.right, table.clean td.right { text-align: right; }
+        table.clean tr:nth-child(even) td { background: #fafafa; }
+        table.clean { border-collapse: separate; border-spacing: 0; }
+        table.clean th, table.clean td { border: 1px solid #e6e6e6; }
+        .section-note { font-size: 12px; color: #777; margin-top: 6px; }
+
+        input,
+        select {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 6px;
+            border: 1px solid #bbb;
+            width: 100%;
+        }
+
+        button.submit {
+            margin-top: 8px;
+            background: #4a4a4a;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+
+
+        button.submit:hover {
+            background: #666;
+        }
+
+        /* Dashboard filter buttons */
+        .filter-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+        .filter-btn {
+            background: #ffffff;
+            color: #333;
+            border: 1px solid #ccc;
+            padding: 7px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+        .filter-btn:hover { background: #f3f3f3; }
+        .filter-btn.active { background: #3a3a3a; color: #fff; border-color: #3a3a3a; }
+
+        .hidden {
+            display: none;
+        }
+
+        .summary {
+            font-size: 16px;
+            margin-top: 12px;
+        }
     </style>
 </head>
 
@@ -22,7 +194,113 @@
     </nav>
 
     <div class="container">
-        <!-- ... (HTML Form dan Table sama seperti sebelumnya) ... -->
+
+        
+
+
+        <!-- DASHBOARD -->
+        <div id="dashboard" class="card">
+            <h2>Dashboard</h2>
+            <div id="dashboardContent">Loading...</div>
+        </div>
+
+        <!-- TRANSAKSI -->
+        <div id="transaksi" class="card hidden">
+            <h2>Transaksi</h2>
+            
+            <form onsubmit="addTransaksi(event)">
+                <div class="form-grid">
+                    <div class="field">
+                        <label>Tanggal</label>
+                        <input type="date" id="tglTransaksi" required>
+                    </div>
+                    <div class="field">
+                        <label>Keterangan</label>
+                        <input type="text" id="ketTransaksi" placeholder="Contoh: Beli es" required>
+                    </div>
+                    <div class="field">
+                        <label>Kategori</label>
+                        <select id="katTransaksi">
+                            <option>Pemasukan</option>
+                            <option>Pengeluaran</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Nominal Tunai</label>
+                        <input type="number" id="tunai" placeholder="0">
+                    </div>
+                    <div class="field">
+                        <label>Nominal Non Tunai</label>
+                        <input type="number" id="nonTunai" placeholder="0">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="submit">Tambah</button>
+                    <div class="section-note">Isi salah satu dari Tunai atau Non Tunai.</div>
+                </div>
+            </form>
+
+            <!-- 10 terakhir -->
+            <table id="tableTransaksi" class="clean"></table>
+        </div>
+
+
+        <!-- PRODUK -->
+        <div id="produk" class="card hidden">
+            <h2>Produk</h2>
+            <form onsubmit="addProduk(event)">
+            <div class="form-grid">
+                <div class="field">
+                <label>ID Produk</label>
+                <input type="text" id="idProduk" placeholder="ID Produk" required>
+                </div>
+                <div class="field">
+                <label>Nama Produk</label>
+                <input type="text" id="namaProduk" placeholder="Nama Produk" required>
+                </div>
+                <div class="field">
+                <label>Harga</label>
+                <input type="number" id="hargaProduk" placeholder="Harga" required>
+                </div>
+            </div>
+            <button type="submit" class="submit">Tambah</button>
+            </form>
+            <table id="tableProduk" class="clean"></table>
+        </div>
+        
+        <!-- STOK -->
+        <div id="stok" class="card hidden">
+            <h2>Stok</h2>
+            <form onsubmit="addStok(event)">
+            <div class="form-grid">
+                <div class="field">
+                <label>ID Produk</label>
+                <input type="text" id="stokID" placeholder="ID Produk" required>
+                </div>
+                <div class="field">
+                <label>Jumlah</label>
+                <input type="number" id="stokJumlah" placeholder="Jumlah" required>
+                </div>
+            </div>
+            <button type="submit" class="submit">Tambah</button>
+            </form>
+            <table id="tableStok" class="clean"></table>
+        </div>
+        
+
+        <!-- LAPORAN -->
+        <div id="laporan" class="card hidden">
+            <h2>Laporan</h2>
+            <form onsubmit="loadLaporan(event)">
+                <label>Dari: <input type="date" id="startDate" required></label>
+                <label>Sampai: <input type="date" id="endDate" required></label>
+                <button type="submit" class="submit">Tampilkan</button>
+                <button type="button" class="submit" onclick="exportPDF()">Export PDF</button>
+                <button type="button" class="submit" onclick="exportExcel()">Export Excel</button>
+            </form>
+            <div id="laporanContent"></div>
+        </div>
+
     </div>
 
     <div id="toast" class="toast"></div>
@@ -34,7 +312,7 @@
         // 2. Deploy sebagai Web App dengan akses "Anyone"
         // 3. Copy URL deployment dan ganti API_URL di bawah ini
         // 4. Upload index.html sebagai HTML file di Apps Script
-        const API_URL = "https://script.google.com/macros/s/AKfycbwq3j4mqFiYmhe16PJzud7ocdvHpjKfkSzWVpmZBHKfeP9PTDAmYqbextSI6EWdMztr/exec"; // ganti dengan URL Web App kamu
+        const API_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec"; // ganti dengan URL Web App kamu
 
         // ==== HELPER ====
         function showSection(id) {
