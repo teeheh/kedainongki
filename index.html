@@ -1,587 +1,296 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kedai Nongki</title>
-    <style>
-        /* ==== GLOBAL STYLE ==== */
-        body {
-            margin: 0;
-            font-family: "Segoe UI", Roboto, sans-serif;
-            background: #f5f5f5;
-            color: #333;
-        }
-
-        header {
-            background: #3a3a3a;
-            color: white;
-            padding: 15px 20px;
-            font-size: 20px;
-            font-weight: bold;
-            letter-spacing: 1px;
-        }
-
-        nav {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding: 12px 20px;
-            background: #e0e0e0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: thin;
-        }
-        nav::-webkit-scrollbar { height: 6px; }
-        nav::-webkit-scrollbar-thumb { background: #c7c7c7; border-radius: 3px; }
-
-        nav button {
-            background: #3a3a3a;
-            color: white;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: 0.2s;
-            flex: 0 0 auto;
-            white-space: nowrap;
-        }
-        nav button:hover { background: #555; }
-        nav button.active { background: #1f1f1f; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.15); }
-        nav button:focus { outline: 2px solid #8ab4f8; outline-offset: 2px; }
-
-        /* Table base */
-        .table-wrap { display: block; overflow-x: auto; }
-        table.clean { border-collapse: separate; border-spacing: 0; }
-        table.clean th, table.clean td { border: 1px solid #e6e6e6; }
-        table.clean th.right, table.clean td.right { text-align: right; }
-        table.clean tr:nth-child(even) td { background: #fafafa; }
-        table thead th { position: sticky; top: 0; z-index: 1; }
-
-        /* Responsive stacked tables */
-        @media (max-width: 680px) {
-            table.responsive thead { display: none; }
-            table.responsive tr { display: block; border: 1px solid #e6e6e6; border-radius: 8px; margin-bottom: 10px; padding: 6px; }
-            table.responsive td { display: flex; justify-content: space-between; align-items: center; border: none; border-bottom: 1px dashed #eee; padding: 8px 6px; text-align: left; }
-            table.responsive td:last-child { border-bottom: none; }
-            table.responsive td::before { content: attr(data-label); font-weight: 600; color: #666; margin-right: 12px; }
-            table.responsive td.right { justify-content: space-between; }
-        }
-
-        /* Inputs and selects */
-        input[type="number"] { text-align: right; }
-        input, select { touch-action: manipulation; }
-        input:focus, select:focus { outline: 2px solid #8ab4f8; outline-offset: 1px; }
-
-        .container {
-            padding: 20px;
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        .card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        h2 {
-            margin-top: 0;
-            font-size: 20px;
-            color: #444;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 12px;
-            overflow-x: auto;
-            display: block;
-        }
-
-        /* Responsive helpers */
-        .table-wrap { display: block; overflow-x: auto; }
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
-
-        table th,
-        table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
-        }
-
-        table th {
-            background: #f0f0f0;
-        }
-
-        /* Transaksi clean styles */
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px;
-            margin-bottom: 10px;
-        }
-        .form-grid .field input,
-        .form-grid .field select { width: 100%; box-sizing: border-box; }
-        .form-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
-
-        @media (min-width: 768px) {
-            .form-grid { grid-template-columns: repeat(2, minmax(240px, 1fr)); }
-        }
-        @media (min-width: 1024px) {
-            .form-grid { grid-template-columns: repeat(4, minmax(220px, 1fr)); }
-        }
-
-        @media (max-width: 768px) {
-            header { font-size: 18px; padding: 12px 16px; }
-            nav { padding: 10px 16px; }
-            .card { padding: 16px; }
-            .container { padding: 16px; }
-            .form-grid { grid-template-columns: 1fr; }
-            table th, table td { font-size: 14px; padding: 6px; }
-        }
-
-        @media (max-width: 480px) {
-            nav button { padding: 8px 12px; }
-            h2 { font-size: 18px; }
-            .summary { font-size: 14px; }
-        }
-        .form-grid .field label {
-            display: block;
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 4px;
-        }
-        table.clean th.right, table.clean td.right { text-align: right; }
-        table.clean tr:nth-child(even) td { background: #fafafa; }
-        table.clean { border-collapse: separate; border-spacing: 0; }
-        table.clean th, table.clean td { border: 1px solid #e6e6e6; }
-        .section-note { font-size: 12px; color: #777; margin-top: 6px; }
-
-        input,
-        select {
-            padding: 8px;
-            margin: 5px 0;
-            border-radius: 6px;
-            border: 1px solid #bbb;
-            width: 100%;
-        }
-
-        button.submit {
-            margin-top: 8px;
-            background: #4a4a4a;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-
-
-        button.submit:hover {
-            background: #666;
-        }
-
-        /* Dashboard filter buttons */
-        .filter-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-        .filter-btn {
-            background: #ffffff;
-            color: #333;
-            border: 1px solid #ccc;
-            padding: 7px 12px;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: background 0.2s, color 0.2s, border-color 0.2s;
-        }
-        .filter-btn:hover { background: #f3f3f3; }
-        .filter-btn.active { background: #3a3a3a; color: #fff; border-color: #3a3a3a; }
-
-        .hidden {
-            display: none;
-        }
-
-        .summary {
-            font-size: 16px;
-            margin-top: 12px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sheet Data Viewer – Abu Minimal</title>
+  <style>
+    :root{
+      --bg:#0f0f10;         /* almost-black gray */
+      --panel:#17181a;      /* panel gray */
+      --muted:#1f2023;      /* muted elements */
+      --border:#2a2b2f;     /* borders */
+      --text:#e6e7eb;       /* main text */
+      --sub:#9aa0a6;        /* secondary text */
+      --accent:#9ca3af;     /* light gray accent */
+      --accent-2:#d1d5db;   /* lighter */
+      --focus:#e5e7eb;      /* focus ring */
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Noto Sans, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background:linear-gradient(180deg, var(--bg), #121315);
+      color:var(--text);
+    }
+    .wrap{max-width:1100px; margin:24px auto; padding:0 16px}
+    header{display:flex; gap:12px; align-items:center; justify-content:space-between; margin-bottom:16px}
+    .title{font-size:clamp(20px, 3.5vw, 28px); font-weight:700; letter-spacing:.2px}
+    .bar{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+    .input, select, button{
+      background:var(--muted); border:1px solid var(--border); color:var(--text);
+      padding:10px 12px; border-radius:12px; outline:none; font-size:14px;
+      transition:.2s ease; min-height:40px
+    }
+    .input::placeholder{color:var(--sub)}
+    .input:focus, select:focus{box-shadow:0 0 0 3px #ffffff10; border-color:var(--focus)}
+    button{
+      cursor:pointer; border:1px solid var(--border);
+    }
+    button:hover{background:#202226; border-color:#3a3c42}
+    .card{
+      background:linear-gradient(180deg, var(--panel), #121317);
+      border:1px solid var(--border); border-radius:20px; overflow:hidden;
+      box-shadow:0 10px 30px #00000055;
+    }
+    .toolbar{display:flex; flex-wrap:wrap; gap:10px; padding:14px; border-bottom:1px solid var(--border); align-items:center}
+    .pill{background:#1b1c20; border:1px solid var(--border); padding:6px 10px; border-radius:999px; font-size:12px; color:var(--accent-2)}
+    .table-wrap{width:100%; overflow:auto}
+    table{width:100%; border-collapse:separate; border-spacing:0}
+    thead th{
+      position:sticky; top:0; z-index:2; background:#141518; border-bottom:1px solid var(--border);
+      font-weight:600; text-align:left; padding:12px; font-size:13px; white-space:nowrap; cursor:pointer
+    }
+    tbody td{border-bottom:1px solid var(--border); padding:10px 12px; font-size:14px; vertical-align:top}
+    tbody tr:hover{background:#17181c}
+    .empty{padding:28px; text-align:center; color:var(--sub)}
+    .footer{display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border-top:1px solid var(--border); color:var(--sub); font-size:13px}
+    .badge{font-size:12px; padding:4px 8px; background:#1e2024; border:1px solid var(--border); border-radius:10px}
+    .hidden{display:none}
+    /* Responsive tweaks */
+    @media (max-width:700px){
+      thead th, tbody td{padding:10px}
+      .toolbar{gap:8px}
+      .bar{width:100%}
+      .title{margin-bottom:6px}
+      header{flex-direction:column; align-items:flex-start}
+    }
+  </style>
 </head>
-
 <body>
-    <header>📊 Kas Kedai Nongki</header>
+  <div class="wrap">
+    <header>
+      <div class="title">Google Sheet → Viewer & Filter (Abu Minimal)</div>
+      <div class="bar">
+        <button id="btnReload" title="Muat ulang data">↻ Reload</button>
+        <button id="btnDownload" title="Unduh CSV sumber">⬇ Unduh CSV</button>
+      </div>
+    </header>
 
-    <nav>
-        <button onclick="showSection('dashboard')">Dashboard</button>
-        <button onclick="showSection('transaksi')">Transaksi</button>
-        <button onclick="showSection('produk')">Produk</button>
-        <button onclick="showSection('stok')">Stok</button>
-        <button onclick="showSection('laporan')">Laporan</button>
-    </nav>
+    <div class="card" role="region" aria-label="Data Table">
+      <div class="toolbar">
+        <input id="search" class="input" placeholder="Cari teks di semua kolom…" />
+        <select id="columnFilter" title="Filter kolom" aria-label="Pilih kolom untuk filter cepat"></select>
+        <input id="valueFilter" class="input" placeholder="Nilai tepat (opsional)" />
+        <button id="btnApply">Terapkan</button>
+        <button id="btnClear">Bersihkan</button>
+        <span class="pill" id="stats">Memuat…</span>
+      </div>
 
-    <div class="container">
+      <div class="table-wrap" id="tableWrap">
+        <table id="grid">
+          <thead id="thead"></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        <div id="empty" class="empty hidden">Tidak ada data yang cocok.</div>
+      </div>
 
-        
-
-
-        <!-- DASHBOARD -->
-        <div id="dashboard" class="card">
-            <h2>Dashboard</h2>
-            <div id="dashboardContent">Loading...</div>
-        </div>
-
-        <!-- TRANSAKSI -->
-        <div id="transaksi" class="card hidden">
-            <h2>Transaksi</h2>
-            
-            <form onsubmit="addTransaksi(event)">
-                <div class="form-grid">
-                    <div class="field">
-                        <label>Tanggal</label>
-                        <input type="date" id="tglTransaksi" required>
-                    </div>
-                    <div class="field">
-                        <label>Keterangan</label>
-                        <input type="text" id="ketTransaksi" placeholder="Contoh: Beli es" required>
-                    </div>
-                    <div class="field">
-                        <label>Kategori</label>
-                        <select id="katTransaksi">
-                            <option>Pemasukan</option>
-                            <option>Pengeluaran</option>
-                        </select>
-                    </div>
-                    <div class="field">
-                        <label>Nominal Tunai</label>
-                        <input type="number" id="tunai" placeholder="0">
-                    </div>
-                    <div class="field">
-                        <label>Nominal Non Tunai</label>
-                        <input type="number" id="nonTunai" placeholder="0">
-                    </div>
-                </div>
-                <div class="form-actions">
-                    <button type="submit" class="submit">Tambah</button>
-                    <div class="section-note">Isi salah satu dari Tunai atau Non Tunai.</div>
-                </div>
-            </form>
-
-            <!-- 10 terakhir -->
-            <table id="tableTransaksi" class="clean responsive"></table>
-        </div>
-
-
-        <!-- PRODUK -->
-        <div id="produk" class="card hidden">
-            <h2>Produk</h2>
-            <form onsubmit="addProduk(event)">
-            <div class="form-grid">
-                <div class="field">
-                <label>ID Produk</label>
-                <input type="text" id="idProduk" placeholder="ID Produk" required>
-                </div>
-                <div class="field">
-                <label>Nama Produk</label>
-                <input type="text" id="namaProduk" placeholder="Nama Produk" required>
-                </div>
-                <div class="field">
-                <label>Harga</label>
-                <input type="number" id="hargaProduk" placeholder="Harga" required>
-                </div>
-            </div>
-            <button type="submit" class="submit">Tambah</button>
-            </form>
-            <table id="tableProduk" class="clean responsive"></table>
-        </div>
-        
-        <!-- STOK -->
-        <div id="stok" class="card hidden">
-            <h2>Stok</h2>
-            <form onsubmit="addStok(event)">
-            <div class="form-grid">
-                <div class="field">
-                <label>ID Produk</label>
-                <input type="text" id="stokID" placeholder="ID Produk" required>
-                </div>
-                <div class="field">
-                <label>Jumlah</label>
-                <input type="number" id="stokJumlah" placeholder="Jumlah" required>
-                </div>
-            </div>
-            <button type="submit" class="submit">Tambah</button>
-            </form>
-            <table id="tableStok" class="clean responsive"></table>
-        </div>
-        
-
-        <!-- LAPORAN -->
-        <div id="laporan" class="card hidden">
-            <h2>Laporan</h2>
-            <form onsubmit="loadLaporan(event)">
-                <label>Dari: <input type="date" id="startDate" required></label>
-                <label>Sampai: <input type="date" id="endDate" required></label>
-                <button type="submit" class="submit">Tampilkan</button>
-                <button type="button" class="submit" onclick="exportPDF()">Export PDF</button>
-                <button type="button" class="submit" onclick="exportExcel()">Export Excel</button>
-            </form>
-            <div id="laporanContent"></div>
-        </div>
-
+      <div class="footer">
+        <div>Urutkan: klik judul kolom • Shift+klik untuk multi-sort</div>
+        <div class="badge" id="sourceInfo">Sumber: Google Sheets</div>
+      </div>
     </div>
+  </div>
 
-    <div id="toast" class="toast"></div>
+  <script>
+    // === KONFIGURASI ===
+    const SHEET_ID = '1gd1JcYiuUsPXO1xbwKHJomnLxMdK7s7xfJ60l3p7WKw';
+    const GID = '0'; // ubah jika sheet-nya berbeda
+    // Endpoint CSV publik (Pastikan Spreadsheet dapat diakses Publik atau "Siapa saja yang punya link")
+    const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
 
-    <script>
-        // ==== KONFIG API ====
-        // INSTRUKSI DEPLOYMENT:
-        // 1. Upload code.gs ke Google Apps Script (script.google.com)
-        // 2. Deploy sebagai Web App dengan akses "Anyone"
-        // 3. Copy URL deployment dan ganti API_URL di bawah ini
-        // 4. Upload index.html sebagai HTML file di Apps Script
-        const API_URL = "https://script.google.com/macros/s/AKfycbysPnrSdLlYQXOPnUVw1dbsStqJ8mEjK6SwGQpA6WvkURSX4oc0SS1Jvq89VEsrpPg/exec"; // ganti dengan URL Web App kamu
+    // === STATE ===
+    let rawCSV = '';
+    let headers = [];
+    let rows = []; // array of arrays
+    let view = []; // filtered/sorted view
+    let sorts = []; // [{index, dir: 1|-1}]
 
-        // ==== HELPER ====
-        function showSection(id) {
-            document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
-            // nav active state
-            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-            const activeBtn = document.querySelector(`nav button[onclick="showSection('${id}')"]`);
-            if (activeBtn) activeBtn.classList.add('active');
-            if (id === 'dashboard') loadDashboard();
-            if (id === 'transaksi') loadTransaksi();
-            if (id === 'produk') loadProduk();
-            if (id === 'stok') loadStok();
+    // CSV Parser sederhana (mendukung tanda kutip)
+    function parseCSV(text){
+      const out = []; let row = []; let cur = '';
+      let i = 0; let quoted = false;
+      while(i < text.length){
+        const c = text[i];
+        if(quoted){
+          if(c === '"'){
+            if(text[i+1] === '"'){ cur += '"'; i++; }
+            else { quoted = false; }
+          } else { cur += c; }
+        } else {
+          if(c === '"') quoted = true;
+          else if(c === ','){ row.push(cur); cur = ''; }
+          else if(c === '\n'){ row.push(cur); out.push(row); row = []; cur = ''; }
+          else if(c === '\r'){ /* ignore */ }
+          else { cur += c; }
         }
+        i++;
+      }
+      // flush tail
+      if(cur.length || row.length){ row.push(cur); out.push(row); }
+      return out;
+    }
 
-        function showToast(msg, type = "success") {
-            const x = document.getElementById("toast");
-            x.innerText = msg;
-            x.className = `toast show ${type}`;
-            setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
+    async function fetchCSV(){
+      const res = await fetch(CSV_URL, { cache: 'no-store' });
+      if(!res.ok) throw new Error('Gagal mengambil CSV. Pastikan akses publik.');
+      rawCSV = await res.text();
+      const arr = parseCSV(rawCSV).filter(r => r.length && r.some(c => String(c).trim() !== ''));
+      headers = arr.shift() || [];
+      rows = arr;
+      view = [...rows];
+      sorts = [];
+      render();
+      buildFilters();
+      updateStats();
+    }
+
+    function buildFilters(){
+      const sel = document.getElementById('columnFilter');
+      sel.innerHTML = '';
+      const opt0 = document.createElement('option');
+      opt0.value = ''; opt0.textContent = '— Pilih Kolom —';
+      sel.appendChild(opt0);
+      headers.forEach((h, i) => {
+        const o = document.createElement('option');
+        o.value = i; o.textContent = h || `Kolom ${i+1}`;
+        sel.appendChild(o);
+      });
+    }
+
+    function render(){
+      const thead = document.getElementById('thead');
+      const tbody = document.getElementById('tbody');
+      const empty = document.getElementById('empty');
+      const grid = document.getElementById('grid');
+
+      // header
+      thead.innerHTML = '';
+      const trh = document.createElement('tr');
+      headers.forEach((h, idx) => {
+        const th = document.createElement('th');
+        const sortInfo = sorts.find(s => s.index === idx);
+        const arrow = sortInfo ? (sortInfo.dir === 1 ? '▲' : '▼') : '';
+        const order = sortInfo ? ` (${sorts.indexOf(sortInfo)+1})` : '';
+        th.textContent = (h || `Kolom ${idx+1}`) + (arrow ? ' ' + arrow + order : '');
+        th.title = 'Klik untuk sort';
+        th.addEventListener('click', (e) => onHeaderClick(idx, e.shiftKey));
+        trh.appendChild(th);
+      });
+      thead.appendChild(trh);
+
+      // body
+      tbody.innerHTML = '';
+      if(!view.length){ empty.classList.remove('hidden'); grid.classList.add('hidden'); return; }
+      empty.classList.add('hidden'); grid.classList.remove('hidden');
+
+      const frag = document.createDocumentFragment();
+      view.forEach(r => {
+        const tr = document.createElement('tr');
+        r.forEach((c, i) => {
+          const td = document.createElement('td');
+          td.textContent = c;
+          tr.appendChild(td);
+        });
+        frag.appendChild(tr);
+      });
+      tbody.appendChild(frag);
+    }
+
+    function updateStats(){
+      const stats = document.getElementById('stats');
+      stats.textContent = `${view.length.toLocaleString('id-ID')} baris • ${headers.length} kolom`;
+    }
+
+    function applySearchAndFilter(){
+      const q = document.getElementById('search').value.trim().toLowerCase();
+      const colIdx = document.getElementById('columnFilter').value;
+      const val = document.getElementById('valueFilter').value.trim();
+
+      view = rows.filter(r => {
+        let ok = true;
+        if(q){
+          ok = r.some(c => String(c).toLowerCase().includes(q));
         }
-
-        function formatRupiah(val) {
-            const n = Number(val) || 0;
-            return 'Rp ' + n.toLocaleString('id-ID');
+        if(ok && colIdx !== ''){
+          ok = String(r[Number(colIdx)] ?? '').trim() === val.trim();
         }
+        return ok;
+      });
 
-        // ==== DASHBOARD ====
-        function loadDashboard(range = 'today') {
-            const now = new Date();
-            const pad = (n) => String(n).padStart(2, '0');
-            const toDateStr = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      // Terapkan sort urutan saat ini
+      if(sorts.length){
+        view.sort((a,b)=>{
+          for(const s of sorts){
+            const av = a[s.index] ?? '';
+            const bv = b[s.index] ?? '';
+            const na = parseFloat(av.replace?.(/,/g,''));
+            const nb = parseFloat(bv.replace?.(/,/g,''));
+            const bothNum = !isNaN(na) && !isNaN(nb);
+            const cmp = bothNum ? (na - nb) : String(av).localeCompare(String(bv), 'id');
+            if(cmp !== 0) return s.dir * (cmp < 0 ? -1 : 1);
+          }
+          return 0;
+        });
+      }
 
-            let start = new Date(now);
-            let end = new Date(now);
-            if (range === 'all') start = new Date('2000-01-01T00:00:00');
-            const startStr = toDateStr(start);
-            const endStr = toDateStr(end);
+      render();
+      updateStats();
+    }
 
-            fetch(`${API_URL}?action=getDashboardRange&start=${startStr}&end=${endStr}`)
-                .then(res => res.json())
-                .then(res => {
-                    const k = res.kpi;
-                    const recent = res.recent || [];
-                    const low = res.lowStock || [];
+    function onHeaderClick(idx, multi){
+      if(!multi) sorts = [];
+      const found = sorts.find(s => s.index === idx);
+      if(!found) sorts.push({ index: idx, dir: 1 });
+      else if(found.dir === 1) found.dir = -1;
+      else sorts = sorts.filter(s => s.index !== idx);
+      applySearchAndFilter();
+    }
 
-                    const barTotal = Math.max(1, Math.abs(k.kas) + Math.abs(k.nonKas));
-                    const kasPct = Math.round(Math.abs(k.kas) * 100 / barTotal);
-                    const nonKasPct = 100 - kasPct;
+    // === EVENTS ===
+    document.getElementById('btnReload').addEventListener('click', fetchCSV);
+    document.getElementById('btnDownload').addEventListener('click', () => {
+      if(!rawCSV) return;
+      const blob = new Blob([rawCSV], {type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'sheet-data.csv'; a.click();
+      URL.revokeObjectURL(url);
+    });
+    document.getElementById('btnApply').addEventListener('click', applySearchAndFilter);
+    document.getElementById('btnClear').addEventListener('click', () => {
+      document.getElementById('search').value = '';
+      document.getElementById('columnFilter').value = '';
+      document.getElementById('valueFilter').value = '';
+      sorts = [];
+      view = [...rows];
+      render(); updateStats();
+    });
+    document.getElementById('search').addEventListener('input', () => {
+      // live search (debounced minimal)
+      clearTimeout(window.__t);
+      window.__t = setTimeout(applySearchAndFilter, 120);
+    });
 
-                    let recentHtml = recent.length ? recent.map(r => `<tr>
-                        <td data-label="Tanggal">${r[0]}</td>
-                        <td data-label="Keterangan">${r[1]}</td>
-                        <td data-label="Kategori">${r[2]}</td>
-                        <td class='right' data-label="Tunai">${formatRupiah(r[3])}</td>
-                        <td class='right' data-label="Non Tunai">${formatRupiah(r[4])}</td>
-                    </tr>`).join('') : `<tr><td colspan="5">Tidak ada transaksi</td></tr>`;
-                    let lowHtml = low.length ? low.map(r => `<tr>
-                        <td data-label="ID Produk">${r[0]}</td>
-                        <td class='right' data-label="Jumlah">${r[1]}</td>
-                    </tr>`).join('') : `<tr><td colspan="2">Semua stok aman</td></tr>`;
-
-                    document.getElementById("dashboardContent").innerHTML = `
-        <div class="filter-buttons">
-          <button class="filter-btn" data-range="today" onclick="setDashboardRange(this)">Hari ini</button>
-          <button class="filter-btn" data-range="all" onclick="setDashboardRange(this)">Keseluruhan</button>
-        </div>
-        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px;">
-          <div class="card"><b>Pemasukan</b><div>${formatRupiah(k.pemasukan)}</div></div>
-          <div class="card"><b>Pengeluaran</b><div>${formatRupiah(k.pengeluaran)}</div></div>
-          <div class="card"><b>Laba Bersih</b><div>${formatRupiah(k.labaBersih)}</div></div>
-          <div class="card"><b>Jumlah Transaksi</b><div>${k.jumlahTransaksi}</div></div>
-          <div class="card"><b>Rata-rata Transaksi</b><div>${formatRupiah(k.rataRataTransaksi)}</div></div>
-          <div class="card"><b>Kas vs Non-Tunai</b>
-            <div style="height:12px; background:#eee; border-radius:6px; overflow:hidden; margin-top:6px;">
-              <div style="height:100%; width:${kasPct}%; background:#2e7d32; float:left"></div>
-              <div style="height:100%; width:${nonKasPct}%; background:#1976d2; float:left"></div>
-            </div>
-            <div style="display:flex; justify-content:space-between; font-size:12px; margin-top:4px;">
-              <span>Kas: ${formatRupiah(k.kas)}</span>
-              <span>Non Tunai: ${formatRupiah(k.nonKas)}</span>
-            </div>
-          </div>
-        </div>
-        <div class="dashboard-grid" style="margin-top:12px;">
-          <div class="card"><b>Transaksi Terbaru</b>
-            <div class="table-wrap"><table class='clean responsive'><tr><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th>Tunai</th><th>Non Tunai</th></tr>${recentHtml}</table></div>
-          </div>
-          <div class="card"><b>Stok Menipis</b>
-            <div class="table-wrap"><table class='clean responsive'><tr><th>ID Produk</th><th>Jumlah</th></tr>${lowHtml}</table></div>
-          </div>
-        </div>`;
-                })
-                .catch(() => document.getElementById("dashboardContent").innerHTML = "Error loading dashboard data");
-        }
-
-        function setDashboardRange(btn) {
-            const range = btn.getAttribute('data-range');
-            loadDashboard(range);
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        }
-
-        // ==== TRANSAKSI ====
-        function loadTransaksi() {
-            fetch(`${API_URL}?action=getLast10Transaksi`)
-                .then(res => res.json())
-                .then(data => {
-                    let html = "<tr><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th class='right'>Tunai</th><th class='right'>Non Tunai</th></tr>";
-                    if (data && data.length > 0) {
-                        data.forEach(r => {
-                            html += `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class='right'>${formatRupiah(r[3])}</td><td class='right'>${formatRupiah(r[4])}</td></tr>`;
-                        });
-                    } else html += "<tr><td colspan='5'>Tidak ada data transaksi</td></tr>";
-                    document.getElementById("tableTransaksi").innerHTML = html;
-                })
-                .catch(() => document.getElementById("tableTransaksi").innerHTML = "<tr><td colspan='5'>Error loading data</td></tr>");
-        }
-
-        function addTransaksi(e) {
-            e.preventDefault();
-            const data = {
-                action: "addTransaksi",
-                tgl: document.getElementById("tglTransaksi").value,
-                ket: document.getElementById("ketTransaksi").value,
-                kat: document.getElementById("katTransaksi").value,
-                tunai: document.getElementById("tunai").value,
-                nonTunai: document.getElementById("nonTunai").value
-            };
-            fetch(API_URL, { method: "POST", body: JSON.stringify(data), headers: { "Content-Type": "application/json" } })
-                .then(res => res.json())
-                .then(r => {
-                    if (r.success) {
-                        showToast("✅ Transaksi berhasil ditambahkan!");
-                        loadTransaksi();
-                    } else showToast("❌ Gagal menambah transaksi", "error");
-                })
-                .catch(err => { showToast("❌ Gagal koneksi", "error"); console.error(err); });
-        }
-
-        // ==== PRODUK ====
-        function loadProduk() {
-            fetch(`${API_URL}?action=getProduk`)
-                .then(r => r.json())
-                .then(data => {
-                    let html = "<tr><th>ID</th><th>Nama</th><th>Harga</th></tr>";
-                    data.forEach(r => { html += `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`; });
-                    document.getElementById("tableProduk").innerHTML = html;
-                });
-        }
-
-        function addProduk(e) {
-            e.preventDefault();
-            const data = {
-                action: "addProduk",
-                id: document.getElementById("idProduk").value,
-                nama: document.getElementById("namaProduk").value,
-                harga: document.getElementById("hargaProduk").value
-            };
-            fetch(API_URL, { method: "POST", body: JSON.stringify(data), headers: { "Content-Type": "application/json" } })
-                .then(r => r.json())
-                .then(() => loadProduk());
-        }
-
-        // ==== STOK ====
-        function loadStok() {
-            fetch(`${API_URL}?action=getStok`)
-                .then(r => r.json())
-                .then(data => {
-                    let html = "<tr><th>ID Produk</th><th>Jumlah</th></tr>";
-                    data.forEach(r => { html += `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`; });
-                    document.getElementById("tableStok").innerHTML = html;
-                });
-        }
-
-        function addStok(e) {
-            e.preventDefault();
-            const data = { action: "addStok", id: document.getElementById("stokID").value, jumlah: document.getElementById("stokJumlah").value };
-            fetch(API_URL, { method: "POST", body: JSON.stringify(data), headers: { "Content-Type": "application/json" } })
-                .then(r => r.json())
-                .then(() => loadStok());
-        }
-
-        // ==== LAPORAN ====
-        function loadLaporan(e) {
-            e.preventDefault();
-            const start = document.getElementById("startDate").value;
-            const end = document.getElementById("endDate").value;
-            fetch(`${API_URL}?action=getLaporan&start=${start}&end=${end}`)
-                .then(r => r.json())
-                .then(res => {
-                    let html = "<table class='clean responsive'><tr><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th>Tunai</th><th>Non Tunai</th></tr>";
-                    res.data.forEach(r => {
-                        html += `<tr>
-                            <td data-label="Tanggal">${r[0]}</td>
-                            <td data-label="Keterangan">${r[1]}</td>
-                            <td data-label="Kategori">${r[2]}</td>
-                            <td class='right' data-label="Tunai">${formatRupiah(r[3])}</td>
-                            <td class='right' data-label="Non Tunai">${formatRupiah(r[4])}</td>
-                        </tr>`;
-                    });
-                    html += "</table>";
-                    html += `<div>Total Tunai: ${formatRupiah(res.totalTunai)}</div>`;
-                    html += `<div>Total Non Tunai: ${formatRupiah(res.totalNonTunai)}</div>`;
-                    html += `<div><b>Total: ${formatRupiah(res.total)}</b></div>`;
-                    document.getElementById("laporanContent").innerHTML = html;
-                });
-        }
-
-        function exportPDF() {
-            const start = document.getElementById("startDate").value;
-            const end = document.getElementById("endDate").value;
-            fetch(`${API_URL}?action=exportLaporanPDFInline&start=${start}&end=${end}`)
-                .then(r => r.json())
-                .then(res => {
-                    const link = document.createElement('a');
-                    link.href = `data:${res.mime};base64,${res.base64}`;
-                    link.download = res.filename;
-                    link.click();
-                });
-        }
-
-        function exportExcel() {
-            const start = document.getElementById("startDate").value;
-            const end = document.getElementById("endDate").value;
-            fetch(`${API_URL}?action=exportLaporanExcel&start=${start}&end=${end}`)
-                .then(r => r.json())
-                .then(res => window.open(res.url, "_blank"));
-        }
-
-        // ==== INIT ====
-        loadDashboard();
-        // set nav active to Dashboard on load
-        const firstNavBtn = document.querySelector("nav button[onclick=\"showSection('dashboard')\"]");
-        if (firstNavBtn) firstNavBtn.classList.add('active');
-        setTimeout(() => { document.querySelector('.filter-btn[data-range="today"]')?.classList.add('active'); }, 0);
-    </script>
+    // init
+    fetchCSV().catch(err => {
+      document.getElementById('thead').innerHTML = '';
+      document.getElementById('tbody').innerHTML = '';
+      document.getElementById('empty').classList.remove('hidden');
+      document.getElementById('empty').textContent = 'Tidak bisa memuat data: ' + err.message;
+      document.getElementById('stats').textContent = 'Gagal memuat';
+      console.error(err);
+    });
+  </script>
 </body>
-
 </html>
