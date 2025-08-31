@@ -682,6 +682,7 @@
     .toast.error {
       background: #dc3545;
     }
+
   </style>
 
 </head>
@@ -773,18 +774,18 @@
           style="padding:5px 10px; background:#D6A99D; color:#fff; border:none; border-radius:5px; cursor:pointer;">Simpan
           Transaksi</button>
       </form>
-      <table id="tableTx" style="width:100%; border-collapse:collapse; background:#D6DAC8;">
-        <thead>
-          <tr style="background:#9CAFAA; color:#fff;">
-            <th style="padding:8px; border:1px solid #ccc;">Tanggal</th>
-            <th style="padding:8px; border:1px solid #ccc;">Keterangan</th>
-            <th style="padding:8px; border:1px solid #ccc;">Jenis</th>
-            <th style="padding:8px; border:1px solid #ccc;">Metode</th>
-            <th style="padding:8px; border:1px solid #ccc;">Nominal</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+	  <table id="tableTransaksi" style="width:100%; border-collapse:collapse; background:#D6DAC8;">
+		<thead>
+		  <tr style="background:#9CAFAA; color:#fff;">
+			<th style="padding:8px; border:1px solid #ccc;">Tanggal</th>
+			<th style="padding:8px; border:1px solid #ccc;">Keterangan</th>
+			<th style="padding:8px; border:1px solid #ccc;">Jenis</th>
+			<th style="padding:8px; border:1px solid #ccc;">Metode</th>
+			<th style="padding:8px; border:1px solid #ccc;">Nominal</th>
+		  </tr>
+		</thead>
+		<tbody></tbody>
+	  </table>
     </section>
 
     <!-- PRODUK -->
@@ -1096,123 +1097,131 @@
     document.getElementById('btnFilterDashboard').onclick = loadDashboard;
 
     // === TABEL TRANSAKSI ===
-    function renderTransaksi(rows) {
-const tbody = document.querySelector('#tableTransaksi tbody');
-  if (!tbody) return;
+	function renderTransaksi(rows) {
+	  const tbody = document.querySelector('#tableTransaksi tbody');
+	  if (!tbody) return;
 
-  if (typeof isMobile !== 'undefined' && isMobile) {
-    // MOBILE: Card style
-    tbody.innerHTML = rows.map(r => {
-      const { day, month, year } = formatTanggalSplit(r.tanggal);
-      return `
-        <tr data-row="${r.sheetRow}">
-          <td class="card-date">
-            <div class="day">${day}</div>
-            <div class="month">${month}</div>
-            <div class="year">${year}</div>
-          </td>
-          <td class="card-detail">
-            <div>${r.keterangan || '-'}</div>
-            <div>${r.jenis || '-'}</div>
-            <div>${r.metode || '-'}</div>
-            <div class="nominal">${formatNominal(r.nominal)}</div>
-          </td>
-        </tr>
-      `;
-    }).join('');
-  } else {
-    // DESKTOP: Table style
-    tbody.innerHTML = rows.map(r => {
-      const tgl = r.tanggal ? new Date(r.tanggal).toLocaleDateString("id-ID") : "-";
-      return `
-        <tr data-row="${r.sheetRow}">
-          <td data-field="tanggal">${tgl}</td>
-          <td data-field="keterangan">${r.keterangan || '-'}</td>
-          <td data-field="jenis">${r.jenis || '-'}</td>
-          <td data-field="metode">${r.metode || '-'}</td>
-          <td data-field="nominal">${formatNominal(r.nominal)}</td>
-        </tr>
-      `;
-    }).join('');
-  }
+	  if (isMobile) {
+		// === MOBILE: Card style ===
+		tbody.innerHTML = rows.map(r => {
+		  const { day, month, year } = formatTanggalSplit(r.tanggal);
+		  return `
+			<tr data-row="${r.sheetRow}">
+			  <td class="card-date">
+				<div class="day">${day}</div>
+				<div class="month">${month}</div>
+				<div class="year">${year}</div>
+			  </td>
+			  <td class="card-detail">
+				<div>${r.keterangan || '-'}</div>
+				<div>${r.jenis || '-'}</div>
+				<div>${r.metode || '-'}</div>
+				<div class="nominal">${formatNominal(r.nominal)}</div>
+			  </td>
+			</tr>
+		  `;
+		}).join('');
+	  } else {
+		// === DESKTOP: Table style ===
+		tbody.innerHTML = rows.map(r => {
+		  const tgl = r.tanggal ? new Date(r.tanggal).toLocaleDateString("id-ID") : "-";
+		  return `
+			<tr data-row="${r.sheetRow}">
+			  <td data-field="tanggal">${tgl}</td>
+			  <td data-field="keterangan">${r.keterangan || '-'}</td>
+			  <td data-field="jenis">${r.jenis || '-'}</td>
+			  <td data-field="metode">${r.metode || '-'}</td>
+			  <td data-field="nominal">${formatNominal(r.nominal)}</td>
+			</tr>
+		  `;
+		}).join('');
+	  }
 
-  // inline edit (desktop)
-  document.querySelectorAll('#tableTransaksi td').forEach(cell => {
-    if (typeof isMobile !== 'undefined' && isMobile) return;
-    cell.addEventListener('click', () => {
-      if (cell.querySelector('input,select')) return;
+	  // === Inline edit hanya untuk desktop ===
+	  if (!isMobile) {
+		document.querySelectorAll('#tableTransaksi td').forEach(cell => {
+		  cell.addEventListener('click', () => {
+			if (cell.querySelector('input,select')) return;
+			const tr = cell.closest('tr');
+			const sheetRow = tr ? tr.getAttribute('data-row') : null;
+			const field = cell.getAttribute('data-field');
+			if (!field) return;
 
-      const tr = cell.closest('tr');
-      const sheetRow = tr ? tr.getAttribute('data-row') : null;
-      const field = cell.getAttribute('data-field');
-      if (!field) return;
+			const oldValue = cell.innerText.trim();
+			let inputEl;
 
-      const oldValue = cell.innerText.trim();
-      let inputEl;
+			if (field === "tanggal") {
+			  inputEl = document.createElement("input");
+			  inputEl.type = "date";
+			  inputEl.value = oldValue ? new Date(oldValue).toISOString().split("T")[0] : "";
+			} else if (field === "jenis") {
+			  inputEl = document.createElement("select");
+			  ["Pemasukan", "Pengeluaran"].forEach(opt => {
+				const o = document.createElement("option");
+				o.value = opt; o.text = opt;
+				if (opt === oldValue) o.selected = true;
+				inputEl.appendChild(o);
+			  });
+			} else if (field === "metode") {
+			  inputEl = document.createElement("select");
+			  ["Tunai", "Non Tunai"].forEach(opt => {
+				const o = document.createElement("option");
+				o.value = opt; o.text = opt;
+				if (opt === oldValue) o.selected = true;
+				inputEl.appendChild(o);
+			  });
+			} else if (field === "nominal") {
+			  inputEl = document.createElement("input");
+			  inputEl.type = "number";
+			  inputEl.value = oldValue.replace(/[^\\d]/g, "");
+			} else {
+			  inputEl = document.createElement("input");
+			  inputEl.type = "text";
+			  inputEl.value = oldValue;
+			}
 
-      if (field === "tanggal") {
-        inputEl = document.createElement("input");
-        inputEl.type = "date";
-        inputEl.value = oldValue ? new Date(oldValue).toISOString().split("T")[0] : "";
-      } else if (field === "jenis") {
-        inputEl = document.createElement("select");
-        ["Pemasukan", "Pengeluaran"].forEach(opt => {
-          const o = document.createElement("option");
-          o.value = opt; o.text = opt;
-          if (opt === oldValue) o.selected = true;
-          inputEl.appendChild(o);
-        });
-      } else if (field === "metode") {
-        inputEl = document.createElement("select");
-        ["Tunai", "Non Tunai"].forEach(opt => {
-          const o = document.createElement("option");
-          o.value = opt; o.text = opt;
-          if (opt === oldValue) o.selected = true;
-          inputEl.appendChild(o);
-        });
-      } else if (field === "nominal") {
-        inputEl = document.createElement("input");
-        inputEl.type = "number";
-        inputEl.value = oldValue.replace(/[^\d]/g, "");
-      } else {
-        inputEl = document.createElement("input");
-        inputEl.type = "text";
-        inputEl.value = oldValue;
-      }
+			inputEl.style.width = "100%";
+			inputEl.style.height = "100%";
+			inputEl.style.boxSizing = "border-box";
+			inputEl.style.border = "none";
+			inputEl.style.outline = "none";
+			inputEl.style.background = "transparent";
+			inputEl.style.font = "inherit";
+			inputEl.style.color = "inherit";
 
-      inputEl.style.width = "100%";
-      inputEl.style.height = "100%";
-      inputEl.style.boxSizing = "border-box";
-      inputEl.style.border = "none";
-      inputEl.style.outline = "none";
-      inputEl.style.background = "transparent";
-      inputEl.style.font = "inherit";
-      inputEl.style.color = "inherit";
+			cell.innerHTML = "";
+			cell.appendChild(inputEl);
+			inputEl.focus();
 
-      cell.innerHTML = "";
-      cell.appendChild(inputEl);
-      inputEl.focus();
+			inputEl.addEventListener("click", ev => ev.stopPropagation());
+			const commitChange = async () => { await saveCell(sheetRow, field, inputEl.value); };
 
-      inputEl.addEventListener("click", ev => ev.stopPropagation());
-      const commitChange = async () => { await saveCell(sheetRow, field, inputEl.value); };
-
-      if (field === "jenis" || field === "metode") {
-        inputEl.addEventListener("change", commitChange);
-        inputEl.addEventListener("blur", commitChange);
-      } else {
-        inputEl.addEventListener("blur", commitChange);
-      }
-    });
-  });
-}
+			if (field === "jenis" || field === "metode") {
+			  inputEl.addEventListener("change", commitChange);
+			  inputEl.addEventListener("blur", commitChange);
+			} else {
+			  inputEl.addEventListener("blur", commitChange);
+			}
+		  });
+		});
+	  }
+	}
 
 
-    async function loadTxTable() {
-      const tx = await getValues('Transaksi!A:E');
-      const rows = tx.slice(1).slice(-10).reverse();
-      document.querySelector('#tableTx tbody').innerHTML =
-        rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td></tr>`).join('');
-    }
+
+	 async function loadTxTable() {
+	  const tx = await getValues('Transaksi!A:E');
+	  const rows = tx.slice(1).slice(-10).reverse().map((r, idx) => ({
+		sheetRow: tx.length - idx, // posisi row di sheet
+		tanggal: r[0],
+		keterangan: r[1],
+		jenis: r[2],
+		metode: r[3],
+		nominal: r[4]
+	  }));
+	  renderTransaksi(rows);
+	}
+
 
     // === TABEL PRODUK ===
     async function loadProduk() {
@@ -1672,29 +1681,47 @@ const start = (page - 1) * pageSize;
       return "Rp. " + num.toLocaleString("id-ID");
     }
 
-    function renderTransaksi(rows) {
-      const tbody = document.querySelector('#tableTransaksi tbody');
-      if (!tbody) return;
+	function renderTransaksi(rows) {
+	  const tbody = document.querySelector('#tableTransaksi tbody');
+	  if (!tbody) return;
 
-      tbody.innerHTML = rows.map(r => {
-        const { day, month, year } = formatTanggalSplit(r.tanggal);
-        return `
-      <tr data-row="${r.sheetRow}">
-        <td class="card-date">
-          <div class="day">${day}</div>
-          <div class="month">${month}</div>
-          <div class="year">${year}</div>
-        </td>
-        <td class="card-detail">
-          <div>${r.keterangan || '-'}</div>
-          <div>${r.jenis || '-'}</div>
-          <div>${r.metode || '-'}</div>
-          <div class="nominal">${formatNominal(r.nominal)}</div>
-        </td>
-      </tr>
-    `;
-      }).join('');
-    }
+	  if (isMobile) {
+		// === MOBILE: Card style ===
+		tbody.innerHTML = rows.map(r => {
+		  const { day, month, year } = formatTanggalSplit(r.tanggal);
+		  return `
+			<tr data-row="${r.sheetRow}">
+			  <td class="card-date">
+				<div class="day">${day}</div>
+				<div class="month">${month}</div>
+				<div class="year">${year}</div>
+			  </td>
+			  <td class="card-detail">
+				<div>${r.keterangan || '-'}</div>
+				<div>${r.jenis || '-'}</div>
+				<div>${r.metode || '-'}</div>
+				<div class="nominal">${formatNominal(r.nominal)}</div>
+			  </td>
+			</tr>
+		  `;
+		}).join('');
+	  } else {
+		// === DESKTOP: Table style ===
+		tbody.innerHTML = rows.map(r => {
+		  const tgl = r.tanggal ? new Date(r.tanggal).toLocaleDateString("id-ID") : "-";
+		  return `
+			<tr data-row="${r.sheetRow}">
+			  <td data-field="tanggal">${tgl}</td>
+			  <td data-field="keterangan">${r.keterangan || '-'}</td>
+			  <td data-field="jenis">${r.jenis || '-'}</td>
+			  <td data-field="metode">${r.metode || '-'}</td>
+			  <td data-field="nominal">${formatNominal(r.nominal)}</td>
+			</tr>
+		  `;
+		}).join('');
+	  }
+	}
+
 
     function renderLaporan(rows) {
 	  const tbody = document.querySelector('#tableLaporan tbody');
