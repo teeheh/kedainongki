@@ -1,1835 +1,693 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Kas Kedai Nongki</title>
-  <style>
-    /* ================== THEME VARIABLES ================== */
-    :root {
-      --color-bg: #D6DAC8;
-      --color-header: #D6A99D;
-      --color-card: #FBF3D5;
-      --color-card-hover: #9CAFAA;
-      --color-text: #051520;
-      --color-highlight: #D6A99D;
-    }
-
-    /* Palet 1 */
-    .theme-palet1 {
-      --color-bg: #FFEDFA;
-      --color-header: #E195AB;
-      --color-card: #DE3163;
-      --color-card-hover: #CCDF92;
-      --color-text: #09122C;
-      --color-highlight: #CCDF92;
-    }
-
-    /* Palet 2 */
-    .theme-palet2 {
-      --color-bg: #09122C;
-      --color-header: #872341;
-      --color-card: #BE3144;
-      --color-card-hover: #E17564;
-      --color-text: #FFEDFA;
-      --color-highlight: #E17564;
-    }
-
-    /* ================== BASE ================== */
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: var(--color-bg);
-      color: var(--color-text);
-      line-height: 1.5;
-      transition: background 0.3s, color 0.3s;
-    }
-
-    /* Header */
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px;
-      flex-wrap: wrap;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 18px;
-    }
-
-    /* Navigation */
-    nav {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    nav button {
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: none;
-      background: #D6A99D;
-      color: white;
-      font-size: 14px;
-      flex: 1;
-    }
-
-    .tab-btn {
-      flex-shrink: 0;
-      padding: 8px 16px;
-      border: none;
-      border-radius: 8px;
-      background: var(--color-card);
-      color: var(--color-text);
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.2s ease;
-    }
-
-    .tab-btn.active {
-      background: var(--color-card-hover);
-      color: #fff;
-    }
-
-    .tab-btn:hover {
-      background: var(--color-card-hover);
-      color: #fff;
-    }
-
-    /* Sections */
-    .section {
-      display: none;
-      padding: 20px;
-    }
-
-    .section.active {
-      display: block;
-    }
-
-    /* Dashboard Cards Grid */
-    .dashboard-cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px;
-      margin-top: 16px;
-    }
-
-    /* Base Card Style */
-    .card {
-      background-color: var(--color-card);
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-      margin: 10px 0;
-      text-align: center;
-      transition: transform 0.2s, background 0.25s, color 0.25s;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    /* Card Titles */
-    .card h3 {
-      margin: 0;
-      font-size: 1.2rem;
-      color: var(--color-text);
-      opacity: 0.7;
-    }
-
-    /* Card Content */
-    .card p,
-    .card .kas-item {
-      margin: 5px 0;
-      font-size: 1rem;
-      color: var(--color-text);
-    }
-
-    /* Total style */
-    .card .total,
-    .kas-item.total {
-      font-weight: bold;
-      font-size: 1.1rem;
-      color: var(--color-highlight);
-    }
-
-    /* Kas Card Specific */
-    /* ================== KAS CARD SESUAI CARD BIASA ================== */
-    .kas-card {
-      background-color: var(--color-card);
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
-      margin: 10px 0;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      transition: transform 0.2s, background 0.25s, color 0.25s;
-    }
-
-    /* Hover untuk semua card */
-    .card:hover {
-      transform: translateY(-3px);
-      /* bisa ganti sesuai tema */
-      color: #fff;
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
-    }
-
-
-    /* Judul card */
-    .kas-card h3 {
-      color: var(--color-text);
-      font-size: 1.2rem;
-      margin-bottom: 12px;
-      opacity: 0.7;
-    }
-
-    /* Kas item (Tunai, Non Tunai, Total) */
-    .kas-item {
-      font-size: 1rem;
-      color: var(--color-text);
-      margin: 5px 0;
-    }
-
-    .kas-item.total {
-      font-weight: bold;
-      font-size: 1.1rem;
-      color: var(--color-highlight);
-    }
-
-
-    /* Forms */
-    form {
-      margin-bottom: 16px;
-      display: grid;
-      gap: 10px;
-      max-width: 500px;
-      width: 100%;
-    }
-
-    input,
-    select {
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid var(--color-card-hover);
-      background: var(--color-card);
-      color: var(--color-text);
-      font-size: 14px;
-      transition: background 0.3s, color 0.3s;
-    }
-
-    button {
-      padding: 10px 14px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      background: var(--color-card-hover);
-      color: #fff;
-      font-weight: 600;
-      transition: all 0.2s ease;
-    }
-
-    button:hover {
-      background: var(--color-header);
-      color: var(--color-text);
-    }
-
-    /* Tables */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-      background: var(--color-bg);
-      border-radius: 8px;
-      overflow: hidden;
-      font-size: 14px;
-      transition: background 0.3s, color 0.3s;
-    }
-
-    th,
-    td {
-      padding: 10px;
-      border-bottom: 1px solid var(--color-card-hover);
-      text-align: left;
-      color: var(--color-text);
-    }
-
-    th {
-      background: var(--color-card-hover);
-      color: #fff;
-      font-weight: 600;
-    }
-
-    .table-wrapper {
-      overflow-x: auto;
-    }
-
-    .table-container {
-      overflow-x: auto;
-    }
-
-    #tableReport th,
-    #tableReport td {
-      padding: 10px;
-      font-size: 14px;
-      text-align: center;
-    }
-
-    /* Responsive Font Size */
-    @media (max-width: 768px) {
-      header h1 {
-        font-size: 16px;
-      }
-
-      .card h3,
-      .kas-card h3 {
-        font-size: 1rem;
-      }
-
-      .card p,
-      .kas-item {
-        font-size: 0.95rem;
-      }
-
-      .card .total,
-      .kas-item.total {
-        font-size: 1rem;
-      }
-    }
-
-    @media (max-width: 480px) {
-
-      .card,
-      .kas-card {
-        padding: 15px;
-      }
-
-      .card h3,
-      .kas-card h3 {
-        font-size: 0.95rem;
-      }
-
-      .card p,
-      .kas-item {
-        font-size: 0.9rem;
-      }
-
-      .card .total,
-      .kas-item.total {
-        font-size: 0.95rem;
-      }
-    }
-
-    /* === MODAL RESPONSIVE === */
-    #editModal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.4);
-      align-items: center;
-      justify-content: center;
-      z-index: 200;
-      padding: 10px;
-      box-sizing: border-box;
-    }
-
-    #editModal .modal-content {
-      background: #fff;
-      padding: 16px;
-      border-radius: 10px;
-      width: 95%;
-      max-width: 360px;
-      /* lebih kecil biar nyaman di layar hp */
-      max-height: 85vh;
-      overflow-y: auto;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-    }
-
-    #editForm label {
-      font-size: 14px;
-      color: #333;
-    }
-
-    #editForm input,
-    #editForm select {
-      width: 100%;
-      padding: 8px;
-      /* lebih ramping */
-      margin-top: 4px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
-      /* lebih kecil dari sebelumnya */
-      box-sizing: border-box;
-    }
-
-    #editForm .form-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    #editForm button {
-      flex: 1;
-      padding: 10px;
-      /* lebih kecil */
-      border-radius: 6px;
-      font-size: 14px;
-      border: none;
-      cursor: pointer;
-    }
-
-    #cancelEdit {
-      background: #eee;
-      color: #333;
-    }
-
-    #editForm button[type="submit"] {
-      background: #D6A99D;
-      color: #fff;
-    }
-
-    #editForm .form-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    /* Animasi */
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* === RESPONSIVE === */
-    @media (max-width: 480px) {
-      #editModal .modal-content {
-        width: 95%;
-        max-width: 340px;
-        /* lebih ramping */
-        padding: 14px;
-      }
-
-      #editForm input,
-      #editForm select {
-        font-size: 13px;
-        padding: 7px;
-      }
-
-      #editForm button {
-        font-size: 13px;
-        padding: 9px;
-      }
-    }
-
-    /* Desktop tetap tabel */
-    @media (min-width: 481px) {
-      #tableReport {
-        width: 100%;
-        border-collapse: collapse;
-      }
-
-      #tableReport th,
-      #tableReport td {
-        border: 1px solid #ddd;
-        padding: 8px;
-        text-align: left;
-      }
-    }
-
-    @media (max-width: 480px) {
-
-      #tableReport,
-      #tableReport thead,
-      #tableReport tbody,
-      #tableReport th,
-      #tableReport tr,
-      #tableReport td {
-        display: block;
-        border: none;
-      }
-
-      #tableReport thead {
-        display: none;
-      }
-
-      #tableReport tbody {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-      }
-
-      #tableReport tr {
-        display: flex;
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      }
-
-      /* Bagian tanggal kiri */
-      .card-date {
-        background: #d6a99d;
-        color: #fff;
-        font-weight: bold;
-        text-align: center;
-        padding: 12px 8px;
-        min-width: 90px;
-        display: flex;
-        align-items: center;
-        /* vertical center */
-        justify-content: center;
-        /* horizontal center */
-        font-size: 13px;
-      }
-
-      /* Bagian detail kanan */
-      .card-detail {
-        background: #fffbea;
-        flex: 1;
-        padding: 10px 14px;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        font-size: 14px;
-        color: #333;
-        text-align: left;
-        /* semua rata kiri */
-      }
-
-      .card-detail .nominal {
-        font-weight: bold;
-        color: #222;
-      }
-    }
-
-
-    /* === Paging === */
-    #reportPaging {
-      margin-top: 16px;
-      display: flex;
-      justify-content: center;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    #reportPaging button {
-      padding: 8px 12px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      background: #eee;
-      font-size: 14px;
-    }
-
-    #reportPaging button.active {
-      background: #D6A99D;
-      color: #fff;
-      font-weight: bold;
-    }
-
-
-    @media (max-width: 480px) {
-      .card-date {
-        background: #d6a99d;
-        color: #fff;
-        font-weight: bold;
-        text-align: center;
-        padding: 12px 8px;
-        min-width: 90px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        line-height: 1.2;
-      }
-
-      .card-date .day {
-        font-size: 20px;
-        /* lebih besar */
-        font-weight: 700;
-      }
-
-      .card-date .month {
-        font-size: 13px;
-        /* default */
-        font-weight: 500;
-      }
-
-      .card-date .year {
-        font-size: 15px;
-        /* medium */
-        font-weight: 600;
-      }
-    }
-
-    @media (max-width: 480px) {
-
-      #tableTransaksi,
-      #tableTransaksi thead,
-      #tableTransaksi tbody,
-      #tableTransaksi th,
-      #tableTransaksi tr,
-      #tableTransaksi td {
-        display: block;
-        border: none;
-      }
-
-      #tableTransaksi thead {
-        display: none;
-      }
-
-      #tableTransaksi tbody {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-      }
-
-      #tableTransaksi tr {
-        display: flex;
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      }
-
-      #tableTransaksi .card-date {
-        background: #d6a99d;
-        color: #fff;
-        text-align: center;
-        padding: 12px 8px;
-        min-width: 90px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        line-height: 1.2;
-      }
-
-      #tableTransaksi .card-date .day {
-        font-size: 20px;
-        font-weight: 700;
-      }
-
-      #tableTransaksi .card-date .month {
-        font-size: 13px;
-        font-weight: 500;
-      }
-
-      #tableTransaksi .card-date .year {
-        font-size: 15px;
-        font-weight: 600;
-      }
-
-      #tableTransaksi .card-detail {
-        background: #fffbea;
-        flex: 1;
-        padding: 10px 14px;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        font-size: 14px;
-        color: #333;
-        text-align: left;
-      }
-
-      #tableTransaksi .card-detail .nominal {
-        font-weight: bold;
-        color: #222;
-      }
-    }
-  </style>
-
-  <style>
-    .toast {
-      visibility: hidden;
-      min-width: 200px;
-      background: #333;
-      color: #fff;
-      text-align: center;
-      border-radius: 6px;
-      padding: 12px;
-      position: fixed;
-      z-index: 9999;
-      right: 20px;
-      top: 20px;
-      font-size: 14px;
-      opacity: 0;
-      transition: opacity 0.5s, top 0.5s;
-    }
-
-    .toast.show {
-      visibility: visible;
-      opacity: 1;
-      top: 40px;
-    }
-
-    .toast.success {
-      background: #28a745;
-    }
-
-    .toast.error {
-      background: #dc3545;
-    }
-
-  </style>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="img-src 'self' data: https://*.googleusercontent.com https://*.gstatic.com https://ui-avatars.com https://lh3.googleusercontent.com">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kedai Nongki - Sistem Manajemen Kas</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    <link rel="stylesheet" href="styles.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    <!-- Chart.js untuk visualisasi grafik -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 </head>
-
 <body>
-  <header>
-    <h1>Kas Kedai Nongki</h1>
-    <div>
-      <!-- <label for="themeSelect">Pilih Tema:</label> -->
-      <select id="themeSelect" style="padding:5px; border-radius:5px;">
-        <option value="default">Default</option>
-        <option value="palet1">Palet 1</option>
-        <option value="palet2">Palet 2</option>
-      </select>
-      <button id="signinBtn" style="display:none;">Sign In</button>
-      <button id="signoutBtn" style="display:none;">Sign Out</button>
+    <!-- Modal Login -->
+    <div id="login-modal">
+    <div class="login-wrap">
+        <header class="login-header">
+        <div class="login-brand">
+            <svg class="login-logo" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+            <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
+            </svg>
+            <h1 class="login-title">Kedai Nongki</h1>
+        </div>
+        </header>
+
+        <main class="login-main">
+        <div class="login-panel">
+            <div class="login-text">
+            <h2 class="login-heading">Welcome Back</h2>
+            <p class="login-subtitle">Sign in to manage your cash flow efficiently.</p>
+            </div>
+
+            <div class="login-btn-wrap">
+            <button id="google-login-button" class="google-btn">
+                <svg class="google-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" fill="#4285F4"/>
+                <path d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z" fill="#EA4335"/>
+                <path d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0124 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z" fill="#34A853"/>
+                <path d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 01-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" fill="#FBBC05"/>
+                </svg>
+                <span>Sign in with Google</span>
+            </button>
+            </div>
+        </div>
+        </main>
     </div>
-  </header>
-
-  <nav>
-    <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
-    <button class="tab-btn" data-tab="transaksi">Transaksi</button>
-    <button class="tab-btn" data-tab="produk">Produk</button>
-    <button class="tab-btn" data-tab="stok">Stok</button>
-    <button class="tab-btn" data-tab="laporan">Laporan</button>
-  </nav>
-
-  <main>
-
-    <!-- DASHBOARD -->
-    <section id="dashboard" class="section active">
-      <h2 style="color:#9CAFAA;">Dashboard</h2>
-      <div style="margin-bottom:10px">
-        <input type="date" id="fromDateDashboard" style="padding:5px; border-radius:5px; border:1px solid #ccc;">
-        <input type="date" id="toDateDashboard" style="padding:5px; border-radius:5px; border:1px solid #ccc;">
-        <button id="btnFilterDashboard"
-          style="padding:5px 10px; background:#D6A99D; color:#fff; border:none; border-radius:5px; cursor:pointer;">Terapkan
-          Filter</button>
-      </div>
-      <div class="dashboard-cards" style="display:flex; flex-wrap:wrap; gap:10px;">
-        <div class="card"
-          style="flex:1; min-width:120px; text-align:center; padding:15px; background:#FBF3D5; border-radius:8px;">
-          <h3 style="color:#9CAFAA;">Pemasukan</h3>
-          <p id="cardPemasukan" style="font-weight:bold;">Rp 0</p>
-        </div>
-        <div class="card"
-          style="flex:1; min-width:120px; text-align:center; padding:15px; background:#FBF3D5; border-radius:8px;">
-          <h3 style="color:#9CAFAA;">Pengeluaran</h3>
-          <p id="cardPengeluaran" style="font-weight:bold;">Rp 0</p>
-        </div>
-        <div class="card"
-          style="flex:1; min-width:120px; text-align:center; padding:15px; background:#FBF3D5; border-radius:8px;">
-          <h3 style="color:#9CAFAA;">Laba Bersih</h3>
-          <p id="cardLaba" style="font-weight:bold;">Rp 0</p>
-        </div>
-        <div class="card"
-          style="flex:1; min-width:120px; text-align:center; padding:15px; background:#FBF3D5; border-radius:8px;">
-          <h3 style="color:#9CAFAA;">Jumlah Transaksi</h3>
-          <p id="cardTx" style="font-weight:bold;">0</p>
-        </div>
-        <div class="card kas-card">
-          <h3>Kas</h3>
-          <div class="kas-item">Tunai: <span id="cardTunai">Rp 0</span></div>
-          <div class="kas-item">Non Tunai: <span id="cardNonTunai">Rp 0</span></div>
-          <div class="kas-item total">Total: <span id="cardTotal">Rp 0</span></div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- TRANSAKSI -->
-    <section id="transaksi" class="section">
-      <h2 style="color:#9CAFAA;">Transaksi</h2>
-      <form id="formTransaksi" style="margin-bottom:10px; display:flex; flex-wrap:wrap; gap:5px;">
-        <input type="date" name="tanggal" required style="padding:5px; border-radius:5px; border:1px solid #ccc;">
-        <select name="jenis" style="padding:5px; border-radius:5px; border:1px solid #ccc;">
-          <option value="Pemasukan">Pemasukan</option>
-          <option value="Pengeluaran">Pengeluaran</option>
-        </select>
-        <input name="keterangan" placeholder="Keterangan" required
-          style="padding:5px; border-radius:5px; border:1px solid #ccc;">
-        <select name="metode" style="padding:5px; border-radius:5px; border:1px solid #ccc;">
-          <option value="Tunai">Tunai</option>
-          <option value="Non Tunai">Non Tunai</option>
-        </select>
-        <input type="number" name="nominal" placeholder="Nominal" required
-          style="padding:5px; border-radius:5px; border:1px solid #ccc;">
-        <button type="submit"
-          style="padding:5px 10px; background:#D6A99D; color:#fff; border:none; border-radius:5px; cursor:pointer;">Simpan
-          Transaksi</button>
-      </form>
-	  <table id="tableTransaksi" style="width:100%; border-collapse:collapse; background:#D6DAC8;">
-		<thead>
-		  <tr style="background:#9CAFAA; color:#fff;">
-			<th style="padding:8px; border:1px solid #ccc;">Tanggal</th>
-			<th style="padding:8px; border:1px solid #ccc;">Keterangan</th>
-			<th style="padding:8px; border:1px solid #ccc;">Jenis</th>
-			<th style="padding:8px; border:1px solid #ccc;">Metode</th>
-			<th style="padding:8px; border:1px solid #ccc;">Nominal</th>
-		  </tr>
-		</thead>
-		<tbody></tbody>
-	  </table>
-    </section>
-
-    <!-- PRODUK -->
-    <section id="produk" class="section">
-      <h2 style="color:#9CAFAA;">Produk</h2>
-      <form id="formProduk" style="margin-bottom:10px; display:flex; flex-wrap:wrap; gap:5px;">
-        <input name="kode" placeholder="Kode" required style="padding:5px; border-radius:5px; border:1px solid #ccc;">
-        <input name="nama" placeholder="Nama" required style="padding:5px; border-radius:5px; border:1px solid #ccc;">
-        <input type="number" name="harga" placeholder="Harga" required
-          style="padding:5px; border-radius:5px; border:1px solid #ccc;">
-        <input type="number" name="stok" placeholder="Stok" required
-          style="padding:5px; border-radius:5px; border:1px solid #ccc;">
-        <button type="submit"
-          style="padding:5px 10px; background:#D6A99D; color:#fff; border:none; border-radius:5px; cursor:pointer;">Simpan
-          Produk</button>
-      </form>
-      <table id="tableProduk" style="width:100%; border-collapse:collapse; background:#D6DAC8;">
-        <thead>
-          <tr style="background:#9CAFAA; color:#fff;">
-            <th style="padding:8px; border:1px solid #ccc;">Kode</th>
-            <th style="padding:8px; border:1px solid #ccc;">Nama</th>
-            <th style="padding:8px; border:1px solid #ccc;">Harga</th>
-            <th style="padding:8px; border:1px solid #ccc;">Stok</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
-
-    <!-- STOK -->
-    <section id="stok" class="section">
-      <h2 style="color:#9CAFAA;">Stok</h2>
-      <form id="formStok" style="margin-bottom:10px; display:flex; flex-wrap:wrap; gap:5px;">
-        <input type="date" name="tanggal" required style="padding:5px; border-radius:5px; border:1px solid #ccc;">
-        <input name="kode" placeholder="Kode Produk" required
-          style="padding:5px; border-radius:5px; border:1px solid #ccc;">
-        <input type="number" name="qty" placeholder="Qty" required
-          style="padding:5px; border-radius:5px; border:1px solid #ccc;">
-        <input name="keterangan" placeholder="Keterangan"
-          style="padding:5px; border-radius:5px; border:1px solid #ccc;">
-        <button type="submit"
-          style="padding:5px 10px; background:#D6A99D; color:#fff; border:none; border-radius:5px; cursor:pointer;">Simpan
-          Stok</button>
-      </form>
-      <table id="tableStok" style="width:100%; border-collapse:collapse; background:#D6DAC8;">
-        <thead>
-          <tr style="background:#9CAFAA; color:#fff;">
-            <th style="padding:8px; border:1px solid #ccc;">Kode</th>
-            <th style="padding:8px; border:1px solid #ccc;">Nama</th>
-            <th style="padding:8px; border:1px solid #ccc;">Stok</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
-
-    <!-- LAPORAN -->
-    <section id="laporan" class="section">
-      <h2 style="color:#9CAFAA;">Laporan</h2>
-      <div style="margin-bottom:10px;">
-        <input type="date" id="fromDate" style="padding:5px; border-radius:5px; border:1px solid #ccc;">
-        <input type="date" id="toDate" style="padding:5px; border-radius:5px; border:1px solid #ccc;">
-        <button id="btnShowReport"
-          style="padding:5px 10px; background:#D6A99D; color:#fff; border:none; border-radius:5px; cursor:pointer;">Tampilkan</button>
-        <button id="btnExportPDF"
-          style="padding:5px 10px; background:#9CAFAA; color:#fff; border:none; border-radius:5px; cursor:pointer;">Export
-          PDF</button>
-      </div>
-
-      <div class="dashboard-cards" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
-        <div class="card" style="flex:1; text-align:center; padding:15px; background:#FBF3D5; border-radius:8px;">
-          <h3 style="color:#9CAFAA;">Pemasukan</h3>
-          <p id="reportPemasukan" style="font-weight:bold;">Rp 0</p>
-        </div>
-        <div class="card" style="flex:1; text-align:center; padding:15px; background:#FBF3D5; border-radius:8px;">
-          <h3 style="color:#9CAFAA;">Pengeluaran</h3>
-          <p id="reportPengeluaran" style="font-weight:bold;">Rp 0</p>
-        </div>
-        <div class="card" style="flex:1; text-align:center; padding:15px; background:#FBF3D5; border-radius:8px;">
-          <h3 style="color:#9CAFAA;">Laba Bersih</h3>
-          <p id="reportLaba" style="font-weight:bold;">Rp 0</p>
-        </div>
-        <div class="card" style="flex:1; text-align:center; padding:15px; background:#FBF3D5; border-radius:8px;">
-          <h3 style="color:#9CAFAA;">Jumlah Transaksi</h3>
-          <p id="reportTx" style="font-weight:bold;">0</p>
-        </div>
-        <div class="card kas-card">
-          <h3>Kas</h3>
-          <div class="kas-item">Tunai: <span id="reportTunai">Rp 0</span></div>
-          <div class="kas-item">Non Tunai: <span id="reportNonTunai">Rp 0</span></div>
-          <div class="kas-item total">Total: <span id="reportTotal">Rp 0</span></div>
-        </div>
-
-
-      </div>
-
-      <table id="tableReport" style="width:100%; border-collapse:collapse; background:#D6DAC8;">
-        <thead>
-          <tr style="background:#9CAFAA; color:#fff;">
-            <th style="width:15%;">Tanggal</th>
-            <th style="width:35%;">Keterangan</th>
-            <th style="width:15%;">Jenis</th>
-            <th style="width:15%;">Metode</th>
-            <th style="width:20%;">Nominal</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <div id="reportPaging" style="display:flex; gap:5px; flex-wrap:wrap; margin-top:10px;"></div>
-    </section>
-
-  </main>
-
-
-  <!-- Modal Edit untuk Mobile -->
-  <div id="editModal">
-    <div class="modal-content">
-      <h3>Edit Data</h3>
-      <form id="editForm" style="display:flex; flex-direction:column; gap:12px;">
-        <input type="hidden" name="sheetRow">
-        <label>Tanggal<input type="date" name="tanggal"></label>
-        <label>Keterangan<input type="text" name="keterangan"></label>
-        <label>Jenis
-          <select name="jenis">
-            <option value="Pemasukan">Pemasukan</option>
-            <option value="Pengeluaran">Pengeluaran</option>
-          </select>
-        </label>
-        <label>Metode
-          <select name="metode">
-            <option value="Tunai">Tunai</option>
-            <option value="Non Tunai">Non Tunai</option>
-          </select>
-        </label>
-        <label>Nominal<input type="number" name="nominal"></label>
-        <div style="display:flex; justify-content:space-between; margin-top:10px;">
-          <button type="button" id="cancelEdit">Batal</button>
-          <button type="submit">Simpan</button>
-        </div>
-      </form>
     </div>
-  </div>
 
 
-  <script>
-    // === THEME SWITCHER ===
-    const themeSelect = document.getElementById('themeSelect');
-    themeSelect.addEventListener('change', () => {
-      document.body.classList.remove('theme-palet1', 'theme-palet2');
-      const val = themeSelect.value;
-      if (val === 'palet1') document.body.classList.add('theme-palet1');
-      if (val === 'palet2') document.body.classList.add('theme-palet2');
-    });
-  </script>
+    <!-- Main Layout -->
+    <div id="app" class="hidden">
+        <!-- Sidebar Overlay untuk Mobile -->
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+        <!-- Sidebar for Desktop -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h1>Kedai Nongki</h1>
+                <p>Sistem Manajemen Kas</p>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#dashboard" class="nav-item active" data-page="dashboard">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#transactions" class="nav-item" data-page="transactions">
+                    <i class="bi bi-wallet2"></i>
+                    <span>Transaksi</span>
+                </a>
+                <a href="#reports" class="nav-item" data-page="reports">
+                    <i class="bi bi-bar-chart"></i>
+                    <span>Laporan</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="logout-btn" class="logout-btn">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Keluar</span>
+                </button>
+            </div>
+        </aside>
 
-  <!-- Tambahkan script jsPDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-  <script>
-    document.getElementById('btnExportPDF').onclick = () => {
-      if (!reportData || reportData.length === 0) {
-        alert("Tidak ada data untuk diexport!");
-        return;
-      }
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h2 id="page-title">Dashboard</h2>
+                <button id="add-transaction-btn" class="btn-primary add-transaction-btn">
+                    <i class="bi bi-plus-circle" alt="Transaksi Baru"></i> 
+                </button>
+                <div class="user-profile">
+                    <img id="user-avatar" src="" alt="Avatar" class="avatar">
+                    <span id="user-name"></span>
+                </div>
+            </header>
 
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
+            <!-- Page Content -->
+            <div class="page-content">
+                <!-- Dashboard Page -->
+                <div id="dashboard-page" class="page active">
+                    <div class="metrics-grid">
+                        <!-- Metrics Cards -->
+                        <div class="metric-card">
+                            <div class="metric-icon income">
+                                <i class="bi bi-arrow-down-circle"></i>
+                            </div>
+                            <div class="metric-info">
+                                <h3>Pemasukan</h3>
+                                <p id="total-income">Rp 0</p>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon expense">
+                                <i class="bi bi-arrow-up-circle"></i>
+                            </div>
+                            <div class="metric-info">
+                                <h3>Pengeluaran</h3>
+                                <p id="total-expense">Rp 0</p>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon profit">
+                                <i class="bi bi-graph-up"></i>
+                            </div>
+                            <div class="metric-info">
+                                <h3>Laba Bersih</h3>
+                                <p id="net-profit">Rp 0</p>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon transaction">
+                                <i class="bi bi-receipt"></i>
+                            </div>
+                            <div class="metric-info">
+                                <h3>Jumlah Transaksi</h3>
+                                <p id="total-transactions">0</p>
+                            </div>
+                        </div>
+                    </div>
 
-      doc.setFontSize(16);
-      doc.text("Laporan Kas Kedai Nongki", 14, 20);
+                    <div class="breakdown-section">
+                        <div class="card">
+                            <h3>Breakdown Kas</h3>
+                            <div class="progress-container">
+                                <div class="progress-info">
+                                    <span>Tunai</span>
+                                    <span id="cash-percentage">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill cash" style="width: 0%"></div>
+                                </div>
+                                <p id="cash-amount" class="amount">Rp 0</p>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-info">
+                                    <span>Non Tunai</span>
+                                    <span id="non-cash-percentage">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill non-cash" style="width: 0%"></div>
+                                </div>
+                                <p id="non-cash-amount" class="amount">Rp 0</p>
+                            </div>
+                        </div>
 
-      // Summary cards
-      doc.setFontSize(12);
-      doc.text(`Pemasukan: Rp ${document.getElementById('reportPemasukan').innerText}`, 14, 30);
-      doc.text(`Pengeluaran: Rp ${document.getElementById('reportPengeluaran').innerText}`, 14, 36);
-      doc.text(`Laba Bersih: Rp ${document.getElementById('reportLaba').innerText}`, 14, 42);
-      doc.text(`Jumlah Transaksi: ${document.getElementById('reportTx').innerText}`, 14, 48);
-      doc.text(`Tunai: Rp ${document.getElementById('reportTunai').innerText}`, 14, 54);
-      doc.text(`Non Tunai: Rp ${document.getElementById('reportNonTunai').innerText}`, 14, 60);
+                        <div class="card">
+                            <h3>Rasio Profitabilitas</h3>
+                            <div class="progress-container">
+                                <div class="progress-info">
+                                    <span>Rasio Laba</span>
+                                    <span id="profit-ratio">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill profit-ratio" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-info">
+                                    <span>Rasio Pengeluaran</span>
+                                    <span id="expense-ratio">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill expense-ratio" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-      // Table
-      const headers = [["Tanggal", "Keterangan", "Jenis", "Metode", "Nominal"]];
-      const rows = reportData.map(r => [r[0], r[1], r[2], r[3], r[4]]);
+                    <div class="recent-transactions">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Transaksi Terbaru</h3>
+                                <a href="#transactions" class="view-all">Lihat Semua</a>
+                            </div>
+                            <div class="table-container">
+                                <table id="recent-transactions-table" class="transaction-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="hide-on-mobile">ID</th>
+                                            <th>Tanggal</th>
+                                            <th>Deskripsi</th>
+                                            <th class="hide-on-mobile">Jenis</th>
+                                            <th class="hide-on-mobile">Metode</th>
+                                            <th>Nominal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Data will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="recent-transactions-cards" class="cards-container">
+                                <!-- Mobile cards will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-      doc.autoTable({
-        startY: 70,
-        head: headers,
-        body: rows,
-        theme: 'grid',
-        headStyles: { fillColor: [156, 175, 170] },
-        margin: { left: 14, right: 14 }
-      });
+                <!-- Transactions Page -->
+                <div id="transactions-page" class="page">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Tambah Transaksi Baru</h3>
+                        </div>
+                        <form id="transaction-form">
+                            <div class="form-container">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="date">Tanggal</label>
+                                        <input type="date" id="date" name="date" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="description">Deskripsi</label>
+                                        <input type="text" id="description" name="description" placeholder="Masukkan deskripsi" required>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="type">Jenis</label>
+                                        <select id="type" name="type" required>
+                                            <option value="">Pilih Jenis</option>
+                                            <option value="Pemasukan">Pemasukan</option>
+                                            <option value="Pengeluaran">Pengeluaran</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="method">Metode</label>
+                                        <select id="method" name="method" required>
+                                            <option value="">Pilih Metode</option>
+                                            <option value="Tunai">Tunai</option>
+                                            <option value="Non Tunai">Non Tunai</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="amount">Nominal (Rp)</label>
+                                        <input type="number" id="amount" name="amount" placeholder="0" min="0" required>
+                                    </div>
+                                    <div class="form-group form-actions">
+                                        <button type="submit" class="btn-primary">
+                                            <i class="bi bi-plus-circle"></i> Tambah Transaksi
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
 
-      doc.save("Laporan_Kas_Kedai_Nongki.pdf");
-    };
-  </script>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Daftar Transaksi</h3>
+                            <div class="filter-container">
+                                <select id="transactions-filter">
+                                    <option value="all">Semua Transaksi</option>
+                                    <option value="income">Pemasukan</option>
+                                    <option value="expense">Pengeluaran</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="search-container">
+                            <div class="search-input-wrapper">
+                                <i class="bi bi-search search-icon"></i>
+                                <input type="text" id="transaction-search" class="search-input" placeholder="Cari transaksi..." autocomplete="off">
+                                <button id="reset-search" class="reset-search-btn" title="Reset pencarian"><i class="bi bi-x"></i></button>
+                                <div id="autocomplete-results" class="autocomplete-results"></div>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table id="transactions-table" class="transaction-table">
+                                <thead>
+                                    <tr>
+                                        <th class="hide-on-mobile">ID</th>
+                                        <th>Tanggal</th>
+                                        <th>Deskripsi</th>
+                                        <th class="hide-on-mobile">Jenis</th>
+                                        <th class="hide-on-mobile">Metode</th>
+                                        <th>Nominal</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Data will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="pagination">
+                            <button id="prev-page" class="pagination-button" disabled>
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <span class="pagination-info">Halaman <span id="current-page">1</span> dari <span id="total-pages">1</span></span>
+                            <button id="next-page" class="pagination-button" disabled>
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                        <div id="transactions-cards" class="cards-container">
+                            <!-- Mobile cards will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
 
-  <script>
-    const CONFIG = {
-      clientId: '883588123458-kc7p924f89q7dtg4ape0u8lslqjqvmrt.apps.googleusercontent.com',
-      spreadsheetId: '1gd1JcYiuUsPXO1xbwKHJomnLxMdK7s7xfJ60l3p7WKw',
-      discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
-      scope: 'https://www.googleapis.com/auth/spreadsheets'
-    };
+                <!-- Reports Page -->
+                <div id="reports-page" class="page">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Generate Laporan</h3>
+                        </div>
+                        <form id="report-form">
+                            <div class="form-container">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="period">Periode</label>
+                                        <select id="period" name="period" required>
+                                            <option value="daily">Harian</option>
+                                            <option value="weekly" selected>Mingguan</option>
+                                            <option value="monthly">Bulanan</option>
+                                            <option value="quarterly">Kuartalan</option>
+                                            <option value="yearly">Tahunan</option>
+                                            <option value="last-month">Bulan Lalu</option>
+                                            <option value="last-quarter">Kuartal Lalu</option>
+                                            <option value="last-year">Tahun Lalu</option>
+                                            <option value="custom">Kustom</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="report-type">Jenis Laporan</label>
+                                        <select id="report-type" name="report-type" required>
+                                            <option value="all">Semua Jenis</option>
+                                            <option value="basic">Laporan Dasar</option>
+                                            <option value="analytic">Laporan Analitis</option>
+                                            <option value="visual">Laporan Visualisasi</option>
+                                            <option value="forecast">Forecast Keuangan</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row" id="custom-date-range" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="start-date">Tanggal Mulai</label>
+                                        <input type="date" id="start-date" name="start-date">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="end-date">Tanggal Akhir</label>
+                                        <input type="date" id="end-date" name="end-date">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group form-actions">
+                                        <button type="submit" class="btn-primary">
+                                            <i class="bi bi-file-earmark-text"></i> Generate Laporan
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
 
-    let tokenClient, gapiInited = false, gisInited = false;
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Hasil Laporan</h3>
+                            <div class="report-header-actions">
+                                <span id="report-range">Minggu Ini</span>
+                                <div class="export-actions">
+                                    <button id="export-report" class="btn-icon" title="Print Laporan">
+                                        <i class="bi bi-printer"></i>
+                                    </button>
+                                    <button id="export-pdf" class="btn-icon" title="Download PDF">
+                                        <i class="bi bi-file-earmark-pdf"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Laporan Dasar -->
+                        <div id="report-basic" class="report-section">
+                            <h4>Ringkasan Periode</h4>
+                            <div class="report-cards-container">
+                                <div class="report-card income">
+                                    <div class="report-card-icon">
+                                        <i class="bi bi-graph-up-arrow"></i>
+                                    </div>
+                                    <div class="report-card-content">
+                                        <h4>Total Pemasukan</h4>
+                                        <span id="report-income" class="report-card-value">Rp 0</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="report-card expense">
+                                    <div class="report-card-icon">
+                                        <i class="bi bi-graph-down-arrow"></i>
+                                    </div>
+                                    <div class="report-card-content">
+                                        <h4>Total Pengeluaran</h4>
+                                        <span id="report-expense" class="report-card-value">Rp 0</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="report-card profit">
+                                    <div class="report-card-icon">
+                                        <i class="bi bi-cash-coin"></i>
+                                    </div>
+                                    <div class="report-card-content">
+                                        <h4>Laba Bersih</h4>
+                                        <span id="report-profit" class="report-card-value">Rp 0</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="report-card percentage">
+                                    <div class="report-card-icon">
+                                        <i class="bi bi-percent"></i>
+                                    </div>
+                                    <div class="report-card-content">
+                                        <h4>Persentase Laba</h4>
+                                        <span id="report-profit-percent" class="report-card-value">0%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Laporan Analitis -->
+                        <div id="report-analytic" class="report-section hidden">
+                            <h4>Analisis Profitabilitas</h4>
+                            <div class="report-cards-container">
+                                <div class="report-card">
+                                    <h4>Margin Laba (%)</h4>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill profit-ratio" id="profit-margin-bar" style="width: 0%"></div>
+                                    </div>
+                                    <span id="profit-margin" class="report-card-value">0%</span>
+                                </div>
+                                <div class="report-card">
+                                    <h4>Rasio Pengeluaran (%)</h4>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill expense-ratio" id="expense-ratio-bar" style="width: 0%"></div>
+                                    </div>
+                                    <span id="expense-ratio-analytics" class="report-card-value">0%</span>
+                                </div>
+                            </div>
+                            
 
-    function gapiLoaded() {
-      gapi.load('client', async () => {
-        await gapi.client.init({ discoveryDocs: CONFIG.discoveryDocs });
-        gapiInited = true; maybeEnableButtons();
-      });
-    }
+                            
+                            <h4>Analisis Metode Pembayaran</h4>
+                            <div id="payment-method-analysis" class="payment-method-analysis">
+                                <!-- Analisis metode pembayaran akan ditampilkan di sini -->
+                            </div>
+                        </div>
+                        
+                        <!-- Laporan Visualisasi -->
+                        <div id="report-visual" class="report-section hidden">
+                            <h4>Visualisasi Data</h4>
+                            <div class="charts-container">
+                                <div class="chart-card">
+                                    <h4>Perbandingan Pemasukan & Pengeluaran</h4>
+                                    <div class="chart-wrapper">
+                                        <canvas id="pie-chart"></canvas>
+                                    </div>
+                                </div>
+                                
 
-    function gisLoaded() {
-      tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: CONFIG.clientId, scope: CONFIG.scope, callback: ''
-      });
-      gisInited = true; maybeEnableButtons();
-    }
+                            </div>
+                            
 
-    function maybeEnableButtons() {
-      if (gapiInited && gisInited) {
-        document.getElementById('signinBtn').style.display = 'inline-block';
-      }
-    }
+                        </div>
+                        
+                        <!-- Laporan Forecast dihapus -->
+                        
+                        <!-- Tabel Detail Laporan -->
+                        <div id="report-details">
+                            <h4 class="table-title">Detail Transaksi</h4>
+                            <div class="table-container">
+                                <table id="report-table" class="transaction-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tanggal</th>
+                                            <th>Deskripsi</th>
+                                            <th class="hide-on-mobile">Jenis</th>
+                                            <th class="hide-on-mobile">Metode</th>
+                                            <th>Nominal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Data will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="report-cards" class="cards-container">
+                                <!-- Mobile cards will be populated by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <div id="empty-state" class="empty-state">
+                            <i class="bi bi-bar-chart"></i>
+                            <p>Belum ada data laporan. Generate laporan untuk melihat data.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
 
-    // LOGIN
-    document.getElementById('signinBtn').onclick = () => {
-      tokenClient.callback = async (resp) => {
-        if (resp.error !== undefined) throw resp;
-        document.getElementById('signinBtn').style.display = 'none';
-        document.getElementById('signoutBtn').style.display = 'inline-block';
-        await loadDashboard(); await loadTxTable(); await loadProduk(); await loadStok();
-        await generateKodeProduk();
-      };
-      tokenClient.requestAccessToken({ prompt: '' });
-    };
+        <!-- Bottom Navigation for Mobile -->
+        <nav id="bottom-nav" class="bottom-nav">
+            <a href="#dashboard" class="nav-item active" data-page="dashboard">
+                <i class="bi bi-speedometer2"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#transactions" class="nav-item" data-page="transactions">
+                <i class="bi bi-wallet2"></i>
+                <span>Transaksi</span>
+            </a>
+            <a href="#reports" class="nav-item" data-page="reports">
+                <i class="bi bi-bar-chart"></i>
+                <span>Laporan</span>
+            </a>
+        </nav>
+    </div>
 
-    // LOGOUT
-    document.getElementById('signoutBtn').onclick = () => {
-      gapi.client.setToken(null);
-      document.getElementById('signoutBtn').style.display = 'none';
-      document.getElementById('signinBtn').style.display = 'inline-block';
-      alert('Anda sudah logout, silakan login lagi.');
-    };
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p>Memuat data...</p>
+    </div>
 
-    async function getValues(range) {
-      try {
-        const res = await gapi.client.sheets.spreadsheets.values.get({
-          spreadsheetId: CONFIG.spreadsheetId, range
-        });
-        return res.result.values || [];
-      } catch (e) {
-        console.error("Token expired / tidak valid", e);
-        document.getElementById('signinBtn').style.display = 'inline-block';
-        document.getElementById('signoutBtn').style.display = 'none';
-        return [];
-      }
-    }
+    <!-- Error Message -->
+    <div id="error-message" class="error-message hidden">
+        <span id="error-text"></span>
+        <button id="close-error">&times;</button>
+    </div>
+    
+    <!-- Transaction Shortcut Modal -->
+    <div id="transaction-modal" class="modal-container hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Tambah Transaksi Cepat</h3>
+                <button id="close-transaction-modal" class="close-modal">&times;</button>
+            </div>
+            <form id="quick-transaction-form">
+                <div class="form-container">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="quick-date">Tanggal</label>
+                            <input type="date" id="quick-date" name="quick-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="quick-description">Deskripsi</label>
+                            <input type="text" id="quick-description" name="quick-description" placeholder="Masukkan deskripsi" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="quick-type">Jenis</label>
+                            <select id="quick-type" name="quick-type" required>
+                                <option value="">Pilih Jenis</option>
+                                <option value="Pemasukan">Pemasukan</option>
+                                <option value="Pengeluaran">Pengeluaran</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="quick-method">Metode</label>
+                            <select id="quick-method" name="quick-method" required>
+                                <option value="">Pilih Metode</option>
+                                <option value="Tunai">Tunai</option>
+                                <option value="Non Tunai">Non Tunai</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="quick-amount">Nominal (Rp)</label>
+                            <input type="number" id="amount" name="amount" placeholder="0" min="0" required>
+                        </div>
+                        <div class="form-group form-actions">
+                            <button type="submit" class="btn-primary">
+                                <i class="bi bi-plus-circle"></i> Tambah Transaksi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
-    async function appendValues(range, values) {
-      await gapi.client.sheets.spreadsheets.values.append({
-        spreadsheetId: CONFIG.spreadsheetId,
-        range,
-        valueInputOption: 'USER_ENTERED',
-        insertDataOption: 'INSERT_ROWS',
-        resource: { values }
-      });
-    }
-
-    function parseNominal(str) {
-      if (!str) return 0;
-      str = str.toString().replace(/[Rp\s\.]/g, '').replace(',', '.');
-      const val = parseFloat(str);
-      return isNaN(val) ? 0 : val;
-    }
-
-    // === DASHBOARD ===
-    async function loadDashboard() {
-      const tx = await getValues('Transaksi!A:E');
-      let rows = tx.slice(1);
-      const from = document.getElementById('fromDateDashboard')?.value;
-      const to = document.getElementById('toDateDashboard')?.value;
-      if (from) rows = rows.filter(r => new Date(r[0]) >= new Date(from));
-      if (to) rows = rows.filter(r => new Date(r[0]) <= new Date(to));
-
-      let pemasukan = 0, pengeluaran = 0, tunai = 0, nonTunai = 0;
-      rows.forEach(r => {
-        const nominal = parseNominal(r[4]);
-        const jenis = (r[2] || "").trim();
-        const metode = (r[3] || "").trim();
-        if (jenis === "Pemasukan") pemasukan += nominal;
-        if (jenis === "Pengeluaran") pengeluaran += nominal;
-        if (metode === "Tunai") tunai += nominal;
-        if (metode === "Non Tunai") nonTunai += nominal;
-      });
-      const laba = pemasukan - pengeluaran;
-      const total = tunai + nonTunai;
-
-      document.getElementById('cardPemasukan').innerText = "Rp " + pemasukan.toLocaleString();
-      document.getElementById('cardPengeluaran').innerText = "Rp " + pengeluaran.toLocaleString();
-      document.getElementById('cardLaba').innerText = "Rp " + laba.toLocaleString();
-      document.getElementById('cardTx').innerText = rows.length;
-      document.getElementById('cardTunai').innerText = "Rp " + tunai.toLocaleString();
-      document.getElementById('cardNonTunai').innerText = "Rp " + nonTunai.toLocaleString();
-      document.getElementById('cardTotal').innerText = "Rp " + total.toLocaleString();
-    }
-    document.getElementById('btnFilterDashboard').onclick = loadDashboard;
-
-    // === TABEL TRANSAKSI ===
-	function renderTransaksi(rows) {
-	  const tbody = document.querySelector('#tableTransaksi tbody');
-	  if (!tbody) return;
-
-	  if (isMobile) {
-		// === MOBILE: Card style ===
-		tbody.innerHTML = rows.map(r => {
-		  const { day, month, year } = formatTanggalSplit(r.tanggal);
-		  return `
-			<tr data-row="${r.sheetRow}">
-			  <td class="card-date">
-				<div class="day">${day}</div>
-				<div class="month">${month}</div>
-				<div class="year">${year}</div>
-			  </td>
-			  <td class="card-detail">
-				<div>${r.keterangan || '-'}</div>
-				<div>${r.jenis || '-'}</div>
-				<div>${r.metode || '-'}</div>
-				<div class="nominal">${formatNominal(r.nominal)}</div>
-			  </td>
-			</tr>
-		  `;
-		}).join('');
-	  } else {
-		// === DESKTOP: Table style ===
-		tbody.innerHTML = rows.map(r => {
-		  const tgl = r.tanggal ? new Date(r.tanggal).toLocaleDateString("id-ID") : "-";
-		  return `
-			<tr data-row="${r.sheetRow}">
-			  <td data-field="tanggal">${tgl}</td>
-			  <td data-field="keterangan">${r.keterangan || '-'}</td>
-			  <td data-field="jenis">${r.jenis || '-'}</td>
-			  <td data-field="metode">${r.metode || '-'}</td>
-			  <td data-field="nominal">${formatNominal(r.nominal)}</td>
-			</tr>
-		  `;
-		}).join('');
-	  }
-
-	  // === Inline edit hanya untuk desktop ===
-	  if (!isMobile) {
-		document.querySelectorAll('#tableTransaksi td').forEach(cell => {
-		  cell.addEventListener('click', () => {
-			if (cell.querySelector('input,select')) return;
-			const tr = cell.closest('tr');
-			const sheetRow = tr ? tr.getAttribute('data-row') : null;
-			const field = cell.getAttribute('data-field');
-			if (!field) return;
-
-			const oldValue = cell.innerText.trim();
-			let inputEl;
-
-			if (field === "tanggal") {
-			  inputEl = document.createElement("input");
-			  inputEl.type = "date";
-			  inputEl.value = oldValue ? new Date(oldValue).toISOString().split("T")[0] : "";
-			} else if (field === "jenis") {
-			  inputEl = document.createElement("select");
-			  ["Pemasukan", "Pengeluaran"].forEach(opt => {
-				const o = document.createElement("option");
-				o.value = opt; o.text = opt;
-				if (opt === oldValue) o.selected = true;
-				inputEl.appendChild(o);
-			  });
-			} else if (field === "metode") {
-			  inputEl = document.createElement("select");
-			  ["Tunai", "Non Tunai"].forEach(opt => {
-				const o = document.createElement("option");
-				o.value = opt; o.text = opt;
-				if (opt === oldValue) o.selected = true;
-				inputEl.appendChild(o);
-			  });
-			} else if (field === "nominal") {
-			  inputEl = document.createElement("input");
-			  inputEl.type = "number";
-			  inputEl.value = oldValue.replace(/[^\\d]/g, "");
-			} else {
-			  inputEl = document.createElement("input");
-			  inputEl.type = "text";
-			  inputEl.value = oldValue;
-			}
-
-			inputEl.style.width = "100%";
-			inputEl.style.height = "100%";
-			inputEl.style.boxSizing = "border-box";
-			inputEl.style.border = "none";
-			inputEl.style.outline = "none";
-			inputEl.style.background = "transparent";
-			inputEl.style.font = "inherit";
-			inputEl.style.color = "inherit";
-
-			cell.innerHTML = "";
-			cell.appendChild(inputEl);
-			inputEl.focus();
-
-			inputEl.addEventListener("click", ev => ev.stopPropagation());
-			const commitChange = async () => { await saveCell(sheetRow, field, inputEl.value); };
-
-			if (field === "jenis" || field === "metode") {
-			  inputEl.addEventListener("change", commitChange);
-			  inputEl.addEventListener("blur", commitChange);
-			} else {
-			  inputEl.addEventListener("blur", commitChange);
-			}
-		  });
-		});
-	  }
-	}
-
-
-
-	 async function loadTxTable() {
-	  const tx = await getValues('Transaksi!A:E');
-	  const rows = tx.slice(1).slice(-10).reverse().map((r, idx) => ({
-		sheetRow: tx.length - idx, // posisi row di sheet
-		tanggal: r[0],
-		keterangan: r[1],
-		jenis: r[2],
-		metode: r[3],
-		nominal: r[4]
-	  }));
-	  renderTransaksi(rows);
-	}
-
-
-    // === TABEL PRODUK ===
-    async function loadProduk() {
-      const pr = await getValues('Produk!A:D');
-      const rows = pr.slice(1);
-      document.querySelector('#tableProduk tbody').innerHTML =
-        rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('');
-    }
-
-    // === TABEL STOK ===
-    async function loadStok() {
-      const pr = await getValues('Produk!A:D');
-      const rows = pr.slice(1);
-      document.querySelector('#tableStok tbody').innerHTML =
-        rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[3]}</td></tr>`).join('');
-    }
-
-    // === GENERATE KODE PRODUK OTOMATIS (FORMAT: PR-YYYYMMDD-XXX) ===
-    async function generateKodeProduk() {
-      const pr = await getValues('Produk!A:D');
-      const today = new Date();
-      const dateStr = today.getFullYear() + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0');
-
-      // ambil kode terakhir untuk tanggal hari ini
-      const filtered = pr.slice(1).filter(r => r[0]?.includes(dateStr));
-      let nextNum = filtered.length + 1;
-
-      const newKode = 'PR-' + dateStr + '-' + String(nextNum).padStart(3, '0');
-      document.querySelector('#formProduk input[name="kode"]').value = newKode;
-    }
-
-    // Panggil generate kode saat tab Produk diklik
-    document.querySelector('.tab-btn[data-tab="produk"]').addEventListener('click', generateKodeProduk);
-
-    // Panggil generate kode saat login & tab aktif
-    document.addEventListener('DOMContentLoaded', async () => {
-      const activeTab = document.querySelector('.tab-btn.active').getAttribute('data-tab');
-      if (activeTab === 'produk') await generateKodeProduk();
-    });
-
-    // === FORM TRANSAKSI SUBMIT ===
-    document.getElementById('formTransaksi').onsubmit = async e => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const row = [fd.get('tanggal'), fd.get('keterangan'), fd.get('jenis'), fd.get('metode'), fd.get('nominal')];
-      await appendValues('Transaksi!A:E', [row]);
-      e.target.reset();
-      loadDashboard(); loadTxTable();
-    };
-
-    // === FORM PRODUK SUBMIT ===
-    document.getElementById('formProduk').onsubmit = async e => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const row = [fd.get('kode'), fd.get('nama'), fd.get('harga'), fd.get('stok')];
-      await appendValues('Produk!A:D', [row]);
-      e.target.reset();
-      loadProduk();
-      loadStok();
-      await generateKodeProduk(); // generate kode baru setelah simpan
-    };
-
-    // === FORM STOK SUBMIT ===
-    document.getElementById('formStok').onsubmit = async e => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const row = [fd.get('tanggal'), fd.get('kode'), fd.get('qty'), fd.get('keterangan')];
-      await appendValues('Stok!A:D', [row]);
-      e.target.reset(); loadStok();
-    };
-
-    // === LAPORAN ===
-    let currentPage = 1;
-    const pageSize = 10;
-    let reportData = [];
-
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        const targetId = btn.getAttribute('data-tab');
-        document.getElementById(targetId).classList.add('active');
-        btn.classList.add('active');
-      });
-    });
-
-    /* Fungsi parseNominal, getValues, appendValues, loadDashboard, loadTxTable, loadProduk, loadStok sama seperti sebelumnya */
-
-
-    function formatTanggalSplit(dateStr) {
-      if (!dateStr) return { day: "", month: "", year: "" };
-      const d = new Date(dateStr);
-      const day = d.getDate();
-      const month = d.toLocaleDateString('id-ID', { month: 'long' });
-      const year = d.getFullYear();
-      return { day, month, year };
-    }
-
-    function formatNominal(val) {
-      if (!val) return "-";
-      // hapus semua selain angka
-      let cleaned = String(val).replace(/[^0-9]/g, "");
-      if (!cleaned) return "-";
-      let num = parseInt(cleaned, 10);
-      return "Rp. " + num.toLocaleString("id-ID");
-    }
-
-    const isMobile = window.matchMedia("(max-width: 768px)").matches;
-
-    function renderReportPage(page = 1) {
-const start = (page - 1) * pageSize;
-  const end = start + pageSize;
-  const rows = reportData.slice(start, end);
-
-  if (typeof isMobile !== 'undefined' && isMobile) {
-    // MOBILE: Card style
-    document.querySelector('#tableReport tbody').innerHTML =
-      rows.map(r => {
-        const { day, month, year } = formatTanggalSplit(r.tanggal);
-        return `
-          <tr data-row="${r.sheetRow}">
-            <td class="card-date">
-              <div class="day">${day}</div>
-              <div class="month">${month}</div>
-              <div class="year">${year}</div>
-            </td>
-            <td class="card-detail">
-              <div>${r.keterangan}</div>
-              <div>${r.jenis}</div>
-              <div>${r.metode}</div>
-              <div class="nominal">${formatNominal(r.nominal)}</div>
-            </td>
-          </tr>
-        `;
-      }).join('');
-  } else {
-    // DESKTOP: Table style
-    document.querySelector('#tableReport tbody').innerHTML =
-      rows.map(r => {
-        const tgl = r.tanggal ? new Date(r.tanggal).toLocaleDateString("id-ID") : "-";
-        return `
-          <tr data-row="${r.sheetRow}">
-            <td data-field="tanggal">${tgl}</td>
-            <td data-field="keterangan">${r.keterangan || '-'}</td>
-            <td data-field="jenis">${r.jenis || '-'}</td>
-            <td data-field="metode">${r.metode || '-'}</td>
-            <td data-field="nominal">${formatNominal(r.nominal)}</td>
-          </tr>
-        `;
-      }).join('');
-  }
-
-  // Event listener: mobile modal & desktop inline edit
-  document.querySelectorAll('#tableReport td').forEach(cell => {
-    cell.addEventListener('click', (e) => {
-      const tr = cell.closest('tr');
-      const sheetRow = tr ? tr.getAttribute('data-row') : null;
-      const rowData = sheetRow ? reportData.find(r => r.sheetRow == sheetRow) : null;
-
-      if (typeof isMobile !== 'undefined' && isMobile) {
-        if (!rowData) return;
-        // MOBILE: open modal
-        const modal = document.getElementById("editModal");
-        const form = document.getElementById("editForm");
-
-        form.sheetRow.value = sheetRow || "";
-        form.tanggal.value = rowData.tanggal ? new Date(rowData.tanggal).toISOString().split("T")[0] : "";
-        form.keterangan.value = rowData.keterangan || "";
-        form.jenis.value = rowData.jenis || "Pemasukan";
-        form.metode.value = rowData.metode || "Tunai";
-        form.nominal.value = rowData.nominal ? rowData.nominal.replace(/[^\d]/g, "") : "";
-
-        if (modal) modal.style.display = "flex";
-      } else {
-        // DESKTOP: inline edit
-        if (cell.querySelector('input,select')) return;
-        const field = cell.getAttribute('data-field');
-        if (!field) return;
-        const oldValue = cell.innerText.trim();
-        let inputEl;
-
-        if (field === "tanggal") {
-          inputEl = document.createElement("input");
-          inputEl.type = "date";
-          inputEl.value = oldValue ? new Date(oldValue).toISOString().split("T")[0] : "";
-        } else if (field === "jenis") {
-          inputEl = document.createElement("select");
-          ["Pemasukan", "Pengeluaran"].forEach(opt => {
-            const o = document.createElement("option");
-            o.value = opt; o.text = opt;
-            if (opt === oldValue) o.selected = true;
-            inputEl.appendChild(o);
-          });
-        } else if (field === "metode") {
-          inputEl = document.createElement("select");
-          ["Tunai", "Non Tunai"].forEach(opt => {
-            const o = document.createElement("option");
-            o.value = opt; o.text = opt;
-            if (opt === oldValue) o.selected = true;
-            inputEl.appendChild(o);
-          });
-        } else if (field === "nominal") {
-          inputEl = document.createElement("input");
-          inputEl.type = "number";
-          inputEl.value = oldValue.replace(/[^\d]/g, "");
-        } else {
-          inputEl = document.createElement("input");
-          inputEl.type = "text";
-          inputEl.value = oldValue;
+    <!-- Chart.js dan Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
+    
+    <!-- HTML2PDF.js untuk export PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- Google API -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script>
+        // Tambahkan meta tag untuk Content Security Policy
+        function addCSPMetaTag() {
+            // Periksa apakah meta tag CSP sudah ada
+            const existingCSP = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+            if (!existingCSP) {
+                const meta = document.createElement('meta');
+                meta.httpEquiv = 'Content-Security-Policy';
+                meta.content = "default-src 'self' https://accounts.google.com https://apis.google.com https://*.googleapis.com https://*.gstatic.com; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://*.googleapis.com https://*.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://accounts.google.com/gsi/style; img-src 'self' data: https://*.googleusercontent.com https://*.gstatic.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; connect-src 'self' https://*.googleapis.com https://accounts.google.com https://accounts.google.com/gsi/fedcm.json https://accounts.google.com/gsi/log https://apis.google.com/js/gen_204";
+                document.head.appendChild(meta);
+                console.log('Added CSP meta tag');
+            }
         }
-
-        // style
-        inputEl.style.width = "100%";
-        inputEl.style.height = "100%";
-        inputEl.style.boxSizing = "border-box";
-        inputEl.style.border = "none";
-        inputEl.style.outline = "none";
-        inputEl.style.background = "transparent";
-        inputEl.style.font = "inherit";
-        inputEl.style.color = "inherit";
-
-        cell.innerHTML = "";
-        cell.appendChild(inputEl);
-        inputEl.focus();
-
-        inputEl.addEventListener("click", ev => ev.stopPropagation());
-
-        const commitChange = async () => { await saveCell(sheetRow, field, inputEl.value); };
-
-        if (field === "jenis" || field === "metode") {
-          inputEl.addEventListener("change", commitChange);
-          inputEl.addEventListener("blur", commitChange);
-        } else {
-          inputEl.addEventListener("blur", commitChange);
-        }
-      }
-    });
-  });
-
-  // paging
-  const totalPages = Math.ceil(reportData.length / pageSize);
-  const pagingEl = document.getElementById('reportPaging');
-  if (pagingEl) {
-    pagingEl.innerHTML = '';
-    for (let i = 1; i <= totalPages; i++) {
-      const btn = document.createElement('button');
-      btn.innerText = i;
-      if (i === page) btn.classList.add("active");
-      btn.onclick = () => { currentPage = i; renderReportPage(i); };
-      pagingEl.appendChild(btn);
-    }
-  }
-}
-
-
-    // Modal logic
-    document.getElementById("cancelEdit").onclick = () => {
-      document.getElementById("editModal").style.display = "none";
-    };
-
-    document.getElementById("editForm").onsubmit = async (e) => {
-      e.preventDefault();
-      const form = e.target;
-      const sheetRow = form.sheetRow.value;
-
-      const newRow = [
-        form.tanggal.value,
-        form.keterangan.value,
-        form.jenis.value,
-        form.metode.value,
-        form.nominal.value
-      ];
-
-      // Update ke Google Sheets
-      await gapi.client.sheets.spreadsheets.values.update({
-        spreadsheetId: CONFIG.spreadsheetId,
-        range: `Transaksi!A${sheetRow}:E${sheetRow}`,
-        valueInputOption: 'USER_ENTERED',
-        resource: { values: [newRow] }
-      });
-
-      // Update data di memori (reportData)
-      const rowData = reportData.find(r => r.sheetRow == sheetRow);
-      rowData.tanggal = newRow[0];
-      rowData.keterangan = newRow[1];
-      rowData.jenis = newRow[2];
-      rowData.metode = newRow[3];
-      rowData.nominal = newRow[4];
-
-      // Tutup modal & render ulang laporan
-      document.getElementById("editModal").style.display = "none";
-      renderReportPage(currentPage);
-    };
-
-
-    async function saveCell(sheetRow, field, newValue) {
-      const rowData = reportData.find(r => r.sheetRow == sheetRow);
-      rowData[field] = newValue;
-
-      const newRow = [
-        rowData.tanggal,
-        rowData.keterangan,
-        rowData.jenis,
-        rowData.metode,
-        rowData.nominal
-      ];
-
-      await gapi.client.sheets.spreadsheets.values.update({
-        spreadsheetId: CONFIG.spreadsheetId,
-        range: `Transaksi!A${sheetRow}:E${sheetRow}`,
-        valueInputOption: 'USER_ENTERED',
-        resource: { values: [newRow] }
-      });
-
-      renderReportPage(currentPage);
-    }
-
-
-
-    async function deleteReport(sheetRow) {
-      if (!confirm("Hapus data ini?")) return;
-
-      await gapi.client.sheets.spreadsheets.values.clear({
-        spreadsheetId: CONFIG.spreadsheetId,
-        range: `Transaksi!A${sheetRow}:E${sheetRow}`
-      });
-
-      alert("Data berhasil dihapus");
-      // reload laporan & dashboard
-      document.getElementById('btnShowReport').click();
-      loadDashboard();
-      loadTxTable();
-    }
-
-
-    function editReport(sheetRow) {
-      const rowData = reportData.find(r => r.sheetRow === sheetRow);
-      const form = document.getElementById('formTransaksi');
-
-      form.tanggal.value = rowData.tanggal;
-      form.keterangan.value = rowData.keterangan;
-      form.jenis.value = rowData.jenis;
-      form.metode.value = rowData.metode;
-      form.nominal.value = rowData.nominal;
-
-      form.onsubmit = async e => {
-        e.preventDefault();
-        const fd = new FormData(form);
-        const newRow = [fd.get('tanggal'), fd.get('keterangan'), fd.get('jenis'), fd.get('metode'), fd.get('nominal')];
-
-        await gapi.client.sheets.spreadsheets.values.update({
-          spreadsheetId: CONFIG.spreadsheetId,
-          range: `Transaksi!A${sheetRow}:E${sheetRow}`,
-          valueInputOption: 'USER_ENTERED',
-          resource: { values: [newRow] }
-        });
-
-        alert("Data berhasil diupdate");
-        form.reset();
-        form.onsubmit = defaultFormTransaksiSubmit;
-
-        document.getElementById('btnShowReport').click();
-        loadDashboard();
-        loadTxTable();
-      };
-    }
-
-    // simpan submit default
-    const defaultFormTransaksiSubmit = document.getElementById('formTransaksi').onsubmit;
-
-    document.getElementById('btnShowReport').onclick = async () => {
-      const from = document.getElementById('fromDate').value;
-      const to = document.getElementById('toDate').value;
-      const tx = await getValues('Transaksi!A:E');
-
-      // Simpan sheetRow asli + data
-      reportData = tx.slice(1).map((r, idx) => ({
-        sheetRow: idx + 2, // baris asli di sheet
-        tanggal: r[0],
-        keterangan: r[1],
-        jenis: r[2],
-        metode: r[3],
-        nominal: r[4]
-      }));
-
-      if (from) reportData = reportData.filter(r => new Date(r.tanggal) >= new Date(from));
-      if (to) reportData = reportData.filter(r => new Date(r.tanggal) <= new Date(to));
-
-      let pemasukan = 0, pengeluaran = 0, tunai = 0, nonTunai = 0;
-      reportData.forEach(r => {
-        const nominal = parseNominal(r.nominal);
-        const jenis = (r.jenis || "").trim();
-        const metode = (r.metode || "").trim();
-        if (jenis === "Pemasukan") pemasukan += nominal;
-        if (jenis === "Pengeluaran") pengeluaran += nominal;
-        if (metode === "Tunai") tunai += nominal;
-        if (metode === "Non Tunai") nonTunai += nominal;
-      });
-
-      const laba = pemasukan - pengeluaran;
-      const totalReport = tunai + nonTunai;
-
-      document.getElementById('reportPemasukan').innerText = "Rp " + pemasukan.toLocaleString();
-      document.getElementById('reportPengeluaran').innerText = "Rp " + pengeluaran.toLocaleString();
-      document.getElementById('reportLaba').innerText = "Rp " + laba.toLocaleString();
-      document.getElementById('reportTx').innerText = reportData.length;
-      document.getElementById('reportTunai').innerText = "Rp " + tunai.toLocaleString();
-      document.getElementById('reportNonTunai').innerText = "Rp " + nonTunai.toLocaleString();
-      document.getElementById('reportTotal').innerText = "Rp " + totalReport.toLocaleString();
-
-      currentPage = 1;
-      renderReportPage(currentPage);
-    };
-
-    // === TAB SWITCH ===
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        const targetId = btn.getAttribute('data-tab');
-        document.getElementById(targetId).classList.add('active');
-        btn.classList.add('active');
-      });
-    });
-  </script>
-
-  <script src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
-  <script src="https://accounts.google.com/gsi/client" async defer onload="gisLoaded()"></script>
-  <div id="toast" class="toast"></div>
-
-  <script>
-    function showToast(message, type = "success") {
-      const toast = document.getElementById("toast");
-      toast.className = "toast " + type;
-      toast.textContent = message;
-      toast.classList.add("show");
-      setTimeout(() => {
-        toast.classList.remove("show");
-      }, 3000);
-    }
-
-    function formatTanggalSplit(dateStr) {
-      if (!dateStr) return { day: "", month: "", year: "" };
-      const d = new Date(dateStr);
-      return {
-        day: d.getDate(),
-        month: d.toLocaleDateString('id-ID', { month: 'long' }),
-        year: d.getFullYear()
-      };
-    }
-
-    function formatNominal(val) {
-      if (!val) return "-";
-      let cleaned = String(val).replace(/[^0-9]/g, "");
-      if (!cleaned) return "-";
-      let num = parseInt(cleaned, 10);
-      return "Rp. " + num.toLocaleString("id-ID");
-    }
-
-	function renderTransaksi(rows) {
-	  const tbody = document.querySelector('#tableTransaksi tbody');
-	  if (!tbody) return;
-
-	  if (isMobile) {
-		// === MOBILE: Card style ===
-		tbody.innerHTML = rows.map(r => {
-		  const { day, month, year } = formatTanggalSplit(r.tanggal);
-		  return `
-			<tr data-row="${r.sheetRow}">
-			  <td class="card-date">
-				<div class="day">${day}</div>
-				<div class="month">${month}</div>
-				<div class="year">${year}</div>
-			  </td>
-			  <td class="card-detail">
-				<div>${r.keterangan || '-'}</div>
-				<div>${r.jenis || '-'}</div>
-				<div>${r.metode || '-'}</div>
-				<div class="nominal">${formatNominal(r.nominal)}</div>
-			  </td>
-			</tr>
-		  `;
-		}).join('');
-	  } else {
-		// === DESKTOP: Table style ===
-		tbody.innerHTML = rows.map(r => {
-		  const tgl = r.tanggal ? new Date(r.tanggal).toLocaleDateString("id-ID") : "-";
-		  return `
-			<tr data-row="${r.sheetRow}">
-			  <td data-field="tanggal">${tgl}</td>
-			  <td data-field="keterangan">${r.keterangan || '-'}</td>
-			  <td data-field="jenis">${r.jenis || '-'}</td>
-			  <td data-field="metode">${r.metode || '-'}</td>
-			  <td data-field="nominal">${formatNominal(r.nominal)}</td>
-			</tr>
-		  `;
-		}).join('');
-	  }
-	}
-
-
-    function renderLaporan(rows) {
-	  const tbody = document.querySelector('#tableLaporan tbody');
-	  if (!tbody) return;
-
-	  tbody.innerHTML = rows.map(r => {
-		let tgl = "-";
-		if (r.tanggal) {
-		  const d = new Date(r.tanggal);
-		  if (!isNaN(d)) {
-			tgl = d.getDate().toString().padStart(2, "0") + "/" +
-				  (d.getMonth() + 1).toString().padStart(2, "0") + "/" +
-				  d.getFullYear();
-		  } else {
-			tgl = r.tanggal; // fallback kalau bukan format date
-		  }
-		}
-
-		return `
-		  <tr data-row="${r.sheetRow}">
-			<td class="editable" data-field="tanggal">${tgl}</td>
-			<td class="editable" data-field="keterangan">${r.keterangan || '-'}</td>
-			<td class="editable" data-field="jenis">${r.jenis || '-'}</td>
-			<td class="editable" data-field="metode">${r.metode || '-'}</td>
-			<td class="editable" data-field="nominal">${formatNominal(r.nominal)}</td>
-		  </tr>
-		`;
-	  }).join("")
-
-      tbody.querySelectorAll(".editable").forEach(cell => {
-        cell.addEventListener("click", function () {
-          if (cell.querySelector("input, select")) return;
-          const oldValue = cell.textContent.trim();
-          const field = cell.dataset.field;
-          let input;
-
-          if (field === "tanggal") {
-            input = document.createElement("input");
-            input.type = "date";
-            if (oldValue.includes("/")) {
-              const [d, m, y] = oldValue.split("/");
-              input.value = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
-            }
-          } else if (field === "jenis") {
-            input = document.createElement("select");
-            ["Pemasukan", "Pengeluaran"].forEach(opt => {
-              const o = document.createElement("option");
-              o.value = opt; o.textContent = opt;
-              if (opt === oldValue) o.selected = true;
-              input.appendChild(o);
+        
+        // Panggil fungsi untuk menambahkan CSP
+        addCSPMetaTag();
+    </script>
+    <link rel="stylesheet" href="https://accounts.google.com/gsi/style">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+        // Pastikan script Google API dimuat dengan benar
+        window.onload = function() {
+            console.log('Window loaded');
+            // Tambahkan event listener untuk menangkap error
+            window.addEventListener('error', function(event) {
+                console.error('Global error caught:', event.error);
+                if (event.error && event.error.message && event.error.message.includes('google')) {
+                    console.error('Google API error detected, attempting to reload');
+                    reloadGoogleAPI();
+                }
             });
-          } else if (field === "metode") {
-            input = document.createElement("select");
-            ["Tunai", "Non Tunai"].forEach(opt => {
-              const o = document.createElement("option");
-              o.value = opt; o.textContent = opt;
-              if (opt === oldValue) o.selected = true;
-              input.appendChild(o);
-            });
-          } else if (field === "nominal") {
-            input = document.createElement("input");
-            input.type = "number";
-            input.value = oldValue.replace(/[^0-9]/g, "") || "";
-          } else {
-            input = document.createElement("input");
-            input.type = "text";
-            input.value = oldValue;
-          }
-
-          cell.textContent = "";
-          cell.appendChild(input);
-          input.focus();
-
-          input.addEventListener("blur", async () => {
-            let newValue = input.value;
-            if (field === "nominal") newValue = formatNominal(newValue);
-            if (field === "tanggal" && input.value) {
-              const d = new Date(input.value);
-              newValue = d.getDate().toString().padStart(2, "0") + "/" + (d.getMonth() + 1).toString().padStart(2, "0") + "/" + d.getFullYear();
+            
+            // Fungsi untuk memuat ulang Google API
+            function reloadGoogleAPI() {
+                console.log('Reloading Google API...');
+                const script = document.createElement('script');
+                script.src = 'https://accounts.google.com/gsi/client';
+                script.async = true;
+                script.defer = true;
+                script.onload = function() {
+                    console.log('Google Sign-In API reloaded successfully');
+                    setTimeout(() => {
+                        if (typeof initApp === 'function') {
+                            initApp();
+                        }
+                    }, 500);
+                };
+                script.onerror = function(error) {
+                    console.error('Failed to reload Google Sign-In API:', error);
+                    if (document.getElementById('error-message') && document.getElementById('error-text')) {
+                        document.getElementById('error-text').textContent = 'Gagal memuat Google Sign-In API. Coba muat ulang halaman.';
+                        document.getElementById('error-message').classList.remove('hidden');
+                    }
+                };
+                document.body.appendChild(script);
             }
-            cell.textContent = newValue || "-";
-
-            const rowId = cell.closest("tr").dataset.row;
-            try {
-              await fetch("/update-sheet", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ row: rowId, field, value: input.value })
-              });
-              showToast("Data berhasil disimpan", "success");
-            } catch (e) {
-              console.error("update gagal", e);
-              showToast("Gagal menyimpan data", "error");
+            
+            // Coba muat ulang script Google Sign-In jika tidak tersedia
+            if (typeof google === 'undefined' || typeof google.accounts === 'undefined' || typeof google.accounts.id === 'undefined') {
+                console.log('Google API not loaded or incomplete, trying to reload...');
+                reloadGoogleAPI();
             }
-          });
-        });
-      });
-    }
 
-    function renderData(menu, rows) {
-      if (menu === "transaksi") {
-        renderTransaksi(rows);
-      } else if (menu === "laporan") {
-        renderLaporan(rows);
-      }
-    }
-  </script>
-
+        };
+    </script>
+    
+    <!-- App Scripts -->
+    <script src="app.js"></script>
 </body>
-
 </html>
