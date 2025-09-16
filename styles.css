@@ -239,15 +239,48 @@ a { color: var(--accent); text-decoration: none; }
 
 /* Breakdown Section */
 .breakdown-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
-.progress-container { margin-bottom: 1.5rem; }
-.progress-info { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
-.progress-bar { height: 10px; background-color: var(--glass); border-radius: 5px; margin: 0.75rem 0; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
-.progress-fill { height: 100%; border-radius: 5px; transition: width 0.5s ease; background-image: linear-gradient(to right, rgba(255,255,255,0.1), rgba(255,255,255,0)); }
-.progress-fill.cash { background: var(--success); }
-.progress-fill.non-cash { background: var(--info); }
+.progress-container {
+    margin-bottom: 1.25rem;
+    padding: 0.75rem;
+    border-radius: var(--border-radius);
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.progress-container:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--border);
+    transform: translateY(-2px);
+}
+
+.total-kas-container {
+    margin-bottom: 1rem;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.total-amount {
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--accent);
+    margin-top: 0.5rem;
+    border-top: 1px solid var(--border);
+    padding-top: 0.5rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+.progress-bar { height: 10px; background-color: rgba(255, 255, 255, 0.1); border-radius: 8px; margin: 0.75rem 0; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2); }
+.progress-fill { height: 100%; border-radius: 8px; transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); background-image: linear-gradient(to right, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0)); }
+.progress-fill.cash { background: var(--success); background-image: linear-gradient(45deg, var(--success), var(--success)); }
+.progress-fill.non-cash { background: var(--info); background-image: linear-gradient(45deg, var(--info), var(--info)); }
 .progress-fill.profit-ratio { background: var(--success); }
 .progress-fill.expense-ratio { background: var(--danger); }
-.amount { margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-secondary); }
+.amount { margin-top: 0.5rem; font-size: 1.05rem; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.5px; text-align: right; }
 
 /* Search and Autocomplete */
 .search-container {
@@ -366,17 +399,15 @@ tr:hover { background: var(--glass); }
 
 /* Cards for mobile transactions */
 .cards-container { display: none; }
-.transaction-card { background: var(--card); border-radius: var(--border-radius-lg); padding: 1.25rem; margin-bottom: 1rem; border: 1px solid var(--border); box-shadow: var(--shadow); transition: transform 0.2s, box-shadow 0.2s; }
-.transaction-card:active { transform: translateY(1px); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-.transaction-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
-.transaction-date { color: var(--text-secondary); font-size: 0.875rem; font-weight: 500; }
-.transaction-type { padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+.transaction-card { background: var(--muted); border-radius: var(--border-radius); padding: 1rem; margin-bottom: 0.75rem; }
+.transaction-card-header { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+.transaction-date { color: var(--text-secondary); font-size: 0.875rem; }
+.transaction-type { padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; }
 .transaction-type.income { background: rgba(76, 222, 128, 0.15); color: var(--success); }
 .transaction-type.expense { background: rgba(248, 113, 113, 0.15); color: var(--danger); }
 .transaction-id { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
-.transaction-description { margin-bottom: 0.75rem; font-weight: 600; font-size: 1rem; color: var(--text-primary); }
-.transaction-details { display: flex; justify-content: space-between; color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0; padding-top: 0.75rem; border-top: 1px solid var(--border); }
-.transaction-details span:last-child { font-weight: 700; color: var(--text-primary); font-size: 1rem; }
+.transaction-description { margin-bottom: 0.5rem; font-weight: 500; }
+.transaction-details { display: flex; justify-content: space-between; color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.75rem; }
 .transaction-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
 
 /* Forms */
@@ -402,8 +433,8 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .report-cards-container {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    gap: 1.25rem;
+    margin-bottom: 2.5rem;
 }
 
 .report-card {
@@ -413,13 +444,33 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     display: flex;
     align-items: center;
     box-shadow: var(--shadow);
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: all 0.3s ease;
     border-left: 4px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.report-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.report-card:hover::before {
+    opacity: 1;
 }
 
 .report-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 24px rgba(2,6,23,0.7);
+    border-color: rgba(255,255,255,0.2);
 }
 
 .report-card.income {
@@ -448,6 +499,15 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     justify-content: center;
     margin-right: 1rem;
     font-size: 1.5rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 1;
+    transition: all 0.3s ease;
+}
+
+.report-card:hover .report-card-icon {
+    transform: scale(1.1);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
 }
 
 .income .report-card-icon {
@@ -466,6 +526,38 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     color: var(--warning);
 }
 
+.cash .report-card-icon {
+    color: var(--success);
+}
+
+.non-cash .report-card-icon {
+    color: var(--info);
+}
+
+.cash-income .report-card-icon {
+    color: var(--success);
+}
+
+.non-cash-income .report-card-icon {
+    color: var(--info);
+}
+
+.cash-expense .report-card-icon {
+    color: var(--danger);
+}
+
+.non-cash-expense .report-card-icon {
+    color: var(--danger);
+}
+
+.total-amount .report-card-icon {
+    color: var(--accent);
+}
+
+.transaction-count .report-card-icon {
+    color: var(--warning);
+}
+
 .report-card-content {
     flex: 1;
 }
@@ -474,13 +566,25 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     color: var(--text-secondary);
     font-size: 0.9rem;
     font-weight: 500;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    position: relative;
+    z-index: 1;
+    letter-spacing: 0.5px;
 }
 
 .report-card-value {
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-size: 1.35rem;
+    font-weight: 700;
     display: block;
+    position: relative;
+    z-index: 1;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.report-card:hover .report-card-value {
+    transform: scale(1.05);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 /* Additional Report Styles */
@@ -835,36 +939,37 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 }
 
 .payment-method-stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 0.75rem;
     margin-top: 1rem;
 }
 
 .payment-stat {
-    text-align: center;
-    padding: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
     background: var(--glass);
     border-radius: var(--border-radius-lg);
     border: 1px solid var(--border);
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, transform 0.2s;
 }
 
 .payment-stat:hover {
     background: var(--glass-blur);
+    transform: translateX(3px);
 }
 
-.payment-stat-label {
-    font-size: 0.8rem;
+.stat-label {
+    font-size: 0.9rem;
     color: var(--text-secondary);
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-weight: 500;
 }
 
-.payment-stat-value {
+.stat-value {
     font-weight: 600;
-    font-size: 1.1rem;
+    font-size: 1rem;
     color: var(--text-primary);
 }
 
@@ -896,6 +1001,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     /* Improve report responsiveness on tablets */
     .report-cards-container {
         gap: 0.75rem;
+        grid-template-columns: repeat(2, 1fr);
     }
     
     .charts-container {
@@ -970,6 +1076,19 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     /* Responsive Report Cards */
     .report-cards-container {
         grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+    
+    .report-card {
+        padding: 0.75rem;
+    }
+    
+    .report-card-content h4 {
+        font-size: 0.85rem;
+    }
+    
+    .report-card-value {
+        font-size: 0.95rem;
     }
     
     /* Responsive Charts */
@@ -1046,16 +1165,78 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     #report-details .cards-container {
         display: block;
         margin-top: 1rem;
-        padding: 0 0.5rem;
     }
     
-    #report-details {
-        margin-bottom: 2rem;
+    /* Report pagination styling */
+    #report-details .pagination {
+        margin-top: 1.5rem;
     }
     
-    .table-title {
-        padding: 0 0.5rem;
+    /* Improve transaction cards for report */
+    #report-cards-container .transaction-card {
+        background: var(--glass);
+        border-radius: var(--border-radius-lg);
+        padding: 1.25rem;
         margin-bottom: 1rem;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    #report-cards-container .transaction-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(2,6,23,0.7);
+    }
+    
+    #report-cards-container .transaction-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    #report-cards-container .transaction-date {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+    
+    #report-cards-container .transaction-type {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: white;
+    }
+    
+    #report-cards-container .transaction-type.income {
+        background-color: var(--success);
+    }
+    
+    #report-cards-container .transaction-type.expense {
+        background-color: var(--danger);
+    }
+    
+    #report-cards-container .transaction-description {
+        font-weight: 500;
+        margin-bottom: 0.75rem;
+        color: var(--text-primary);
+    }
+    
+    #report-cards-container .transaction-details {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
+    }
+    
+    #report-cards-container .text-success {
+        color: var(--success);
+        font-weight: 600;
+    }
+    
+    #report-cards-container .text-danger {
+        color: var(--danger);
         font-weight: 600;
     }
 }
