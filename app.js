@@ -48,6 +48,28 @@ const CONFIG = {
     scope: 'https://www.googleapis.com/auth/spreadsheets'
 };
 
+// Helper Functions
+
+/**
+ * Menghasilkan ID transaksi unik dengan format: tanggal sekarang + 4 karakter alfanumerik
+ * Format: YYYYMMDD + 4 karakter alfanumerik acak
+ * @returns {string} ID transaksi unik
+ */
+function generateTransactionId() {
+    const today = new Date();
+    const dateStr = today.getFullYear().toString() + 
+                   (today.getMonth() + 1).toString().padStart(2, '0') + 
+                   today.getDate().toString().padStart(2, '0');
+    
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let alphanumeric = '';
+    for (let i = 0; i < 4; i++) {
+        alphanumeric += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    
+    return dateStr + alphanumeric;
+}
+
 // State Aplikasi
 let state = {
     user: null,
@@ -481,13 +503,8 @@ async function handleAddTransaction(e) {
     
     console.log('Adding transaction - raw amount:', rawAmount, 'parsed amount:', parsedAmount);
     
-    // Generate unique ID (combination of date and random number)
-    const today = new Date();
-    const dateStr = today.getFullYear().toString() + 
-                   (today.getMonth() + 1).toString().padStart(2, '0') + 
-                   today.getDate().toString().padStart(2, '0');
-    const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-    const transactionId = dateStr + randomNum;
+    // Generate unique ID using helper function
+    const transactionId = generateTransactionId();
     
     // Normalisasi metode pembayaran
     const normalizedMethod = (formData.get('method') || '').trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
@@ -588,13 +605,8 @@ async function handleQuickAddTransaction(e) {
     
     console.log('Adding quick transaction - raw amount:', rawAmount, 'parsed amount:', parsedAmount);
     
-    // Generate unique ID (combination of date and random number)
-    const today = new Date();
-    const dateStr = today.getFullYear().toString() + 
-                   (today.getMonth() + 1).toString().padStart(2, '0') + 
-                   today.getDate().toString().padStart(2, '0');
-    const randomNum = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-    const transactionId = dateStr + randomNum;
+    // Generate unique ID using helper function
+    const transactionId = generateTransactionId();
     
     // Normalisasi metode pembayaran
     const normalizedMethod = (formData.get('quick-method') || '').trim().toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
@@ -788,75 +800,79 @@ function updateUI() {
 
 // Update dashboard metrics
 function updateDashboard() {
-    // Debug console dinonaktifkan
-    
-    // Calculate metrics
+    // Hitung total pemasukan & pengeluaran
     const totalIncome = state.transactions
-        .filter(t => t.type.trim().toLowerCase() === 'pemasukan')
-        .reduce((sum, t) => {
-            const amount = parseFloat(t.amount) || 0;
-            // Debug console dinonaktifkan
-            return sum + amount;
-        }, 0);
-    
+        .filter(t => t.type.toLowerCase() === 'pemasukan')
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+
     const totalExpense = state.transactions
-        .filter(t => t.type.trim().toLowerCase() === 'pengeluaran')
-        .reduce((sum, t) => {
-            const amount = parseFloat(t.amount) || 0;
-            // Debug console dinonaktifkan
-            return sum + amount;
-        }, 0);
-    
+        .filter(t => t.type.toLowerCase() === 'pengeluaran')
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+
+    // Hitung modal awal (semua metode)
+    const totalModal = state.transactions
+        .filter(t => t.type.toLowerCase() === 'modal awal')
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+
+    // Net Profit (sesuai konsep laba bersih)
     const netProfit = totalIncome - totalExpense;
     const totalTransactions = state.transactions.length;
-    
-    // Debug console dinonaktifkan
-    
-    // Cash breakdown
-    const cashIncome = state.transactions
-        .filter(t => t.method.trim().toLowerCase() === 'tunai' && t.type.trim().toLowerCase() === 'pemasukan')
-        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-        
-    const cashExpense = state.transactions
-        .filter(t => t.method.trim().toLowerCase() === 'tunai' && t.type.trim().toLowerCase() === 'pengeluaran')
-        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-    
-    const nonCashIncome = state.transactions
-        .filter(t => t.method.trim().toLowerCase() === 'non tunai' && t.type.trim().toLowerCase() === 'pemasukan')
-        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-        
-    const nonCashExpense = state.transactions
-        .filter(t => t.method.trim().toLowerCase() === 'non tunai' && t.type.trim().toLowerCase() === 'pengeluaran')
-        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-    
-    // Total untuk setiap metode pembayaran
-    const totalCash = cashIncome + cashExpense;
-    const totalNonCash = nonCashIncome + nonCashExpense;
-    
-    // Nilai bersih (pemasukan - pengeluaran) untuk setiap metode
-    const cashAmount = cashIncome - cashExpense;
-    const nonCashAmount = nonCashIncome - nonCashExpense;
-    
-    // Total keseluruhan untuk persentase
-    const totalAmount = totalCash + totalNonCash;
-    const cashPercentage = totalAmount > 0 ? (totalCash / totalAmount) * 100 : 0;
-    const nonCashPercentage = totalAmount > 0 ? (totalNonCash / totalAmount) * 100 : 0;
-    
 
-    
-    // Ratios
+    // Hitung breakdown kas: tunai
+    const cashIncome = state.transactions
+        .filter(t => t.method.toLowerCase() === 'tunai' && t.type.toLowerCase() === 'pemasukan')
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+
+    const cashExpense = state.transactions
+        .filter(t => t.method.toLowerCase() === 'tunai' && t.type.toLowerCase() === 'pengeluaran')
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+
+    const cashModal = state.transactions
+        .filter(t => t.method.toLowerCase() === 'tunai' && t.type.toLowerCase() === 'modal awal')
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+
+    const cashAmount = cashIncome - cashExpense + cashModal;
+
+    // Hitung breakdown kas: non tunai
+    const nonCashIncome = state.transactions
+        .filter(t => t.method.toLowerCase() === 'non tunai' && t.type.toLowerCase() === 'pemasukan')
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+
+    const nonCashExpense = state.transactions
+        .filter(t => t.method.toLowerCase() === 'non tunai' && t.type.toLowerCase() === 'pengeluaran')
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+
+    const nonCashModal = state.transactions
+        .filter(t => t.method.toLowerCase() === 'non tunai' && t.type.toLowerCase() === 'modal awal')
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+
+    const nonCashAmount = nonCashIncome - nonCashExpense + nonCashModal;
+
+    // Total kas akhir
+    const totalKas = cashAmount + nonCashAmount;
+
+    // Persentase breakdown
+    const cashPercentage = totalKas > 0 ? (cashAmount / totalKas) * 100 : 0;
+    const nonCashPercentage = totalKas > 0 ? (nonCashAmount / totalKas) * 100 : 0;
+
+    // Rasio
     const profitRatio = totalIncome > 0 ? (netProfit / totalIncome) * 100 : 0;
     const expenseRatio = totalIncome > 0 ? (totalExpense / totalIncome) * 100 : 0;
 
-    // Update DOM dengan format mata uang yang benar
+    // Update DOM
     document.getElementById('total-income').textContent = formatCurrency(totalIncome);
     document.getElementById('total-expense').textContent = formatCurrency(totalExpense);
     document.getElementById('net-profit').textContent = formatCurrency(netProfit);
     document.getElementById('total-transactions').textContent = totalTransactions;
 
-    // Update nilai breakdown kas
     document.getElementById('cash-amount').textContent = formatCurrency(cashAmount);
     document.getElementById('non-cash-amount').textContent = formatCurrency(nonCashAmount);
+    
+    // Update total kas di dashboard jika elemen ada
+    const totalKasEl = document.getElementById('total-kas');
+    if (totalKasEl) {
+        totalKasEl.textContent = formatCurrency(totalKas);
+    }
 
     document.getElementById('cash-percentage').textContent = cashPercentage.toFixed(1) + '%';
     document.getElementById('non-cash-percentage').textContent = nonCashPercentage.toFixed(1) + '%';
@@ -869,9 +885,25 @@ function updateDashboard() {
     document.querySelector('.progress-fill.non-cash').style.width = nonCashPercentage + '%';
     document.querySelector('.progress-fill.profit-ratio').style.width = Math.max(0, profitRatio) + '%';
     document.querySelector('.progress-fill.expense-ratio').style.width = Math.min(100, expenseRatio) + '%';
-
     
-    // Update recent transactions
+    // Update metrik breakdown kas baru jika elemen ada
+    const totalCashEl = document.getElementById('total-cash');
+    const totalNonCashEl = document.getElementById('total-non-cash');
+    const cashIncomeEl = document.getElementById('cash-income');
+    const nonCashIncomeEl = document.getElementById('non-cash-income');
+    const cashExpenseEl = document.getElementById('cash-expense');
+    const nonCashExpenseEl = document.getElementById('non-cash-expense');
+    const totalAmountEl = document.getElementById('total-amount');
+    
+    if (totalCashEl) totalCashEl.textContent = formatCurrency(cashAmount);
+    if (totalNonCashEl) totalNonCashEl.textContent = formatCurrency(nonCashAmount);
+    if (cashIncomeEl) cashIncomeEl.textContent = formatCurrency(cashIncome);
+    if (nonCashIncomeEl) nonCashIncomeEl.textContent = formatCurrency(nonCashIncome);
+    if (cashExpenseEl) cashExpenseEl.textContent = formatCurrency(cashExpense);
+    if (nonCashExpenseEl) nonCashExpenseEl.textContent = formatCurrency(nonCashExpense);
+    if (totalAmountEl) totalAmountEl.textContent = formatCurrency(totalKas);
+
+    // Update transaksi terbaru
     updateRecentTransactions();
 }
 
@@ -1171,6 +1203,46 @@ function updateReportUI(transactions, dateRange, reportType) {
             return sum + amount;
         }, 0);
     
+
+        
+    // Hitung Pemasukan Tunai
+    const cashIncome = transactions
+        .filter(t => t.method.trim().toLowerCase() === 'tunai' && t.type.trim().toLowerCase() === 'pemasukan')
+        .reduce((sum, t) => {
+            const amount = parseFloat(t.amount) || 0;
+            return sum + amount;
+        }, 0);
+    
+    // Hitung Pemasukan Non Tunai
+    const nonCashIncome = transactions
+        .filter(t => t.method.trim().toLowerCase() === 'non tunai' && t.type.trim().toLowerCase() === 'pemasukan')
+        .reduce((sum, t) => {
+            const amount = parseFloat(t.amount) || 0;
+            return sum + amount;
+        }, 0);
+    
+    // Hitung Pengeluaran Tunai
+    const cashExpense = transactions
+        .filter(t => t.method.trim().toLowerCase() === 'tunai' && t.type.trim().toLowerCase() === 'pengeluaran')
+        .reduce((sum, t) => {
+            const amount = parseFloat(t.amount) || 0;
+            return sum + amount;
+        }, 0);
+    
+    // Hitung Pengeluaran Non Tunai
+    const nonCashExpense = transactions
+        .filter(t => t.method.trim().toLowerCase() === 'non tunai' && t.type.trim().toLowerCase() === 'pengeluaran')
+        .reduce((sum, t) => {
+            const amount = parseFloat(t.amount) || 0;
+            return sum + amount;
+        }, 0);
+        
+    // Hitung Total Tunai (pemasukan tunai - pengeluaran tunai)
+    const totalCash = cashIncome - cashExpense;
+    
+    // Hitung Total Non Tunai (pemasukan non tunai - pengeluaran non tunai)
+    const totalNonCash = nonCashIncome - nonCashExpense;
+    
     const netProfit = totalIncome - totalExpense;
     const profitPercentage = totalIncome > 0 ? (netProfit / totalIncome) * 100 : 0;
     const expenseRatio = totalIncome > 0 ? (totalExpense / totalIncome) * 100 : 0;
@@ -1252,11 +1324,44 @@ function updateReportUI(transactions, dateRange, reportType) {
             const transactionCountEl = document.getElementById('transaction-count');
             const avgTransactionEl = document.getElementById('avg-transaction');
             
+            // Elemen untuk metrik baru
+            const totalCashEl = document.getElementById('total-cash');
+            const totalNonCashEl = document.getElementById('total-non-cash');
+            const cashIncomeEl = document.getElementById('cash-income');
+            const nonCashIncomeEl = document.getElementById('non-cash-income');
+            const cashExpenseEl = document.getElementById('cash-expense');
+            const nonCashExpenseEl = document.getElementById('non-cash-expense');
+            const totalAmountEl = document.getElementById('total-amount');
+            
+            // Update metrik dasar
             if (totalIncomeEl) totalIncomeEl.textContent = formatCurrency(totalIncome);
             if (totalExpenseEl) totalExpenseEl.textContent = formatCurrency(totalExpense);
             if (profitLossEl) profitLossEl.textContent = formatCurrency(netProfit);
             if (transactionCountEl) transactionCountEl.textContent = transactions.length;
             if (avgTransactionEl) avgTransactionEl.textContent = avgTransactionsPerDay.toFixed(1);
+            
+            // Update metrik baru
+            if (totalCashEl) totalCashEl.textContent = formatCurrency(totalCash);
+            if (totalNonCashEl) totalNonCashEl.textContent = formatCurrency(totalNonCash);
+            if (cashIncomeEl) cashIncomeEl.textContent = formatCurrency(cashIncome);
+            if (nonCashIncomeEl) nonCashIncomeEl.textContent = formatCurrency(nonCashIncome);
+            if (cashExpenseEl) cashExpenseEl.textContent = formatCurrency(cashExpense);
+            if (nonCashExpenseEl) nonCashExpenseEl.textContent = formatCurrency(nonCashExpense);
+            if (totalAmountEl) totalAmountEl.textContent = formatCurrency(totalCash + totalNonCash);
+            
+            // Update elemen laporan Breakdown Kas
+            const reportCashIncomeEl = document.getElementById('report-cash-income');
+            const reportNonCashIncomeEl = document.getElementById('report-non-cash-income');
+            const reportCashExpenseEl = document.getElementById('report-cash-expense');
+            const reportNonCashExpenseEl = document.getElementById('report-non-cash-expense');
+            const reportTransactionCountEl = document.getElementById('report-transaction-count');
+            
+            // Update nilai Breakdown Kas di laporan
+            if (reportCashIncomeEl) reportCashIncomeEl.textContent = formatCurrency(cashIncome);
+            if (reportNonCashIncomeEl) reportNonCashIncomeEl.textContent = formatCurrency(nonCashIncome);
+            if (reportCashExpenseEl) reportCashExpenseEl.textContent = formatCurrency(cashExpense);
+            if (reportNonCashExpenseEl) reportNonCashExpenseEl.textContent = formatCurrency(nonCashExpense);
+            if (reportTransactionCountEl) reportTransactionCountEl.textContent = transactions.length;
             
             // Update saldo akhir periode (assuming beginning balance is 0 for now)
             const beginningBalance = 0; // This should be calculated or retrieved from previous period
@@ -1302,21 +1407,108 @@ function updateReportUI(transactions, dateRange, reportType) {
         // Update report table for basic report
         if (reportType === 'basic' || reportType === 'all') {
             const tableBody = document.querySelector('#report-table tbody');
-            if (!tableBody) return;
-            tableBody.innerHTML = '';
-        
-            // Show detailed transactions for basic report
-            transactions.forEach(transaction => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${formatDate(new Date(transaction.date))}</td>
-                    <td>${transaction.description}</td>
-                    <td><span class="badge ${transaction.type === 'Pemasukan' ? 'income' : 'expense'}">${transaction.type}</span></td>
-                    <td>${transaction.method}</td>
-                    <td class="${transaction.type === 'Pemasukan' ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloat(transaction.amount))}</td>
-                `;
-                tableBody.appendChild(row);
+            const cardsContainer = document.getElementById('report-cards-container');
+            
+            if (tableBody) tableBody.innerHTML = '';
+            if (cardsContainer) cardsContainer.innerHTML = '';
+            
+            // Sort transactions by date (newest first)
+            const sortedTransactions = [...transactions].sort((a, b) => {
+                return new Date(b.date) - new Date(a.date);
             });
+            
+            // Pagination state for report
+            let reportPaginationState = {
+                currentPage: 1,
+                itemsPerPage: 10,
+                totalPages: Math.ceil(sortedTransactions.length / 10) || 1
+            };
+            
+            // Update pagination UI
+            document.getElementById('report-current-page').textContent = reportPaginationState.currentPage;
+            document.getElementById('report-total-pages').textContent = reportPaginationState.totalPages;
+            document.getElementById('report-prev-page').disabled = reportPaginationState.currentPage <= 1;
+            document.getElementById('report-next-page').disabled = reportPaginationState.currentPage >= reportPaginationState.totalPages;
+            
+            // Get current page items (10 items per page)
+            const startIndex = 0; // Always start with the first page initially
+            const endIndex = startIndex + reportPaginationState.itemsPerPage;
+            const currentPageItems = sortedTransactions.slice(startIndex, endIndex);
+            
+            // Add event listeners for pagination buttons
+            document.getElementById('report-prev-page').onclick = function() {
+                if (reportPaginationState.currentPage > 1) {
+                    reportPaginationState.currentPage--;
+                    updateReportPagination();
+                }
+            };
+            
+            document.getElementById('report-next-page').onclick = function() {
+                if (reportPaginationState.currentPage < reportPaginationState.totalPages) {
+                    reportPaginationState.currentPage++;
+                    updateReportPagination();
+                }
+            };
+            
+            // Function to update pagination
+            function updateReportPagination() {
+                // Update UI
+                document.getElementById('report-current-page').textContent = reportPaginationState.currentPage;
+                document.getElementById('report-prev-page').disabled = reportPaginationState.currentPage <= 1;
+                document.getElementById('report-next-page').disabled = reportPaginationState.currentPage >= reportPaginationState.totalPages;
+                
+                // Clear previous content
+                if (tableBody) tableBody.innerHTML = '';
+                if (cardsContainer) cardsContainer.innerHTML = '';
+                
+                // Get current page items
+                const startIndex = (reportPaginationState.currentPage - 1) * reportPaginationState.itemsPerPage;
+                const endIndex = startIndex + reportPaginationState.itemsPerPage;
+                const currentPageItems = sortedTransactions.slice(startIndex, endIndex);
+                
+                // Render items
+                renderReportItems(currentPageItems);
+            }
+            
+            // Function to render items
+            function renderReportItems(items) {
+                // Show detailed transactions for basic report in table
+                items.forEach(transaction => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${formatDate(new Date(transaction.date))}</td>
+                        <td>${transaction.description}</td>
+                        <td><span class="badge ${transaction.type === 'Pemasukan' ? 'income' : 'expense'}">${
+    transaction.type}</span></td>
+                        <td>${transaction.method}</td>
+                        <td class="${transaction.type === 'Pemasukan' ? 'text-success' : 'text-danger'}">${formatCurrency(parseFloat(transaction.amount))}</td>
+                    `;
+                    if (tableBody) tableBody.appendChild(row);
+                });
+                
+                // Add cards for mobile view
+                items.forEach(transaction => {
+                    const amount = parseFloat(transaction.amount) || 0;
+                    
+                    const card = document.createElement('div');
+                    card.className = 'transaction-card';
+                    card.innerHTML = `
+                        <div class="transaction-card-header">
+                            <span class="transaction-date">${formatDate(new Date(transaction.date))}</span>
+                            <span class="transaction-type ${transaction.type === 'Pemasukan' ? 'income' : 'expense'}">${transaction.type}</span>
+                        </div>
+                        <div class="transaction-description">${transaction.description}</div>
+                        <div class="transaction-details">
+                            <span>${transaction.method}</span>
+                            <span class="${transaction.type === 'Pemasukan' ? 'text-success' : 'text-danger'}">${formatCurrency(amount)}</span>
+                        </div>
+                    `;
+                    if (cardsContainer) cardsContainer.appendChild(card);
+                });
+            }
+            
+            // Initial render
+            renderReportItems(currentPageItems);
         }
         
         // For analytic report, create breakdown by category
@@ -1328,29 +1520,44 @@ function updateReportUI(transactions, dateRange, reportType) {
             const expenseByCategory = {};
             const paymentMethods = { 'Tunai': 0, 'Non Tunai': 0 };
             
+            // Inisialisasi objek untuk menyimpan pemasukan, pengeluaran, dan modal awal berdasarkan metode pembayaran
+            const paymentMethodsIncome = { 'Tunai': 0, 'Non Tunai': 0 };
+            const paymentMethodsExpense = { 'Tunai': 0, 'Non Tunai': 0 };
+            const paymentMethodsModal = { 'Tunai': 0, 'Non Tunai': 0 };
+            
             // Hitung metode pembayaran berdasarkan transaksi aktual
             transactions.forEach(transaction => {
                 const amount = parseFloat(transaction.amount) || 0;
                 const category = transaction.category || 'Lainnya';
                 const method = (transaction.method || 'Tunai').trim().toLowerCase();
                 const normalizedMethod = method === 'tunai' ? 'Tunai' : 'Non Tunai';
+                const transactionType = transaction.type.trim().toLowerCase();
                 
-                // Tambahkan ke total metode pembayaran
-                paymentMethods[normalizedMethod] = (paymentMethods[normalizedMethod] || 0) + amount;
-                
-                if (transaction.type.trim().toLowerCase() === 'pemasukan') {
+                // Tambahkan ke total metode pembayaran berdasarkan jenis transaksi
+                if (transactionType === 'pemasukan') {
+                    paymentMethodsIncome[normalizedMethod] = (paymentMethodsIncome[normalizedMethod] || 0) + amount;
                     incomeByCategory[category] = (incomeByCategory[category] || 0) + amount;
-                } else {
+                } else if (transactionType === 'pengeluaran') {
+                    paymentMethodsExpense[normalizedMethod] = (paymentMethodsExpense[normalizedMethod] || 0) + amount;
                     expenseByCategory[category] = (expenseByCategory[category] || 0) + amount;
+                } else if (transactionType === 'modal awal') {
+                    paymentMethodsModal[normalizedMethod] = (paymentMethodsModal[normalizedMethod] || 0) + amount;
                 }
+                
+                // Tambahkan ke total metode pembayaran (untuk kompatibilitas)
+                paymentMethods[normalizedMethod] = (paymentMethods[normalizedMethod] || 0) + amount;
             });
+            
+            // Hitung total kas sesuai dengan perhitungan di dashboard
+            const cashAmount = paymentMethodsIncome['Tunai'] - paymentMethodsExpense['Tunai'] + paymentMethodsModal['Tunai'];
+            const nonCashAmount = paymentMethodsIncome['Non Tunai'] - paymentMethodsExpense['Non Tunai'] + paymentMethodsModal['Non Tunai'];
+            const totalKas = cashAmount + nonCashAmount;
             
             // Category breakdown telah dihapus
             
             // Update payment method breakdown
-            const totalPayments = Object.values(paymentMethods).reduce((sum, val) => sum + val, 0);
-            const cashPercentage = totalPayments > 0 ? (paymentMethods['Tunai'] / totalPayments) * 100 : 0;
-            const nonCashPercentage = totalPayments > 0 ? (paymentMethods['Non Tunai'] / totalPayments) * 100 : 0;
+            const cashPercentage = totalKas > 0 ? (cashAmount / totalKas) * 100 : 0;
+            const nonCashPercentage = totalKas > 0 ? (nonCashAmount / totalKas) * 100 : 0;
             
             // Buat atau perbarui elemen analisis metode pembayaran
             const paymentMethodAnalysis = document.getElementById('payment-method-analysis');
@@ -1372,8 +1579,20 @@ function updateReportUI(transactions, dateRange, reportType) {
                 </div>
                 <div class="payment-method-stats">
                     <div class="payment-stat">
+                        <div class="stat-label">Pemasukan</div>
+                        <div class="stat-value">${formatCurrency(paymentMethodsIncome['Tunai'])}</div>
+                    </div>
+                    <div class="payment-stat">
+                        <div class="stat-label">Pengeluaran</div>
+                        <div class="stat-value">${formatCurrency(paymentMethodsExpense['Tunai'])}</div>
+                    </div>
+                    <div class="payment-stat">
+                        <div class="stat-label">Modal Awal</div>
+                        <div class="stat-value">${formatCurrency(paymentMethodsModal['Tunai'])}</div>
+                    </div>
+                    <div class="payment-stat">
                         <div class="stat-label">Total</div>
-                        <div class="stat-value">${formatCurrency(paymentMethods['Tunai'])}</div>
+                        <div class="stat-value">${formatCurrency(cashAmount)}</div>
                     </div>
                 </div>
             `;
@@ -1395,8 +1614,20 @@ function updateReportUI(transactions, dateRange, reportType) {
                 </div>
                 <div class="payment-method-stats">
                     <div class="payment-stat">
+                        <div class="stat-label">Pemasukan</div>
+                        <div class="stat-value">${formatCurrency(paymentMethodsIncome['Non Tunai'])}</div>
+                    </div>
+                    <div class="payment-stat">
+                        <div class="stat-label">Pengeluaran</div>
+                        <div class="stat-value">${formatCurrency(paymentMethodsExpense['Non Tunai'])}</div>
+                    </div>
+                    <div class="payment-stat">
+                        <div class="stat-label">Modal Awal</div>
+                        <div class="stat-value">${formatCurrency(paymentMethodsModal['Non Tunai'])}</div>
+                    </div>
+                    <div class="payment-stat">
                         <div class="stat-label">Total</div>
-                        <div class="stat-value">${formatCurrency(paymentMethods['Non Tunai'])}</div>
+                        <div class="stat-value">${formatCurrency(nonCashAmount)}</div>
                     </div>
                 </div>
             `;
@@ -1453,42 +1684,18 @@ function updateReportUI(transactions, dateRange, reportType) {
         // Detailed report (default)
         else {
             const tableBody = document.querySelector('#report-table tbody');
-            const cardsContainer = document.getElementById('report-cards');
-            
-            if (tableBody) tableBody.innerHTML = '';
-            if (cardsContainer) cardsContainer.innerHTML = '';
+            if (!tableBody) return;
             
             transactions.forEach(transaction => {
-                // Add row to table
-                if (tableBody) {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${formatDate(transaction.date)}</td>
-                        <td>${transaction.description}</td>
-                        <td><span class="badge ${transaction.type === 'Pemasukan' ? 'income' : 'expense'}">${transaction.type}</span></td>
-                        <td>${transaction.method}</td>
-                        <td>${formatCurrency(transaction.amount)}</td>
-                    `;
-                    tableBody.appendChild(row);
-                }
-                
-                // Add card for mobile view
-                if (cardsContainer) {
-                    const card = document.createElement('div');
-                    card.className = 'transaction-card';
-                    card.innerHTML = `
-                        <div class="transaction-card-header">
-                            <span class="transaction-date">${formatDate(transaction.date)}</span>
-                            <span class="transaction-type ${transaction.type.trim().toLowerCase() === 'pemasukan' ? 'income' : 'expense'}">${transaction.type}</span>
-                        </div>
-                        <div class="transaction-description">${transaction.description}</div>
-                        <div class="transaction-details">
-                            <span>${transaction.method}</span>
-                            <span>${formatCurrency(transaction.amount)}</span>
-                        </div>
-                    `;
-                    cardsContainer.appendChild(card);
-                }
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formatDate(transaction.date)}</td>
+                    <td>${transaction.description}</td>
+                    <td><span class="badge ${transaction.type === 'Pemasukan' ? 'income' : 'expense'}">${transaction.type}</span></td>
+                    <td>${transaction.method}</td>
+                    <td>${formatCurrency(transaction.amount)}</td>
+                `;
+                tableBody.appendChild(row);
             });
         }
     }
@@ -2754,6 +2961,16 @@ function exportReport() {
     // Tambahkan kelas print-mode ke body untuk styling khusus cetak
     document.body.classList.add('print-mode');
     
+    // Pastikan semua metrik baru terlihat dalam laporan cetak
+    const reportTotalCash = document.getElementById('report-total-cash');
+    const reportTotalNonCash = document.getElementById('report-total-non-cash');
+    const reportCashIncome = document.getElementById('report-cash-income');
+    const reportNonCashIncome = document.getElementById('report-non-cash-income');
+    const reportCashExpense = document.getElementById('report-cash-expense');
+    const reportNonCashExpense = document.getElementById('report-non-cash-expense');
+    const reportTotalAmount = document.getElementById('report-total-amount');
+    const reportTransactionCount = document.getElementById('report-transaction-count');
+    
     // Tambahkan header cetak
     const printHeader = document.createElement('div');
     printHeader.className = 'print-header';
@@ -2782,6 +2999,16 @@ function exportToPDF() {
     try {
         // Tambahkan kelas print-mode ke body untuk styling khusus
         document.body.classList.add('print-mode');
+        
+        // Pastikan semua metrik baru terlihat dalam laporan PDF
+        const reportTotalCash = document.getElementById('report-total-cash');
+        const reportTotalNonCash = document.getElementById('report-total-non-cash');
+        const reportCashIncome = document.getElementById('report-cash-income');
+        const reportNonCashIncome = document.getElementById('report-non-cash-income');
+        const reportCashExpense = document.getElementById('report-cash-expense');
+        const reportNonCashExpense = document.getElementById('report-non-cash-expense');
+        const reportTotalAmount = document.getElementById('report-total-amount');
+        const reportTransactionCount = document.getElementById('report-transaction-count');
     
     // Ambil elemen report range
     const reportRangeEl = document.getElementById('report-range');
