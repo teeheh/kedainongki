@@ -6,7 +6,6 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kedai Nongki - Sistem Manajemen Kas</title>
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -29,15 +28,20 @@
     <div class="login-wrap">
         <header class="login-header">
         <div class="login-brand">
-            <svg class="login-logo" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+            <img src="kedai-02-03.svg" alt="Kedai Logo" class="login-logo">
+            <!-- <svg class="login-logo" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
             <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
-            </svg>
+            </svg> -->
             <h1 class="login-title">Kedai Nongki</h1>
         </div>
         </header>
+        
 
         <main class="login-main">
         <div class="login-panel">
+            <!-- <div class="login-logo-container">
+                <img src="kedai1-04.png" alt="Kedai Logo" class="kedai-logo">
+            </div> -->
             <div class="login-text">
             <h2 class="login-heading">Welcome Back</h2>
             <p class="login-subtitle">Sign in to manage your cash flow efficiently.</p>
@@ -67,8 +71,18 @@
         <!-- Sidebar for Desktop -->
         <aside id="sidebar" class="sidebar">
             <div class="sidebar-header">
-                <h1>Kedai Nongki</h1>
-                <p>Sistem Manajemen Kas</p>
+                 <!-- <div class="login-logo-container">
+                    <img src="kedai1-04.png" alt="Kedai Logo" class="kedai-logo">
+                </div> -->
+                <div class="login-brand">
+                    <img src="kedai-02-03.svg" alt="Kedai Logo" class="login-logo">
+                    <!-- <svg class="login-logo" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
+                    </svg> -->
+                    <h1 class="login-title">Kedai Nongki</h1>
+                </div>
+                
+                
             </div>
             <nav class="sidebar-nav">
                 <a href="#dashboard" class="nav-item active" data-page="dashboard">
@@ -162,7 +176,7 @@
                             <h3>Breakdown Kas</h3>
                             <div class="progress-container">
                                 <div class="progress-info">
-                                    <span>Tunai</span>
+                                    <span>Kas Tunai</span>
                                     <span id="cash-percentage">0%</span>
                                 </div>
                                 <div class="progress-bar">
@@ -172,7 +186,7 @@
                             </div>
                             <div class="progress-container">
                                 <div class="progress-info">
-                                    <span>Non Tunai</span>
+                                    <span>Kas Non Tunai</span>
                                     <span id="non-cash-percentage">0%</span>
                                 </div>
                                 <div class="progress-bar">
@@ -180,7 +194,7 @@
                                 </div>
                                 <p id="non-cash-amount" class="amount">Rp 0</p>
                             </div>
-                            <div class="total-kas-container">
+                            <div class="progress-container">
                                 <div class="progress-info">
                                     <span><strong>Total</strong></span>
                                 </div>
@@ -361,9 +375,6 @@
                                             <option value="monthly">Bulanan</option>
                                             <option value="quarterly">Kuartalan</option>
                                             <option value="yearly">Tahunan</option>
-                                            <option value="last-month">Bulan Lalu</option>
-                                            <option value="last-quarter">Kuartal Lalu</option>
-                                            <option value="last-year">Tahun Lalu</option>
                                             <option value="custom">Kustom</option>
                                         </select>
                                     </div>
@@ -417,94 +428,95 @@
                         
                         <!-- Laporan Dasar -->
                         <div id="report-basic" class="report-section">
-                            <h4>Ringkasan Periode</h4>
+                            <h4>📊 Laporan Keuangan Dasar</h4>
                             <div class="report-cards-container">
+                                <!-- 1. Saldo Awal / Modal -->
+                                <div class="report-card income">
+                                    <div class="report-card-icon">
+                                        <i class="bi bi-wallet2"></i>
+                                    </div>
+                                    <div class="report-card-content">
+                                        <h4>Saldo Awal / Modal</h4>
+                                        <span class="report-card-value">💰 Modal Awal: Rp 4.665.804</span>
+                                        <span class="report-card-detail">(Tunai: Rp 2.002.000 | Non Tunai: Rp 2.663.804)</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- 2. Total Pemasukan -->
                                 <div class="report-card income">
                                     <div class="report-card-icon">
                                         <i class="bi bi-graph-up-arrow"></i>
                                     </div>
                                     <div class="report-card-content">
                                         <h4>Total Pemasukan</h4>
-                                        <span id="report-income" class="report-card-value">Rp 0</span>
+                                        <span class="report-card-value">📈 Pemasukan: Rp 1.950.637</span>
+                                        <span class="report-card-detail">(Tunai: Rp 1.155.000 | Non Tunai: Rp 795.637)</span>
                                     </div>
                                 </div>
                                 
+                                <!-- 3. Total Pengeluaran -->
                                 <div class="report-card expense">
                                     <div class="report-card-icon">
                                         <i class="bi bi-graph-down-arrow"></i>
                                     </div>
                                     <div class="report-card-content">
                                         <h4>Total Pengeluaran</h4>
-                                        <span id="report-expense" class="report-card-value">Rp 0</span>
+                                        <span class="report-card-value">📉 Pengeluaran: Rp 2.878.000</span>
+                                        <span class="report-card-detail">(Tunai: Rp 435.000 | Non Tunai: Rp 2.443.000)</span>
                                     </div>
                                 </div>
                                 
+                                <!-- 4. Netto (Pemasukan - Pengeluaran) -->
                                 <div class="report-card profit">
                                     <div class="report-card-icon">
                                         <i class="bi bi-cash-coin"></i>
                                     </div>
                                     <div class="report-card-content">
-                                        <h4>Laba Bersih</h4>
-                                        <span id="report-profit" class="report-card-value">Rp 0</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="report-card percentage">
-                                    <div class="report-card-icon">
-                                        <i class="bi bi-percent"></i>
-                                    </div>
-                                    <div class="report-card-content">
-                                        <h4>Persentase Laba</h4>
-                                        <span id="report-profit-percent" class="report-card-value">0%</span>
+                                        <h4>Laba Bersih (Pemasukan - Pengeluaran)</h4>
+                                        <span class="report-card-value">🔄 Laba / Rugi: -Rp 911127.363 (defisit)</span>
                                     </div>
                                 </div>
                             </div>
                             
-                            <h4>Breakdown Kas</h4>
+                            <h4>Distribusi & Transaksi Terbesar</h4>
                             <div class="report-cards-container">
-                                
-                                <div class="report-card cash-income">
+                                <!-- 5. Distribusi Metode -->
+                                <div class="report-card distribution">
                                     <div class="report-card-icon">
-                                        <i class="bi bi-cash-stack"></i>
+                                        <i class="bi bi-pie-chart"></i>
                                     </div>
                                     <div class="report-card-content">
-                                        <h4>Pemasukan Tunai</h4>
-                                        <span id="report-cash-income" class="report-card-value">Rp 0</span>
+                                        <h4>Distribusi Metode</h4>
+                                        <span class="report-card-value">💵 Tunai: Rp 3.192.000</span>
+                                        <span class="report-card-value">💳 Non Tunai: Rp 3.459.441</span>
                                     </div>
                                 </div>
                                 
-                                <div class="report-card non-cash-income">
+                                <!-- 6. Pengeluaran Terbesar -->
+                                <div class="report-card top-expense">
                                     <div class="report-card-icon">
-                                        <i class="bi bi-credit-card-2-front"></i>
+                                        <i class="bi bi-trophy"></i>
                                     </div>
                                     <div class="report-card-content">
-                                        <h4>Pemasukan Non Tunai</h4>
-                                        <span id="report-non-cash-income" class="report-card-value">Rp 0</span>
+                                        <h4>Pengeluaran Terbesar</h4>
+                                        <span class="report-card-value">🏆 Bayar Scan Mamah: Rp 1.503.000</span>
+                                        <span class="report-card-value">🥈 Bayar Shopee: Rp 935.000</span>
                                     </div>
                                 </div>
                                 
-                                <div class="report-card cash-expense">
+                                <!-- 7. Pemasukan Terbesar -->
+                                <div class="report-card top-income">
                                     <div class="report-card-icon">
-                                        <i class="bi bi-cash-stack"></i>
+                                        <i class="bi bi-trophy"></i>
                                     </div>
                                     <div class="report-card-content">
-                                        <h4>Pengeluaran Tunai</h4>
-                                        <span id="report-cash-expense" class="report-card-value">Rp 0</span>
+                                        <h4>Pemasukan Terbesar</h4>
+                                        <span class="report-card-value">🏆 Pendapatan Cash (2025-09-02): Rp 435.000</span>
+                                        <span class="report-card-value">🥈 Pendapatan Cash (2025-09-01): Rp 360.000</span>
                                     </div>
                                 </div>
                                 
-                                <div class="report-card non-cash-expense">
-                                    <div class="report-card-icon">
-                                        <i class="bi bi-credit-card-2-front"></i>
-                                    </div>
-                                    <div class="report-card-content">
-                                        <h4>Pengeluaran Non Tunai</h4>
-                                        <span id="report-non-cash-expense" class="report-card-value">Rp 0</span>
-                                    </div>
-                                </div>
-                                
-
-                                
+                                <!-- Jumlah Transaksi -->
                                 <div class="report-card transaction-count">
                                     <div class="report-card-icon">
                                         <i class="bi bi-receipt"></i>
@@ -548,18 +560,74 @@
                         <!-- Laporan Visualisasi -->
                         <div id="report-visual" class="report-section hidden">
                             <h4>Visualisasi Data</h4>
+                            
+                            <!-- Pie Charts -->
+                            <h5>📊 Pie Chart (Bagan Lingkaran)</h5>
                             <div class="charts-container">
                                 <div class="chart-card">
-                                    <h4>Perbandingan Pemasukan & Pengeluaran</h4>
+                                    <h4>Distribusi Jenis Transaksi</h4>
                                     <div class="chart-wrapper">
-                                        <canvas id="pie-chart"></canvas>
+                                        <canvas id="transaction-type-pie-chart"></canvas>
                                     </div>
                                 </div>
                                 
-
+                                <div class="chart-card">
+                                    <h4>Metode Pembayaran</h4>
+                                    <div class="chart-wrapper">
+                                        <canvas id="payment-method-pie-chart"></canvas>
+                                    </div>
+                                </div>
                             </div>
                             
-
+                            <div class="charts-container">
+                                <div class="chart-card">
+                                    <h4>Kategori Pengeluaran</h4>
+                                    <div class="chart-wrapper">
+                                        <canvas id="expense-category-pie-chart"></canvas>
+                                    </div>
+                                </div>
+                                
+                                <div class="chart-card">
+                                    <h4>Persentase Laba</h4>
+                                    <div class="chart-wrapper">
+                                        <canvas id="income-expense-pie-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Bar Charts -->
+                            <h5>📊 Bar Chart (Diagram Batang)</h5>
+                            <div class="charts-container">
+                                <div class="chart-card">
+                                    <h4>Total Transaksi Harian</h4>
+                                    <div class="chart-wrapper">
+                                        <canvas id="daily-transactions-bar-chart"></canvas>
+                                    </div>
+                                </div>
+                                
+                                <div class="chart-card">
+                                    <h4>Pemasukan & Pengeluaran per Metode</h4>
+                                    <div class="chart-wrapper">
+                                        <canvas id="payment-method-bar-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="charts-container">
+                                <div class="chart-card">
+                                    <h4>Top Pengeluaran Harian</h4>
+                                    <div class="chart-wrapper">
+                                        <canvas id="top-expense-bar-chart"></canvas>
+                                    </div>
+                                </div>
+                                
+                                <div class="chart-card" id="bar-chart-container">
+                                    <h4>Tren Transaksi</h4>
+                                    <div class="chart-wrapper">
+                                        <canvas id="bar-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
                         <!-- Laporan Forecast dihapus -->
