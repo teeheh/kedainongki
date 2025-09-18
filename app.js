@@ -45,7 +45,9 @@ const CONFIG = {
     clientId: '883588123458-kc7p924f89q7dtg4ape0u8lslqjqvmrt.apps.googleusercontent.com', // Ganti dengan Client ID Anda
     spreadsheetId: '1gd1JcYiuUsPXO1xbwKHJomnLxMdK7s7xfJ60l3p7WKw', // Ganti dengan Spreadsheet ID Anda
     discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
-    scope: 'https://www.googleapis.com/auth/spreadsheets'
+    scope: 'https://www.googleapis.com/auth/spreadsheets',
+    sheetName: 'Transaksi', // Nama sheet untuk data laporan keuangan dasar (sesuaikan dengan nama sheet yang benar)
+    sheetRange: 'A1:F20000' // Range data yang diambil (bisa disesuaikan)
 };
 
 // Helper Functions
@@ -557,6 +559,9 @@ async function handleAddTransaction(e) {
         // Reset form
         form.reset();
 
+        // Reload data from sheet untuk memastikan data terbaru
+        await loadTransactions();
+        
         // Update UI
         updateUI();
 
@@ -662,6 +667,9 @@ async function handleQuickAddTransaction(e) {
         // Close modal
         closeModal();
 
+        // Reload data from sheet untuk memastikan data terbaru
+        await loadTransactions();
+        
         // Update UI
         updateUI();
 
@@ -728,23 +736,11 @@ function calculateDateRange(period) {
             startDate = new Date(today.getFullYear(), 0, 1);
             endDate = new Date(today);
             break;
-        case 'last-month':
-            // Last month
-            startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-            endDate = new Date(today.getFullYear(), today.getMonth(), 0);
-            break;
-        case 'last-quarter':
-            // Last quarter
-            const lastQuarter = Math.floor(today.getMonth() / 3) - 1;
-            const year = lastQuarter < 0 ? today.getFullYear() - 1 : today.getFullYear();
-            const quarter = lastQuarter < 0 ? 3 : lastQuarter;
-            startDate = new Date(year, quarter * 3, 1);
-            endDate = new Date(year, (quarter + 1) * 3, 0);
-            break;
-        case 'last-year':
-            // Last year
-            startDate = new Date(today.getFullYear() - 1, 0, 1);
-            endDate = new Date(today.getFullYear() - 1, 11, 31);
+        case 'all-time':
+            // Semua transaksi (keseluruhan)
+            // Gunakan tanggal yang sangat lampau untuk memastikan semua transaksi tercakup
+            startDate = new Date(1970, 0, 1); // 1 Januari 1970
+            endDate = new Date(today);
             break;
         case 'custom':
             const startInput = document.getElementById('start-date').value;
@@ -846,6 +842,7 @@ function updateDashboard() {
         .filter(t => t.method.toLowerCase() === 'non tunai' && t.type.toLowerCase() === 'modal awal')
         .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
 
+    // Rumus Kas Non Tunai yang diperbarui: Pemasukan Non Tunai - Pengeluaran Non Tunai + Modal Awal Non Tunai
     const nonCashAmount = nonCashIncome - nonCashExpense + nonCashModal;
 
     // Total kas akhir
@@ -1179,63 +1176,48 @@ function updateTransactionsUI(transactions) {
 }
 
 // Variabel global untuk menyimpan instance chart
-let pieChart = null;
+let transactionTypePieChart = null;
+let paymentMethodPieChart = null;
+let expenseCategoryPieChart = null;
+let incomeExpensePieChart = null;
+let dailyTransactionsBarChart = null;
+let paymentMethodBarChart = null;
+let topExpenseBarChart = null;
 let barChart = null;
+let pieChart = null;
+
 
 // Update report UI
 function updateReportUI(transactions, dateRange, reportType) {
     // Debug console dinonaktifkan
     
-    // Calculate report metrics
-    const totalIncome = transactions
-        .filter(t => t.type.trim().toLowerCase() === 'pemasukan')
-        .reduce((sum, t) => {
-            const amount = parseFloat(t.amount) || 0;
-            // Debug console dinonaktifkan
-            return sum + amount;
-        }, 0);
+    // Fungsi helper untuk menangani nilai undefined
+    function safeGetLowerCase(value) {
+        return value && typeof value === 'string' ? value.trim().toLowerCase() : '';
+    }
     
-    const totalExpense = transactions
-        .filter(t => t.type.trim().toLowerCase() === 'pengeluaran')
-        .reduce((sum, t) => {
-            const amount = parseFloat(t.amount) || 0;
-            // Debug console dinonaktifkan
-            return sum + amount;
-        }, 0);
+    // Fungsi untuk menghitung total berdasarkan tipe dan metode pembayaran
+    function calculateTotal(type, paymentMethod = null) {
+        return transactions
+            .filter(t => {
+                const typeMatch = safeGetLowerCase(t.type) === safeGetLowerCase(type);
+                if (paymentMethod === null) return typeMatch;
+                return typeMatch && safeGetLowerCase(t.method) === safeGetLowerCase(paymentMethod);
+            })
+            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+    }
+    
+    // Calculate report metrics
+    const totalIncome = calculateTotal('pemasukan');
+    const totalExpense = calculateTotal('pengeluaran');
     
 
         
-    // Hitung Pemasukan Tunai
-    const cashIncome = transactions
-        .filter(t => t.method.trim().toLowerCase() === 'tunai' && t.type.trim().toLowerCase() === 'pemasukan')
-        .reduce((sum, t) => {
-            const amount = parseFloat(t.amount) || 0;
-            return sum + amount;
-        }, 0);
-    
-    // Hitung Pemasukan Non Tunai
-    const nonCashIncome = transactions
-        .filter(t => t.method.trim().toLowerCase() === 'non tunai' && t.type.trim().toLowerCase() === 'pemasukan')
-        .reduce((sum, t) => {
-            const amount = parseFloat(t.amount) || 0;
-            return sum + amount;
-        }, 0);
-    
-    // Hitung Pengeluaran Tunai
-    const cashExpense = transactions
-        .filter(t => t.method.trim().toLowerCase() === 'tunai' && t.type.trim().toLowerCase() === 'pengeluaran')
-        .reduce((sum, t) => {
-            const amount = parseFloat(t.amount) || 0;
-            return sum + amount;
-        }, 0);
-    
-    // Hitung Pengeluaran Non Tunai
-    const nonCashExpense = transactions
-        .filter(t => t.method.trim().toLowerCase() === 'non tunai' && t.type.trim().toLowerCase() === 'pengeluaran')
-        .reduce((sum, t) => {
-            const amount = parseFloat(t.amount) || 0;
-            return sum + amount;
-        }, 0);
+    // Hitung Pemasukan dan Pengeluaran berdasarkan metode pembayaran
+    const cashIncome = calculateTotal('pemasukan', 'tunai');
+    const nonCashIncome = calculateTotal('pemasukan', 'non tunai');
+    const cashExpense = calculateTotal('pengeluaran', 'tunai');
+    const nonCashExpense = calculateTotal('pengeluaran', 'non tunai');
         
     // Hitung Total Tunai (pemasukan tunai - pengeluaran tunai)
     const totalCash = cashIncome - cashExpense;
@@ -1253,11 +1235,16 @@ function updateReportUI(transactions, dateRange, reportType) {
     
     // Debug console dinonaktifkan
     
-    // Update summary
-    document.getElementById('report-income').textContent = formatCurrency(totalIncome);
-    document.getElementById('report-expense').textContent = formatCurrency(totalExpense);
-    document.getElementById('report-profit').textContent = formatCurrency(netProfit);
-    document.getElementById('report-profit-percent').textContent = profitPercentage.toFixed(1) + '%';
+    // Update summary - dengan pengecekan null untuk menghindari error
+    const reportIncomeEl = document.getElementById('report-income');
+    const reportExpenseEl = document.getElementById('report-expense');
+    const reportProfitEl = document.getElementById('report-profit');
+    const reportProfitPercentEl = document.getElementById('report-profit-percent');
+    
+    if (reportIncomeEl) reportIncomeEl.textContent = formatCurrency(totalIncome);
+    if (reportExpenseEl) reportExpenseEl.textContent = formatCurrency(totalExpense);
+    if (reportProfitEl) reportProfitEl.textContent = formatCurrency(netProfit);
+    if (reportProfitPercentEl) reportProfitPercentEl.textContent = profitPercentage.toFixed(1) + '%';
     
     // Update date range display
     const rangeText = `Periode: ${formatDate(dateRange.start)} - ${formatDate(dateRange.end)}`;
@@ -1316,7 +1303,402 @@ function updateReportUI(transactions, dateRange, reportType) {
         }
         
         // Fungsi untuk memperbarui metrik laporan dasar
-        function updateBasicReportMetrics() {
+        // Fungsi untuk menampilkan hasil laporan untuk setiap card
+        function updateReportCard(cardType, value, cashValue, nonCashValue) {
+            // Temukan elemen card berdasarkan tipe
+            const cardSelector = `.report-card.${cardType}`;
+            const card = document.querySelector(cardSelector);
+            if (!card) return;
+            
+            // Temukan elemen nilai dan detail di dalam card
+            const valueEl = card.querySelector('.report-card-value');
+            const detailEl = card.querySelector('.report-card-detail');
+            
+            // Update nilai dan detail
+            if (valueEl) {
+                let prefix = '';
+                if (cardType === 'modal') prefix = 'Modal Awal: ';
+                if (cardType === 'income') prefix = 'Pemasukan: ';
+                if (cardType === 'expense') prefix = 'Pengeluaran: ';
+                if (cardType === 'profit-loss') prefix = 'Laba / Rugi: ';
+                
+                valueEl.textContent = `${prefix}${formatCurrency(value)}`;
+            }
+            
+            if (detailEl) {
+                detailEl.textContent = `(Tunai: ${formatCurrency(cashValue)} | Non Tunai: ${formatCurrency(nonCashValue)})`;
+            }
+        }
+        
+        // Konfigurasi Google Sheets API
+        const GOOGLE_SHEETS_CONFIG = {
+            apiKey: 'YOUR_API_KEY', // Ganti dengan API key Anda
+            spreadsheetId: 'YOUR_SPREADSHEET_ID', // Ganti dengan ID spreadsheet Anda
+            range: 'LaporanKeuangan!A1:Z100' // Sesuaikan dengan range data Anda
+        };
+        
+        // Fungsi lama untuk mengambil data dari Google Sheets (tidak digunakan)
+        // Digantikan dengan implementasi baru yang menggunakan gapi.client
+        
+        // Fungsi untuk mengambil data dari Google Sheets
+        async function fetchDataFromGoogleSheets() {
+            try {
+                // Periksa apakah gapi sudah dimuat dan user sudah login
+                if (!gapi || !gapi.client || !gapi.client.sheets) {
+                    console.log('Google API belum dimuat atau user belum login');
+                    return null;
+                }
+                
+                // Ambil data dari Google Sheets
+                const response = await gapi.client.sheets.spreadsheets.values.get({
+                    spreadsheetId: CONFIG.spreadsheetId,
+                    range: `${CONFIG.sheetName}!${CONFIG.sheetRange}`
+                });
+                
+                // Proses data yang diterima
+                const values = response.result.values;
+                if (values && values.length > 0) {
+                    return processSheetData(values);
+                } else {
+                    console.log('Tidak ada data yang ditemukan di Google Sheets');
+                    return null;
+                }
+            } catch (error) {
+                console.error('Error saat mengambil data dari Google Sheets:', error);
+                return null;
+            }
+        }
+        
+        // Fungsi untuk memproses data dari Google Sheets
+        function processSheetData(values) {
+            if (!values || values.length === 0) {
+                return null;
+            }
+            
+            // Asumsikan format data di Google Sheets:
+            // Header: Tipe, Total, Tunai, NonTunai, Persentase, Deskripsi
+            // Row 1: Modal Awal, 1000000, 500000, 500000, -, -
+            // Row 2: Pemasukan, 2000000, 1000000, 1000000, -, -
+            // Row 3: Pengeluaran, 1500000, 750000, 750000, -, -
+            // Row 4: Laba/Rugi, 500000, -, -, 25, -
+            // Row 5: Distribusi Metode, -, 1750000, 1750000, -, -
+            // Row 6: Pengeluaran Terbesar, -, -, -, -, Sewa Tempat: 500000
+            // Row 7: Pengeluaran Terbesar 2, -, -, -, -, Bahan Baku: 300000
+            // Row 8: Pemasukan Terbesar, -, -, -, -, Penjualan Kopi: 800000
+            // Row 9: Pemasukan Terbesar 2, -, -, -, -, Penjualan Makanan: 600000
+            // Row 10: Jumlah Transaksi, 45, -, -, -, -
+            
+            const headers = values[0];
+            const data = {};
+            
+            // Mulai dari baris 1 (setelah header)
+            for (let i = 1; i < values.length; i++) {
+                const row = values[i];
+                const type = row[0];
+                
+                // Penanganan khusus untuk tipe data tertentu
+                if (type.toLowerCase().includes('pengeluaran terbesar') && !type.toLowerCase().includes('2')) {
+                    // Pengeluaran terbesar pertama
+                    if (!data['pengeluaran terbesar']) {
+                        data['pengeluaran terbesar'] = {
+                            top1_desc: '',
+                            top1_amount: 0,
+                            top2_desc: '',
+                            top2_amount: 0
+                        };
+                    }
+                    
+                    // Format: "Deskripsi: Nilai"
+                    const descValue = row[5] ? row[5].split(':') : [];
+                    if (descValue.length >= 2) {
+                        data['pengeluaran terbesar'].top1_desc = descValue[0].trim();
+                        data['pengeluaran terbesar'].top1_amount = parseFloat(descValue[1].trim().replace(/[^\d.-]/g, '')) || 0;
+                    }
+                } 
+                else if (type.toLowerCase().includes('pengeluaran terbesar 2')) {
+                    // Pengeluaran terbesar kedua
+                    if (!data['pengeluaran terbesar']) {
+                        data['pengeluaran terbesar'] = {
+                            top1_desc: '',
+                            top1_amount: 0,
+                            top2_desc: '',
+                            top2_amount: 0
+                        };
+                    }
+                    
+                    // Format: "Deskripsi: Nilai"
+                    const descValue = row[5] ? row[5].split(':') : [];
+                    if (descValue.length >= 2) {
+                        data['pengeluaran terbesar'].top2_desc = descValue[0].trim();
+                        data['pengeluaran terbesar'].top2_amount = parseFloat(descValue[1].trim().replace(/[^\d.-]/g, '')) || 0;
+                    }
+                }
+                else if (type.toLowerCase().includes('pemasukan terbesar') && !type.toLowerCase().includes('2')) {
+                    // Pemasukan terbesar pertama
+                    if (!data['pemasukan terbesar']) {
+                        data['pemasukan terbesar'] = {
+                            top1_desc: '',
+                            top1_amount: 0,
+                            top2_desc: '',
+                            top2_amount: 0
+                        };
+                    }
+                    
+                    // Format: "Deskripsi: Nilai"
+                    const descValue = row[5] ? row[5].split(':') : [];
+                    if (descValue.length >= 2) {
+                        data['pemasukan terbesar'].top1_desc = descValue[0].trim();
+                        data['pemasukan terbesar'].top1_amount = parseFloat(descValue[1].trim().replace(/[^\d.-]/g, '')) || 0;
+                    }
+                }
+                else if (type.toLowerCase().includes('pemasukan terbesar 2')) {
+                    // Pemasukan terbesar kedua
+                    if (!data['pemasukan terbesar']) {
+                        data['pemasukan terbesar'] = {
+                            top1_desc: '',
+                            top1_amount: 0,
+                            top2_desc: '',
+                            top2_amount: 0
+                        };
+                    }
+                    
+                    // Format: "Deskripsi: Nilai"
+                    const descValue = row[5] ? row[5].split(':') : [];
+                    if (descValue.length >= 2) {
+                        data['pemasukan terbesar'].top2_desc = descValue[0].trim();
+                        data['pemasukan terbesar'].top2_amount = parseFloat(descValue[1].trim().replace(/[^\d.-]/g, '')) || 0;
+                    }
+                }
+                else if (type.toLowerCase() === 'jumlah transaksi') {
+                    // Jumlah transaksi
+                    data['jumlah transaksi'] = {
+                        total: parseInt(row[1]) || 0
+                    };
+                }
+                else {
+                    // Format standar untuk tipe data lainnya
+                    data[type.toLowerCase()] = {
+                        total: parseFloat(row[1]) || 0,
+                        tunai: parseFloat(row[2]) || 0,
+                        nonTunai: parseFloat(row[3]) || 0,
+                        persentase: parseFloat(row[4]) || 0
+                    };
+                }
+            }
+            
+            return data;
+        }
+        
+        // Fungsi untuk mengelola card Modal Awal
+        async function updateModalCard(totalModal, cashModal, nonCashModal) {
+            // Coba ambil data dari Google Sheets
+            const sheetData = await fetchDataFromGoogleSheets();
+            
+            if (sheetData && sheetData['modal awal']) {
+                // Gunakan data dari Google Sheets
+                const modalData = sheetData['modal awal'];
+                updateReportCard('modal', modalData.total, modalData.tunai, modalData.nonTunai);
+            } else {
+                // Fallback ke data lokal
+                updateReportCard('modal', totalModal, cashModal, nonCashModal);
+            }
+        }
+        
+        // Fungsi untuk mengelola card Pemasukan
+        async function updateIncomeCard(totalIncome, cashIncome, nonCashIncome) {
+            // Coba ambil data dari Google Sheets
+            const sheetData = await fetchDataFromGoogleSheets();
+            
+            if (sheetData && sheetData['pemasukan']) {
+                // Gunakan data dari Google Sheets
+                const incomeData = sheetData['pemasukan'];
+                updateReportCard('income', incomeData.total, incomeData.tunai, incomeData.nonTunai);
+            } else {
+                // Fallback ke data lokal
+                updateReportCard('income', totalIncome, cashIncome, nonCashIncome);
+            }
+        }
+        
+        // Fungsi untuk mengelola card Pengeluaran
+        async function updateExpenseCard(totalExpense, cashExpense, nonCashExpense) {
+            // Coba ambil data dari Google Sheets
+            const sheetData = await fetchDataFromGoogleSheets();
+            
+            if (sheetData && sheetData['pengeluaran']) {
+                // Gunakan data dari Google Sheets
+                const expenseData = sheetData['pengeluaran'];
+                updateReportCard('expense', expenseData.total, expenseData.tunai, expenseData.nonTunai);
+            } else {
+                // Fallback ke data lokal
+                updateReportCard('expense', totalExpense, cashExpense, nonCashExpense);
+            }
+        }
+        
+        // Fungsi untuk mengelola card Laba/Rugi
+        async function updateProfitLossCard(netProfit, profitPercentage) {
+            // Coba ambil data dari Google Sheets
+            const sheetData = await fetchDataFromGoogleSheets();
+            
+            if (sheetData && sheetData['laba/rugi']) {
+                // Gunakan data dari Google Sheets
+                const profitData = sheetData['laba/rugi'];
+                // Menggunakan kelas profit yang sesuai dengan HTML
+                const profitLossCard = document.querySelector('.report-card.profit');
+                
+                if (profitLossCard) {
+                    const valueEl = profitLossCard.querySelector('.report-card-value');
+                    const detailEl = profitLossCard.querySelector('.report-card-detail');
+                    
+                    if (valueEl) valueEl.textContent = `💹 Laba / Rugi: ${formatCurrency(profitData.total)}`;
+                    if (detailEl) detailEl.textContent = `(${profitData.persentase.toFixed(1)}% dari Pemasukan)`;
+                }
+            } else {
+                // Fallback ke data lokal
+                // Menggunakan kelas profit yang sesuai dengan HTML
+                const profitLossCard = document.querySelector('.report-card.profit');
+                if (profitLossCard) {
+                    const valueEl = profitLossCard.querySelector('.report-card-value');
+                    const detailEl = profitLossCard.querySelector('.report-card-detail');
+                    
+                    if (valueEl) valueEl.textContent = `💹 Laba / Rugi: ${formatCurrency(netProfit)}`;
+                    if (detailEl) detailEl.textContent = `(${profitPercentage.toFixed(1)}% dari Pemasukan)`;
+                }
+            }
+        }
+        
+        // Fungsi untuk mengelola card Distribusi Metode
+        async function updateDistributionCard(totalCash, totalNonCash) {
+            // Coba ambil data dari Google Sheets
+            const sheetData = await fetchDataFromGoogleSheets();
+            
+            const distributionCard = document.querySelector('.report-card.distribution');
+            if (distributionCard) {
+                const valueEls = distributionCard.querySelectorAll('.report-card-value');
+                if (valueEls.length >= 2) {
+                    if (sheetData && sheetData['distribusi metode']) {
+                        // Gunakan data dari Google Sheets
+                        const distData = sheetData['distribusi metode'];
+                        valueEls[0].textContent = `💵 Tunai: ${formatCurrency(distData.tunai)}`;
+                        valueEls[1].textContent = `💳 Non Tunai: ${formatCurrency(distData.nonTunai)}`;
+                    } else {
+                        // Fallback ke data lokal
+                        valueEls[0].textContent = `💵 Tunai: ${formatCurrency(totalCash)}`;
+                        valueEls[1].textContent = `💳 Non Tunai: ${formatCurrency(totalNonCash)}`;
+                    }
+                }
+            }
+        }
+        
+        // Fungsi untuk mengelola card Pengeluaran Terbesar
+        async function updateTopExpenseCard(transactions) {
+            // Coba ambil data dari Google Sheets
+            const sheetData = await fetchDataFromGoogleSheets();
+            
+            const topExpenseCard = document.querySelector('.report-card.top-expense');
+            if (!topExpenseCard) return;
+            
+            const valueEls = topExpenseCard.querySelectorAll('.report-card-value');
+            
+            if (sheetData && sheetData['pengeluaran terbesar']) {
+                // Gunakan data dari Google Sheets
+                const topExpenseData = sheetData['pengeluaran terbesar'];
+                
+                if (valueEls.length >= 1) {
+                    valueEls[0].textContent = `🏆 ${topExpenseData.top1_desc || 'Tidak ada data'}: ${formatCurrency(topExpenseData.top1_amount || 0)}`;
+                }
+                
+                if (valueEls.length >= 2) {
+                    valueEls[1].textContent = `🥈 ${topExpenseData.top2_desc || 'Tidak ada data'}: ${formatCurrency(topExpenseData.top2_amount || 0)}`;
+                }
+            } else {
+                // Fallback ke data lokal
+                // Filter transaksi pengeluaran dan urutkan dari yang terbesar
+                const expenses = transactions
+                    .filter(t => safeGetLowerCase(t.type) === 'pengeluaran')
+                    .sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount));
+                
+                // Tampilkan 2 pengeluaran terbesar jika ada
+                if (expenses.length > 0 && valueEls.length >= 1) {
+                    valueEls[0].textContent = `🏆 ${expenses[0].description}: ${formatCurrency(parseFloat(expenses[0].amount))}`;
+                    
+                    if (expenses.length > 1 && valueEls.length >= 2) {
+                        valueEls[1].textContent = `🥈 ${expenses[1].description}: ${formatCurrency(parseFloat(expenses[1].amount))}`;
+                    } else if (valueEls.length >= 2) {
+                        valueEls[1].textContent = '🥈 Tidak ada data';
+                    }
+                } else {
+                    if (valueEls.length >= 1) valueEls[0].textContent = '🏆 Tidak ada data';
+                    if (valueEls.length >= 2) valueEls[1].textContent = '🥈 Tidak ada data';
+                }
+            }
+        }
+        
+        // Fungsi untuk mengelola card Pemasukan Terbesar
+        async function updateTopIncomeCard(transactions) {
+            // Coba ambil data dari Google Sheets
+            const sheetData = await fetchDataFromGoogleSheets();
+            
+            const topIncomeCard = document.querySelector('.report-card.top-income');
+            if (!topIncomeCard) return;
+            
+            const valueEls = topIncomeCard.querySelectorAll('.report-card-value');
+            
+            if (sheetData && sheetData['pemasukan terbesar']) {
+                // Gunakan data dari Google Sheets
+                const topIncomeData = sheetData['pemasukan terbesar'];
+                
+                if (valueEls.length >= 1) {
+                    valueEls[0].textContent = `🏆 ${topIncomeData.top1_desc || 'Tidak ada data'}: ${formatCurrency(topIncomeData.top1_amount || 0)}`;
+                }
+                
+                if (valueEls.length >= 2) {
+                    valueEls[1].textContent = `🥈 ${topIncomeData.top2_desc || 'Tidak ada data'}: ${formatCurrency(topIncomeData.top2_amount || 0)}`;
+                }
+            } else {
+                // Fallback ke data lokal
+                // Filter transaksi pemasukan dan urutkan dari yang terbesar
+                const incomes = transactions
+                    .filter(t => safeGetLowerCase(t.type) === 'pemasukan')
+                    .sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount));
+                
+                // Tampilkan 2 pemasukan terbesar jika ada
+                if (incomes.length > 0 && valueEls.length >= 1) {
+                    valueEls[0].textContent = `🏆 ${incomes[0].description}: ${formatCurrency(parseFloat(incomes[0].amount))}`;
+                    
+                    if (incomes.length > 1 && valueEls.length >= 2) {
+                        valueEls[1].textContent = `🥈 ${incomes[1].description}: ${formatCurrency(parseFloat(incomes[1].amount))}`;
+                    } else if (valueEls.length >= 2) {
+                        valueEls[1].textContent = '🥈 Tidak ada data';
+                    }
+                } else {
+                    if (valueEls.length >= 1) valueEls[0].textContent = '🏆 Tidak ada data';
+                    if (valueEls.length >= 2) valueEls[1].textContent = '🥈 Tidak ada data';
+                }
+            }
+        }
+        
+        // Fungsi untuk mengelola card Jumlah Transaksi
+        async function updateTransactionCountCard(transactionCount) {
+            // Coba ambil data dari Google Sheets
+            const sheetData = await fetchDataFromGoogleSheets();
+            
+            const transactionCountCard = document.querySelector('.report-card.transaction-count');
+            if (!transactionCountCard) return;
+            
+            const valueEl = transactionCountCard.querySelector('.report-card-value');
+            if (valueEl) {
+                if (sheetData && sheetData['jumlah transaksi']) {
+                    // Gunakan data dari Google Sheets
+                    const countData = sheetData['jumlah transaksi'];
+                    valueEl.textContent = countData.total || 0;
+                } else {
+                    // Fallback ke data lokal
+                    valueEl.textContent = transactionCount;
+                }
+            }
+        }
+        
+        async function updateBasicReportMetrics() {
             // Update basic report metrics
             const totalIncomeEl = document.getElementById('total-income');
             const totalExpenseEl = document.getElementById('total-expense');
@@ -1332,6 +1714,11 @@ function updateReportUI(transactions, dateRange, reportType) {
             const cashExpenseEl = document.getElementById('cash-expense');
             const nonCashExpenseEl = document.getElementById('non-cash-expense');
             const totalAmountEl = document.getElementById('total-amount');
+            
+            // Hitung modal awal (semua metode)
+            const totalModal = calculateTotal('modal awal');
+            const cashModal = calculateTotal('modal awal', 'tunai');
+            const nonCashModal = calculateTotal('modal awal', 'non tunai');
             
             // Update metrik dasar
             if (totalIncomeEl) totalIncomeEl.textContent = formatCurrency(totalIncome);
@@ -1363,8 +1750,8 @@ function updateReportUI(transactions, dateRange, reportType) {
             if (reportNonCashExpenseEl) reportNonCashExpenseEl.textContent = formatCurrency(nonCashExpense);
             if (reportTransactionCountEl) reportTransactionCountEl.textContent = transactions.length;
             
-            // Update saldo akhir periode (assuming beginning balance is 0 for now)
-            const beginningBalance = 0; // This should be calculated or retrieved from previous period
+            // Update saldo awal/modal dan saldo akhir periode
+            const beginningBalance = totalModal; // Menggunakan nilai modal awal yang sudah dihitung
             const netMovement = netProfit;
             const endingBalance = beginningBalance + netMovement;
             
@@ -1375,6 +1762,17 @@ function updateReportUI(transactions, dateRange, reportType) {
             if (beginningBalanceEl) beginningBalanceEl.textContent = formatCurrency(beginningBalance);
             if (netMovementEl) netMovementEl.textContent = formatCurrency(netMovement);
             if (endingBalanceEl) endingBalanceEl.textContent = formatCurrency(endingBalance);
+            
+            // Update semua report card menggunakan fungsi khusus untuk setiap card
+            // Karena fungsi-fungsi ini sekarang async, kita perlu menggunakan await
+            await updateModalCard(totalModal, cashModal, nonCashModal);
+            await updateIncomeCard(totalIncome, cashIncome, nonCashIncome);
+            await updateExpenseCard(totalExpense, cashExpense, nonCashExpense);
+            await updateProfitLossCard(netProfit, profitPercentage);
+            await updateDistributionCard(totalCash, totalNonCash);
+            await updateTopExpenseCard(transactions);
+            await updateTopIncomeCard(transactions);
+            await updateTransactionCountCard(transactions.length);
         }
         
         // Fungsi untuk memperbarui metrik laporan analitis
@@ -1402,7 +1800,8 @@ function updateReportUI(transactions, dateRange, reportType) {
         // }
         
         // Update charts for all report types
-        updateCharts(transactions, dateRange, reportType);
+        const selectedPeriod = 'monthly'; // Default period
+        updateCharts(transactions, dateRange, reportType, selectedPeriod);
         
         // Update report table for basic report
         if (reportType === 'basic' || reportType === 'all') {
@@ -1550,6 +1949,7 @@ function updateReportUI(transactions, dateRange, reportType) {
             
             // Hitung total kas sesuai dengan perhitungan di dashboard
             const cashAmount = paymentMethodsIncome['Tunai'] - paymentMethodsExpense['Tunai'] + paymentMethodsModal['Tunai'];
+            // Rumus Kas Non Tunai yang diperbarui: Pemasukan Tunai - Pengeluaran Tunai + Modal Awal Non Tunai
             const nonCashAmount = paymentMethodsIncome['Non Tunai'] - paymentMethodsExpense['Non Tunai'] + paymentMethodsModal['Non Tunai'];
             const totalKas = cashAmount + nonCashAmount;
             
@@ -1702,10 +2102,11 @@ function updateReportUI(transactions, dateRange, reportType) {
 }
 
 // Fungsi untuk memperbarui grafik
-function updateCharts(transactions, dateRange, reportType) {
+function updateCharts(transactions, dateRange, reportType, selectedPeriod = 'monthly') {
     // Inisialisasi variabel di luar blok try-catch
     let totalIncome = 0;
     let totalExpense = 0;
+    let totalModal = 0;
     
     try {
         // Persiapkan data untuk pie chart (perbandingan pemasukan & pengeluaran)
@@ -1716,25 +2117,29 @@ function updateCharts(transactions, dateRange, reportType) {
         totalExpense = transactions
             .filter(t => t.type.trim().toLowerCase() === 'pengeluaran')
             .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+            
+        totalModal = transactions
+            .filter(t => t.type.trim().toLowerCase() === 'modal awal')
+            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
         
         // Untuk laporan visualisasi, perbarui semua grafik
         if (reportType === 'visual' || reportType === 'all') {
             // Tampilkan elemen visualisasi
             document.getElementById('report-visual').classList.remove('hidden');
             
-            // Donut chart telah dihapus
+            // Update semua pie charts
+            updateTransactionTypePieChart(totalModal, totalIncome, totalExpense);
+            updatePaymentMethodPieChart(transactions);
+            updateExpenseCategoryPieChart(transactions);
+            updateIncomeExpensePieChart(totalIncome, totalExpense);
             
-            // Tren harian telah dihapus
+            // Update semua bar charts
+            updateDailyTransactionsBarChart(transactions);
+            updatePaymentMethodBarChart(transactions);
+            updateTopExpenseBarChart(transactions);
         }
     } catch (error) {
         console.error('Error in updateCharts:', error);
-    }
-    
-    try {
-        // Update pie chart
-        updatePieChart(totalIncome, totalExpense);
-    } catch (error) {
-        console.error('Error in updatePieChart:', error);
     }
     
     // Persiapkan data untuk bar chart (tren transaksi)
@@ -1750,15 +2155,18 @@ function updateCharts(transactions, dateRange, reportType) {
                 groupedByDate[dateKey] = {
                     date: dateKey,
                     income: 0,
-                    expense: 0
+                    expense: 0,
+                    modal: 0
                 };
             }
             
             const amount = parseFloat(transaction.amount) || 0;
             if (transaction.type === 'Pemasukan') {
                 groupedByDate[dateKey].income += amount;
-            } else {
+            } else if (transaction.type === 'Pengeluaran') {
                 groupedByDate[dateKey].expense += amount;
+            } else if (transaction.type === 'Modal Awal') {
+                groupedByDate[dateKey].modal += amount;
             }
         });
         
@@ -1766,6 +2174,17 @@ function updateCharts(transactions, dateRange, reportType) {
         barChartData = Object.values(groupedByDate).sort((a, b) => {
             return new Date(a.date) - new Date(b.date);
         });
+        
+        // Tambahkan properti yang diperlukan untuk bar chart
+        barChartData = barChartData.map(item => ({
+            ...item,
+            cashIncome: item.income || 0,
+            nonCashIncome: 0, // Default 0 karena tidak ada data metode pembayaran
+            cashExpense: item.expense || 0,
+            nonCashExpense: 0, // Default 0 karena tidak ada data metode pembayaran
+            cashModal: item.modal || 0,
+            nonCashModal: 0 // Default 0 karena tidak ada data metode pembayaran
+        }));
     } else if (reportType === 'comparison') {
         // Group by method for comparison report
         const groupedByMethod = {};
@@ -1799,15 +2218,18 @@ function updateCharts(transactions, dateRange, reportType) {
                 groupedByDate[dateKey] = {
                     date: dateKey,
                     income: 0,
-                    expense: 0
+                    expense: 0,
+                    modal: 0
                 };
             }
             
             const amount = parseFloat(transaction.amount) || 0;
             if (transaction.type === 'Pemasukan') {
                 groupedByDate[dateKey].income += amount;
-            } else {
+            } else if (transaction.type === 'Pengeluaran') {
                 groupedByDate[dateKey].expense += amount;
+            } else if (transaction.type === 'Modal Awal') {
+                groupedByDate[dateKey].modal += amount;
             }
         });
         
@@ -1818,14 +2240,14 @@ function updateCharts(transactions, dateRange, reportType) {
     }
     
     // Update bar chart
-    updateBarChart(barChartData, reportType);
+    updateBarChart(barChartData, reportType, selectedPeriod);
 }
 
 
-// Fungsi untuk memperbarui pie chart
-function updatePieChart(income, expense) {
+// Fungsi untuk memperbarui pie chart distribusi jenis transaksi
+function updateTransactionTypePieChart(modal, income, expense) {
     try {
-        const chartElement = document.getElementById('pie-chart');
+        const chartElement = document.getElementById('transaction-type-pie-chart');
         if (!chartElement) return; // Hindari error jika elemen tidak ditemukan
         
         // Tambahkan atribut willReadFrequently untuk meningkatkan performa
@@ -1834,19 +2256,313 @@ function updatePieChart(income, expense) {
         const ctx = chartElement.getContext('2d');
         
         // Destroy existing chart if it exists
-        if (pieChart) {
-            pieChart.destroy();
+        if (transactionTypePieChart) {
+            transactionTypePieChart.destroy();
         }
+        
+        // Total semua transaksi
+        const total = modal + income + expense;
+        
+        // Hitung persentase
+        const modalPercentage = total > 0 ? (modal / total) * 100 : 0;
+        const incomePercentage = total > 0 ? (income / total) * 100 : 0;
+        const expensePercentage = total > 0 ? (expense / total) * 100 : 0;
     
         // Create new chart
-        pieChart = new Chart(ctx, {
+        transactionTypePieChart = new Chart(ctx, {
             type: 'pie',
             data: {
-                labels: ['Pemasukan', 'Pengeluaran'],
+                labels: ['Modal Awal', 'Pemasukan', 'Pengeluaran'],
                 datasets: [{
-                    data: [income, expense],
+                    data: [modalPercentage, incomePercentage, expensePercentage],
                     backgroundColor: [
-                        'rgba(74, 222, 128, 0.8)',  // success color for income
+                        'rgba(59, 130, 246, 0.8)',  // blue for modal
+                        'rgba(74, 222, 128, 0.8)',  // green for income
+                        'rgba(248, 113, 113, 0.8)'   // red for expense
+                    ],
+                    borderColor: [
+                        'rgba(59, 130, 246, 1)',
+                        'rgba(74, 222, 128, 1)',
+                        'rgba(248, 113, 113, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: 'rgb(230, 240, 242)',
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ' + context.raw.toFixed(1) + '%';
+                                    // Tambahkan nilai nominal
+                                    if (label.includes('Modal')) {
+                                        label += ' (' + formatCurrency(modal) + ')';
+                                    } else if (label.includes('Pemasukan')) {
+                                        label += ' (' + formatCurrency(income) + ')';
+                                    } else if (label.includes('Pengeluaran')) {
+                                        label += ' (' + formatCurrency(expense) + ')';
+                                    }
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error("Gagal memperbarui transaction type pie chart:", error);
+    }
+}
+
+// Fungsi untuk memperbarui pie chart metode pembayaran
+function updatePaymentMethodPieChart(transactions) {
+    try {
+        const chartElement = document.getElementById('payment-method-pie-chart');
+        if (!chartElement) return; // Hindari error jika elemen tidak ditemukan
+        
+        // Tambahkan atribut willReadFrequently untuk meningkatkan performa
+        chartElement.setAttribute('willReadFrequently', 'true');
+        
+        const ctx = chartElement.getContext('2d');
+        
+        // Destroy existing chart if it exists
+        if (paymentMethodPieChart) {
+            paymentMethodPieChart.destroy();
+        }
+        
+        // Hitung total transaksi per metode pembayaran
+        const cashTotal = transactions
+            .filter(t => t.method.trim().toLowerCase() === 'tunai')
+            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+            
+        const nonCashTotal = transactions
+            .filter(t => t.method.trim().toLowerCase() === 'non tunai')
+            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+        
+        // Total semua transaksi
+        const total = cashTotal + nonCashTotal;
+        
+        // Hitung persentase
+        const cashPercentage = total > 0 ? (cashTotal / total) * 100 : 0;
+        const nonCashPercentage = total > 0 ? (nonCashTotal / total) * 100 : 0;
+    
+        // Create new chart
+        paymentMethodPieChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Tunai', 'Non-Tunai'],
+                datasets: [{
+                    data: [cashPercentage, nonCashPercentage],
+                    backgroundColor: [
+                        'rgba(234, 179, 8, 0.8)',   // yellow for cash
+                        'rgba(147, 51, 234, 0.8)'   // purple for non-cash
+                    ],
+                    borderColor: [
+                        'rgba(234, 179, 8, 1)',
+                        'rgba(147, 51, 234, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: 'rgb(230, 240, 242)',
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ' + context.raw.toFixed(1) + '%';
+                                    // Tambahkan nilai nominal
+                                    if (label.includes('Tunai')) {
+                                        label += ' (' + formatCurrency(cashTotal) + ')';
+                                    } else if (label.includes('Non-Tunai')) {
+                                        label += ' (' + formatCurrency(nonCashTotal) + ')';
+                                    }
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error("Gagal memperbarui payment method pie chart:", error);
+    }
+}
+
+// Fungsi untuk memperbarui pie chart kategori pengeluaran
+function updateExpenseCategoryPieChart(transactions) {
+    try {
+        const chartElement = document.getElementById('expense-category-pie-chart');
+        if (!chartElement) return; // Hindari error jika elemen tidak ditemukan
+        
+        // Tambahkan atribut willReadFrequently untuk meningkatkan performa
+        chartElement.setAttribute('willReadFrequently', 'true');
+        
+        const ctx = chartElement.getContext('2d');
+        
+        // Destroy existing chart if it exists
+        if (expenseCategoryPieChart) {
+            expenseCategoryPieChart.destroy();
+        }
+        
+        // Filter hanya transaksi pengeluaran
+        const expenseTransactions = transactions.filter(t => t.type.trim().toLowerCase() === 'pengeluaran');
+        
+        // Kelompokkan berdasarkan deskripsi (kategori)
+        const expenseCategories = {};
+        expenseTransactions.forEach(transaction => {
+            // Gunakan deskripsi sebagai kategori
+            const category = transaction.description.trim();
+            if (!expenseCategories[category]) {
+                expenseCategories[category] = 0;
+            }
+            expenseCategories[category] += parseFloat(transaction.amount) || 0;
+        });
+        
+        // Konversi ke array untuk chart
+        const categories = Object.keys(expenseCategories);
+        const amounts = Object.values(expenseCategories);
+        
+        // Total pengeluaran
+        const totalExpense = amounts.reduce((sum, amount) => sum + amount, 0);
+        
+        // Hitung persentase
+        const percentages = amounts.map(amount => totalExpense > 0 ? (amount / totalExpense) * 100 : 0);
+        
+        // Generate warna dinamis
+        const backgroundColors = [
+            'rgba(248, 113, 113, 0.8)', // red
+            'rgba(251, 146, 60, 0.8)',  // orange
+            'rgba(234, 179, 8, 0.8)',   // yellow
+            'rgba(132, 204, 22, 0.8)',  // lime
+            'rgba(74, 222, 128, 0.8)',  // green
+            'rgba(34, 211, 238, 0.8)',  // cyan
+            'rgba(59, 130, 246, 0.8)',  // blue
+            'rgba(147, 51, 234, 0.8)',  // purple
+            'rgba(236, 72, 153, 0.8)',  // pink
+        ];
+        
+        const borderColors = [
+            'rgba(248, 113, 113, 1)',
+            'rgba(251, 146, 60, 1)',
+            'rgba(234, 179, 8, 1)',
+            'rgba(132, 204, 22, 1)',
+            'rgba(74, 222, 128, 1)',
+            'rgba(34, 211, 238, 1)',
+            'rgba(59, 130, 246, 1)',
+            'rgba(147, 51, 234, 1)',
+            'rgba(236, 72, 153, 1)',
+        ];
+        
+        // Pastikan ada cukup warna untuk semua kategori
+        const colors = categories.map((_, index) => {
+            return backgroundColors[index % backgroundColors.length];
+        });
+        
+        const borders = categories.map((_, index) => {
+            return borderColors[index % borderColors.length];
+        });
+    
+        // Create new chart
+        expenseCategoryPieChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: categories,
+                datasets: [{
+                    data: percentages,
+                    backgroundColor: colors,
+                    borderColor: borders,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: 'rgb(230, 240, 242)',
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const index = context.dataIndex;
+                                const category = categories[index];
+                                const amount = amounts[index];
+                                return `${category}: ${context.raw.toFixed(1)}% (${formatCurrency(amount)})`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error("Gagal memperbarui expense category pie chart:", error);
+    }
+}
+
+// Fungsi untuk memperbarui pie chart perbandingan pemasukan & pengeluaran
+function updateIncomeExpensePieChart(income, expense) {
+    try {
+        const chartElement = document.getElementById('income-expense-pie-chart');
+        if (!chartElement) return; // Hindari error jika elemen tidak ditemukan
+        
+        // Tambahkan atribut willReadFrequently untuk meningkatkan performa
+        chartElement.setAttribute('willReadFrequently', 'true');
+        
+        const ctx = chartElement.getContext('2d');
+        
+        // Destroy existing chart if it exists
+        if (incomeExpensePieChart) {
+            incomeExpensePieChart.destroy();
+        }
+        
+        // Hitung persentase laba
+        const profit = income - expense;
+        const profitPercentage = income > 0 ? (profit / income) * 100 : 0;
+        const expensePercentage = income > 0 ? (expense / income) * 100 : 0;
+    
+        // Create new chart
+        incomeExpensePieChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Laba', 'Pengeluaran'],
+                datasets: [{
+                    data: [profitPercentage, expensePercentage],
+                    backgroundColor: [
+                        'rgba(74, 222, 128, 0.8)',  // success color for profit
                         'rgba(248, 113, 113, 0.8)'   // danger color for expense
                     ],
                     borderColor: [
@@ -1863,7 +2579,10 @@ function updatePieChart(income, expense) {
                     legend: {
                         position: 'bottom',
                         labels: {
-                            color: 'rgb(230, 240, 242)'  // text-primary color
+                            color: 'rgb(230, 240, 242)',  // text-primary color
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 15
                         }
                     },
                     tooltip: {
@@ -1871,25 +2590,42 @@ function updatePieChart(income, expense) {
                             label: function (context) {
                                 let label = context.label || '';
                                 if (label) {
-                                    label += ': ' + formatCurrency(context.raw);
+                                    label += ': ' + context.raw.toFixed(1) + '%';
+                                    // Tambahkan nilai nominal
+                                    if (label.includes('Laba')) {
+                                        label += ' (' + formatCurrency(profit) + ')';
+                                    } else if (label.includes('Pengeluaran')) {
+                                        label += ' (' + formatCurrency(expense) + ')';
+                                    }
                                 }
                                 return label;
                             }
+                        }
+                    },
+                    title: {
+                        display: true,
+                        color: 'rgb(230, 240, 242)',
+                        font: {
+                            size: 16
+                        },
+                        padding: {
+                            top: 10,
+                            bottom: 20
                         }
                     }
                 }
             }
         });
     } catch (error) {
-        // Tangani error tanpa menampilkan di console
+        console.error("Gagal memperbarui income expense pie chart:", error);
     }
 }
 
 
-// Fungsi untuk memperbarui bar chart
-function updateBarChart(data, reportType) {
+// Fungsi untuk memperbarui bar chart total transaksi harian
+function updateDailyTransactionsBarChart(transactions) {
     try {
-        const chartElement = document.getElementById('bar-chart');
+        const chartElement = document.getElementById('daily-transactions-bar-chart');
         if (!chartElement) return; // Hindari error jika elemen tidak ditemukan
         
         // Tambahkan atribut willReadFrequently untuk meningkatkan performa
@@ -1898,43 +2634,742 @@ function updateBarChart(data, reportType) {
         const ctx = chartElement.getContext('2d');
         
         // Destroy existing chart if it exists
+        if (dailyTransactionsBarChart) {
+            dailyTransactionsBarChart.destroy();
+        }
+        
+        // Group by date and transaction type
+        const groupedByDate = {};
+        
+        transactions.forEach(transaction => {
+            const dateKey = formatDate(transaction.date);
+            if (!groupedByDate[dateKey]) {
+                groupedByDate[dateKey] = {
+                    date: dateKey,
+                    modal: 0,
+                    income: 0,
+                    expense: 0
+                };
+            }
+            
+            const amount = parseFloat(transaction.amount) || 0;
+            const type = transaction.type.trim().toLowerCase();
+            
+            if (type === 'modal awal') {
+                groupedByDate[dateKey].modal += amount;
+            } else if (type === 'pemasukan') {
+                groupedByDate[dateKey].income += amount;
+            } else if (type === 'pengeluaran') {
+                groupedByDate[dateKey].expense += amount;
+            }
+        });
+        
+        // Convert to array and sort by date
+        const sortedData = Object.values(groupedByDate).sort((a, b) => {
+            return new Date(a.date) - new Date(b.date);
+        });
+        
+        // Prepare data for chart
+        const labels = sortedData.map(item => item.date);
+        const modalData = sortedData.map(item => item.modal);
+        const incomeData = sortedData.map(item => item.income);
+        const expenseData = sortedData.map(item => item.expense);
+        
+        // Create new chart
+        dailyTransactionsBarChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Modal Awal',
+                        data: modalData,
+                        backgroundColor: 'rgba(59, 130, 246, 0.8)', // blue
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9
+                    },
+                    {
+                        label: 'Pemasukan',
+                        data: incomeData,
+                        backgroundColor: 'rgba(74, 222, 128, 0.8)', // green
+                        borderColor: 'rgba(74, 222, 128, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9
+                    },
+                    {
+                        label: 'Pengeluaran',
+                        data: expenseData,
+                        backgroundColor: 'rgba(248, 113, 113, 0.8)', // red
+                        borderColor: 'rgba(248, 113, 113, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'rgb(230, 240, 242)'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'rgb(230, 240, 242)',
+                            callback: function(value) {
+                                return formatCurrency(value);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: 'rgb(230, 240, 242)',
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += formatCurrency(context.raw);
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error("Gagal memperbarui daily transactions bar chart:", error);
+    }
+}
+
+// Fungsi untuk memperbarui bar chart pemasukan & pengeluaran per metode
+function updatePaymentMethodBarChart(transactions) {
+    try {
+        const chartElement = document.getElementById('payment-method-bar-chart');
+        if (!chartElement) return; // Hindari error jika elemen tidak ditemukan
+        
+        // Tambahkan atribut willReadFrequently untuk meningkatkan performa
+        chartElement.setAttribute('willReadFrequently', 'true');
+        
+        const ctx = chartElement.getContext('2d');
+        
+        // Destroy existing chart if it exists
+        if (paymentMethodBarChart) {
+            paymentMethodBarChart.destroy();
+        }
+        
+        // Group by payment method and transaction type
+        const cashIncome = transactions
+            .filter(t => t.method.trim().toLowerCase() === 'tunai' && t.type.trim().toLowerCase() === 'pemasukan')
+            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+            
+        const cashExpense = transactions
+            .filter(t => t.method.trim().toLowerCase() === 'tunai' && t.type.trim().toLowerCase() === 'pengeluaran')
+            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+            
+        const nonCashIncome = transactions
+            .filter(t => t.method.trim().toLowerCase() === 'non tunai' && t.type.trim().toLowerCase() === 'pemasukan')
+            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+            
+        const nonCashExpense = transactions
+            .filter(t => t.method.trim().toLowerCase() === 'non tunai' && t.type.trim().toLowerCase() === 'pengeluaran')
+            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+        
+        // Create new chart
+        paymentMethodBarChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Tunai', 'Non-Tunai'],
+                datasets: [
+                    {
+                        label: 'Pemasukan',
+                        data: [cashIncome, nonCashIncome],
+                        backgroundColor: 'rgba(74, 222, 128, 0.8)', // green
+                        borderColor: 'rgba(74, 222, 128, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9
+                    },
+                    {
+                        label: 'Pengeluaran',
+                        data: [cashExpense, nonCashExpense],
+                        backgroundColor: 'rgba(248, 113, 113, 0.8)', // red
+                        borderColor: 'rgba(248, 113, 113, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'rgb(230, 240, 242)'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'rgb(230, 240, 242)',
+                            callback: function(value) {
+                                return formatCurrency(value);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: 'rgb(230, 240, 242)',
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += formatCurrency(context.raw);
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error("Gagal memperbarui payment method bar chart:", error);
+    }
+}
+
+// Fungsi untuk memperbarui bar chart top pengeluaran harian
+function updateTopExpenseBarChart(transactions) {
+    try {
+        const chartElement = document.getElementById('top-expense-bar-chart');
+        if (!chartElement) return; // Hindari error jika elemen tidak ditemukan
+        
+        // Tambahkan atribut willReadFrequently untuk meningkatkan performa
+        chartElement.setAttribute('willReadFrequently', 'true');
+        
+        const ctx = chartElement.getContext('2d');
+        
+        // Destroy existing chart if it exists
+        if (topExpenseBarChart) {
+            topExpenseBarChart.destroy();
+        }
+        
+        // Filter hanya transaksi pengeluaran
+        const expenseTransactions = transactions.filter(t => t.type.trim().toLowerCase() === 'pengeluaran');
+        
+        // Kelompokkan berdasarkan deskripsi (kategori)
+        const expenseCategories = {};
+        expenseTransactions.forEach(transaction => {
+            // Gunakan deskripsi sebagai kategori
+            const category = transaction.description.trim();
+            if (!expenseCategories[category]) {
+                expenseCategories[category] = 0;
+            }
+            expenseCategories[category] += parseFloat(transaction.amount) || 0;
+        });
+        
+        // Konversi ke array untuk chart dan urutkan dari terbesar ke terkecil
+        const sortedExpenses = Object.entries(expenseCategories)
+            .map(([category, amount]) => ({ category, amount }))
+            .sort((a, b) => b.amount - a.amount)
+            .slice(0, 10); // Ambil 10 pengeluaran terbesar
+        
+        // Prepare data for chart
+        const labels = sortedExpenses.map(item => item.category);
+        const amounts = sortedExpenses.map(item => item.amount);
+        
+        // Generate warna dinamis
+        const backgroundColors = [
+            'rgba(248, 113, 113, 0.8)', // red
+            'rgba(251, 146, 60, 0.8)',  // orange
+            'rgba(234, 179, 8, 0.8)',   // yellow
+            'rgba(132, 204, 22, 0.8)',  // lime
+            'rgba(74, 222, 128, 0.8)',  // green
+            'rgba(34, 211, 238, 0.8)',  // cyan
+            'rgba(59, 130, 246, 0.8)',  // blue
+            'rgba(147, 51, 234, 0.8)',  // purple
+            'rgba(236, 72, 153, 0.8)',  // pink
+            'rgba(248, 113, 113, 0.8)', // red (repeat)
+        ];
+        
+        const borderColors = [
+            'rgba(248, 113, 113, 1)',
+            'rgba(251, 146, 60, 1)',
+            'rgba(234, 179, 8, 1)',
+            'rgba(132, 204, 22, 1)',
+            'rgba(74, 222, 128, 1)',
+            'rgba(34, 211, 238, 1)',
+            'rgba(59, 130, 246, 1)',
+            'rgba(147, 51, 234, 1)',
+            'rgba(236, 72, 153, 1)',
+            'rgba(248, 113, 113, 1)',
+        ];
+        
+        // Create new chart
+        topExpenseBarChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Nominal Pengeluaran',
+                        data: amounts,
+                        backgroundColor: backgroundColors,
+                        borderColor: borderColors,
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y', // Horizontal bar chart
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'rgb(230, 240, 242)',
+                            callback: function(value) {
+                                return formatCurrency(value);
+                            }
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'rgb(230, 240, 242)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += formatCurrency(context.raw);
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error("Gagal memperbarui top expense bar chart:", error);
+    }
+}
+
+// Fungsi untuk memperbarui bar chart tren transaksi
+function updateBarChart(data, reportType, selectedPeriod = 'monthly') {
+    try {
+        const chartElement = document.getElementById('bar-chart');
+        const barChartContainer = document.getElementById('bar-chart-container');
+        if (!chartElement || !barChartContainer) return; // Hindari error jika elemen tidak ditemukan
+        
+        // Tambahkan atribut willReadFrequently untuk meningkatkan performa
+        chartElement.setAttribute('willReadFrequently', 'true');
+        
+        // Selalu tampilkan bar chart untuk semua periode
+        barChartContainer.style.display = 'block';
+        
+        const ctx = chartElement.getContext('2d');
+        
+        // Destroy existing chart if it exists
         if (barChart) {
             barChart.destroy();
         }
-    
-        let labels, incomeData, expenseData;
         
-        if (reportType === 'comparison') {
-            // For comparison report, use method names as labels
-            labels = data.map(item => item.method);
-            incomeData = data.map(item => item.income);
-            expenseData = data.map(item => item.expense);
+        // Periksa apakah data kosong atau tidak ada
+        if (!data || data.length === 0) {
+            console.log('Tidak ada data untuk ditampilkan di bar chart');
+            // Buat chart kosong dengan pesan
+            barChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Tidak ada data'],
+                    datasets: [{
+                        label: 'Tidak ada data transaksi',
+                        data: [0],
+                        backgroundColor: 'rgba(200, 200, 200, 0.5)',
+                        borderColor: 'rgba(200, 200, 200, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Tidak ada data transaksi';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            return;
+        }
+    
+        // Persiapkan data untuk bar chart berdasarkan periode
+        let labels = [];
+        let cashIncomeData = [];
+        let nonCashIncomeData = [];
+        let cashExpenseData = [];
+        let nonCashExpenseData = [];
+        
+        // Inisialisasi weeklyData dan monthlyData di luar blok kondisi
+        let weeklyData = {};
+        let monthlyData = {};
+        
+        // Kelompokkan data berdasarkan periode
+        if (selectedPeriod === 'monthly') {
+            // Untuk periode bulanan, kelompokkan per minggu
+            
+            // Inisialisasi minggu dalam sebulan
+            const startDate = new Date(data[0]?.date || new Date());
+            const endDate = new Date(data[data.length - 1]?.date || new Date());
+            
+            // Buat array minggu
+            let currentDate = new Date(startDate);
+            let weekNumber = 1;
+            
+            while (currentDate <= endDate) {
+                const weekKey = 'Minggu ' + weekNumber;
+                weeklyData[weekKey] = {
+                    cashIncome: 0,
+                    nonCashIncome: 0,
+                    cashExpense: 0,
+                    nonCashExpense: 0,
+                    cashModal: 0,
+                    nonCashModal: 0
+                };
+                
+                // Tambah 7 hari untuk minggu berikutnya
+                currentDate.setDate(currentDate.getDate() + 7);
+                weekNumber++;
+            }
+            
+            // Kelompokkan transaksi per minggu
+            data.forEach(item => {
+                const itemDate = new Date(item.date);
+                const weekDiff = Math.floor((itemDate - startDate) / (7 * 24 * 60 * 60 * 1000));
+                const weekKey = 'Minggu ' + (weekDiff + 1);
+                
+                if (!weeklyData[weekKey]) {
+                    weeklyData[weekKey] = {
+                        cashIncome: 0,
+                        nonCashIncome: 0,
+                        cashExpense: 0,
+                        nonCashExpense: 0,
+                        cashModal: 0,
+                        nonCashModal: 0
+                    };
+                }
+                
+                // Kelompokkan berdasarkan jenis dan metode
+                if (item.transactions) {
+                    item.transactions.forEach(t => {
+                        const amount = parseFloat(t.amount) || 0;
+                        const method = t.method.trim().toLowerCase();
+                        const type = t.type.trim().toLowerCase();
+                        
+                        if (type === 'pemasukan') {
+                            if (method === 'tunai') {
+                                weeklyData[weekKey].cashIncome += amount;
+                            } else {
+                                weeklyData[weekKey].nonCashIncome += amount;
+                            }
+                        } else if (type === 'pengeluaran') {
+                            if (method === 'tunai') {
+                                weeklyData[weekKey].cashExpense += amount;
+                            } else {
+                                weeklyData[weekKey].nonCashExpense += amount;
+                            }
+                        } else if (type === 'modal awal') {
+                            if (method === 'tunai') {
+                                weeklyData[weekKey].cashModal = weeklyData[weekKey].cashModal || 0;
+                                weeklyData[weekKey].cashModal += amount;
+                            } else {
+                                weeklyData[weekKey].nonCashModal = weeklyData[weekKey].nonCashModal || 0;
+                                weeklyData[weekKey].nonCashModal += amount;
+                            }
+                        }
+                    });
+                } else {
+                    // Jika data sudah dikelompokkan per hari
+                    const cashIncome = item.cashIncome || 0;
+                    const nonCashIncome = item.nonCashIncome || 0;
+                    const cashExpense = item.cashExpense || 0;
+                    const nonCashExpense = item.nonCashExpense || 0;
+                    
+                    weeklyData[weekKey].cashIncome += cashIncome;
+                    weeklyData[weekKey].nonCashIncome += nonCashIncome;
+                    weeklyData[weekKey].cashExpense += cashExpense;
+                    weeklyData[weekKey].nonCashExpense += nonCashExpense;
+                }
+            });
+            
+            // Konversi ke array untuk chart
+            labels = Object.keys(weeklyData);
+            cashIncomeData = labels.map(key => weeklyData[key].cashIncome);
+            nonCashIncomeData = labels.map(key => weeklyData[key].nonCashIncome);
+            cashExpenseData = labels.map(key => weeklyData[key].cashExpense);
+            nonCashExpenseData = labels.map(key => weeklyData[key].nonCashExpense);
+            
+        } else if (['quarterly', 'yearly', 'all-time'].includes(selectedPeriod)) {
+            // Untuk periode kuartalan, tahunan, dan keseluruhan, kelompokkan per bulan
+            // monthlyData sudah diinisialisasi di luar blok kondisi
+            
+            // Inisialisasi bulan
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            
+            // Buat array bulan
+            months.forEach(month => {
+                monthlyData[month] = {
+                    cashIncome: 0,
+                    nonCashIncome: 0,
+                    cashExpense: 0,
+                    nonCashExpense: 0,
+                    cashModal: 0,
+                    nonCashModal: 0
+                };
+            });
+            
+            // Kelompokkan transaksi per bulan
+            data.forEach(item => {
+                const itemDate = new Date(item.date);
+                const monthKey = months[itemDate.getMonth()];
+                
+                // Kelompokkan berdasarkan jenis dan metode
+                if (item.transactions) {
+                    item.transactions.forEach(t => {
+                        const amount = parseFloat(t.amount) || 0;
+                        const method = t.method.trim().toLowerCase();
+                        const type = t.type.trim().toLowerCase();
+                        
+                        if (type === 'pemasukan') {
+                            if (method === 'tunai') {
+                                monthlyData[monthKey].cashIncome += amount;
+                            } else {
+                                monthlyData[monthKey].nonCashIncome += amount;
+                            }
+                        } else if (type === 'pengeluaran') {
+                            if (method === 'tunai') {
+                                monthlyData[monthKey].cashExpense += amount;
+                            } else {
+                                monthlyData[monthKey].nonCashExpense += amount;
+                            }
+                        } else if (type === 'modal awal') {
+                            if (method === 'tunai') {
+                                monthlyData[monthKey].cashModal = monthlyData[monthKey].cashModal || 0;
+                                monthlyData[monthKey].cashModal += amount;
+                            } else {
+                                monthlyData[monthKey].nonCashModal = monthlyData[monthKey].nonCashModal || 0;
+                                monthlyData[monthKey].nonCashModal += amount;
+                            }
+                        }
+                    });
+                } else {
+                    // Jika data sudah dikelompokkan per hari
+                    const cashIncome = item.cashIncome || 0;
+                    const nonCashIncome = item.nonCashIncome || 0;
+                    const cashExpense = item.cashExpense || 0;
+                    const nonCashExpense = item.nonCashExpense || 0;
+                    
+                    monthlyData[monthKey].cashIncome += cashIncome;
+                    monthlyData[monthKey].nonCashIncome += nonCashIncome;
+                    monthlyData[monthKey].cashExpense += cashExpense;
+                    monthlyData[monthKey].nonCashExpense += nonCashExpense;
+                }
+            });
+            
+            // Konversi ke array untuk chart
+            labels = Object.keys(monthlyData);
+            cashIncomeData = labels.map(key => monthlyData[key].cashIncome);
+            nonCashIncomeData = labels.map(key => monthlyData[key].nonCashIncome);
+            cashExpenseData = labels.map(key => monthlyData[key].cashExpense);
+            nonCashExpenseData = labels.map(key => monthlyData[key].nonCashExpense);
         } else {
-            // For other reports, use dates as labels
+            // Untuk periode lainnya, gunakan data asli
             labels = data.map(item => item.date);
-            incomeData = data.map(item => item.income);
-            expenseData = data.map(item => item.expense);
+            cashIncomeData = data.map(item => item.cashIncome || 0);
+            nonCashIncomeData = data.map(item => item.nonCashIncome || 0);
+            cashExpenseData = data.map(item => item.cashExpense || 0);
+            nonCashExpenseData = data.map(item => item.nonCashExpense || 0);
         }
         
-        // Create new chart
+        // Tambahkan data modal awal
+        let cashModalData = [];
+        let nonCashModalData = [];
+        
+        // Isi data modal awal berdasarkan periode
+        if (selectedPeriod === 'monthly') {
+            // Untuk periode bulanan (data per minggu)
+            labels.forEach(weekKey => {
+                const weekData = weeklyData[weekKey];
+                if (weekData) {
+                    cashModalData.push(weekData.cashModal || 0);
+                    nonCashModalData.push(weekData.nonCashModal || 0);
+                } else {
+                    console.log('Data minggu tidak ditemukan untuk:', weekKey);
+                    cashModalData.push(0);
+                    nonCashModalData.push(0);
+                }
+            });
+        } else if (['quarterly', 'yearly', 'all-time'].includes(selectedPeriod)) {
+            // Untuk periode kuartalan, tahunan, dan keseluruhan (data per bulan)
+            labels.forEach(monthKey => {
+                const monthData = monthlyData[monthKey];
+                if (monthData) {
+                    cashModalData.push(monthData.cashModal || 0);
+                    nonCashModalData.push(monthData.nonCashModal || 0);
+                } else {
+                    console.log('Data bulan tidak ditemukan untuk:', monthKey);
+                    cashModalData.push(0);
+                    nonCashModalData.push(0);
+                }
+            });
+        } else {
+            // Untuk periode lainnya
+            labels.forEach((_, index) => {
+                if (index < data.length && data[index]) {
+                    cashModalData.push(data[index].cashModal || 0);
+                    nonCashModalData.push(data[index].nonCashModal || 0);
+                } else {
+                    console.log('Data tidak ditemukan untuk index:', index);
+                    cashModalData.push(0);
+                    nonCashModalData.push(0);
+                }
+            });
+        }
+        
+        // Create new chart dengan 6 dataset (termasuk modal awal)
         barChart = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: labels,
                 datasets: [
                     {
-                        label: 'Pemasukan',
-                        data: incomeData,
-                        backgroundColor: 'rgba(74, 222, 128, 0.8)',
-                        borderColor: 'rgba(74, 222, 128, 1)',
-                        borderWidth: 1
+                        label: 'Modal Awal Tunai',
+                        data: cashModalData,
+                        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9
                     },
                     {
-                        label: 'Pengeluaran',
-                        data: expenseData,
+                        label: 'Modal Awal Non Tunai',
+                        data: nonCashModalData,
+                        backgroundColor: 'rgba(96, 165, 250, 0.8)',
+                        borderColor: 'rgba(96, 165, 250, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9
+                    },
+                    {
+                        label: 'Pemasukan Tunai',
+                        data: cashIncomeData,
+                        backgroundColor: 'rgba(74, 222, 128, 0.8)',
+                        borderColor: 'rgba(74, 222, 128, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9
+                    },
+                    {
+                        label: 'Pemasukan Non Tunai',
+                        data: nonCashIncomeData,
+                        backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                        borderColor: 'rgba(34, 197, 94, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9
+                    },
+                    {
+                        label: 'Pengeluaran Tunai',
+                        data: cashExpenseData,
                         backgroundColor: 'rgba(248, 113, 113, 0.8)',
                         borderColor: 'rgba(248, 113, 113, 1)',
-                        borderWidth: 1
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9
+                    },
+                    {
+                        label: 'Pengeluaran Non Tunai',
+                        data: nonCashExpenseData,
+                        backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                        borderColor: 'rgba(239, 68, 68, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9
                     }
                 ]
             },
@@ -1967,7 +3402,10 @@ function updateBarChart(data, reportType) {
                     legend: {
                         position: 'bottom',
                         labels: {
-                            color: 'rgb(230, 240, 242)'  // text-primary color
+                            color: 'rgb(230, 240, 242)',  // text-primary color
+                            padding: 15,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
                         }
                     },
                     tooltip: {
@@ -2101,6 +3539,27 @@ function navigateTo(page) {
     if (window.innerWidth <= 768) {
         elements.sidebar.classList.remove('active');
         elements.sidebarOverlay.classList.remove('active');
+    }
+    
+    // Otomatis tampilkan laporan keseluruhan saat halaman laporan dibuka
+    if (page === 'reports' && state.transactions && state.transactions.length > 0) {
+        // Hitung rentang tanggal untuk keseluruhan data (dari awal hingga sekarang)
+        const dateRange = calculateDateRange('all-time');
+        
+        // Filter transaksi berdasarkan rentang tanggal
+        const filteredTransactions = state.transactions.filter(transaction => {
+            const transactionDate = new Date(transaction.date);
+            return transactionDate >= dateRange.start && transactionDate <= dateRange.end;
+        });
+        
+        // Update UI laporan dengan data keseluruhan
+        updateReportUI(filteredTransactions, dateRange, 'all');
+        
+        // Update teks rentang tanggal
+        const reportRangeEl = document.getElementById('report-range');
+        if (reportRangeEl) {
+            reportRangeEl.textContent = 'Keseluruhan Data';
+        }
     }
 }
 
@@ -2565,11 +4024,12 @@ async function deleteTransaction(index) {
 // Helper function: Format date
 function formatDate(dateString) {
     const date = new Date(dateString);
+    // Format tanggal seperti di Google Sheet: DD/MM/YYYY
     return date.toLocaleDateString('id-ID', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric'
-    });
+    }).replace(/-/g, '/');
 }
 
 // Dummy data for fallback
