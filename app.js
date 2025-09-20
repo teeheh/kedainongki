@@ -946,16 +946,19 @@ function updateRecentTransactions() {
         
         const card = document.createElement('div');
         card.className = 'transaction-card';
+        // Tambahkan kelas income atau expense untuk styling
+        card.classList.add(transaction.type.trim().toLowerCase() === 'pemasukan' ? 'income' : 'expense');
+        
         card.innerHTML = `
             <div class="transaction-card-header">
-                <span class="transaction-date">${formatDate(transaction.date)}</span>
+                <span class="transaction-date"><i class="bi bi-calendar3"></i> ${formatDate(transaction.date)}</span>
                 <span class="transaction-type ${transaction.type.trim().toLowerCase() === 'pemasukan' ? 'income' : 'expense'}">${transaction.type}</span>
             </div>
-            <div class="transaction-id"><small class="text-muted">ID: ${transaction.id || 'N/A'}</small></div>
-            <div class="transaction-description">${transaction.description}</div>
+            <div class="transaction-id"><small class="text-muted"><i class="bi bi-hash"></i> ${transaction.id || 'N/A'}</small></div>
+            <div class="transaction-description"><i class="bi bi-card-text"></i> ${transaction.description}</div>
             <div class="transaction-details">
-                <span>${transaction.method}</span>
-                <span>${formatCurrency(amount)}</span>
+                <span><i class="bi bi-wallet2"></i> ${transaction.method}</span>
+                <span class="transaction-amount ${transaction.type.trim().toLowerCase() === 'pemasukan' ? 'income' : 'expense'}"><i class="bi ${transaction.type.trim().toLowerCase() === 'pemasukan' ? 'bi-graph-up-arrow' : 'bi-graph-down-arrow'}"></i> ${formatCurrency(amount)}</span>
             </div>
         `;
         cardsContainer.appendChild(card);
@@ -1155,16 +1158,19 @@ function updateTransactionsUI(transactions) {
         
         const card = document.createElement('div');
         card.className = 'transaction-card';
+        // Tambahkan kelas income atau expense untuk styling
+        card.classList.add(transaction.type.trim().toLowerCase() === 'pemasukan' ? 'income' : 'expense');
+        
         card.innerHTML = `
             <div class="transaction-card-header">
-                <span class="transaction-date">${formatDate(transaction.date)}</span>
+                <span class="transaction-date"><i class="bi bi-calendar3"></i> ${formatDate(transaction.date)}</span>
                 <span class="transaction-type ${transaction.type.trim().toLowerCase() === 'pemasukan' ? 'income' : 'expense'}">${transaction.type}</span>
             </div>
-            <div class="transaction-id"><small class="text-muted">ID: ${transaction.id || 'N/A'}</small></div>
-            <div class="transaction-description">${transaction.description}</div>
+            <div class="transaction-id"><small class="text-muted"><i class="bi bi-hash"></i> ${transaction.id || 'N/A'}</small></div>
+            <div class="transaction-description"><i class="bi bi-card-text"></i> ${transaction.description}</div>
             <div class="transaction-details">
-                <span>${transaction.method}</span>
-                <span>${formatCurrency(amount)}</span>
+                <span><i class="bi bi-wallet2"></i> ${transaction.method}</span>
+                <span class="transaction-amount ${transaction.type.trim().toLowerCase() === 'pemasukan' ? 'income' : 'expense'}"><i class="bi ${transaction.type.trim().toLowerCase() === 'pemasukan' ? 'bi-graph-up-arrow' : 'bi-graph-down-arrow'}"></i> ${formatCurrency(amount)}</span>
             </div>
             <div class="transaction-actions">
                 <button class="btn-icon" title="Edit" onclick="editTransaction(${globalIndex})"><i class="bi bi-pencil"></i></button>
@@ -1189,12 +1195,13 @@ let pieChart = null;
 
 // Update report UI
 function updateReportUI(transactions, dateRange, reportType) {
-    // Debug console dinonaktifkan
-    
-    // Fungsi helper untuk menangani nilai undefined
-    function safeGetLowerCase(value) {
-        return value && typeof value === 'string' ? value.trim().toLowerCase() : '';
-    }
+    try {
+        console.log('Memperbarui UI laporan dengan', transactions.length, 'transaksi');
+        
+        // Fungsi helper untuk menangani nilai undefined
+        function safeGetLowerCase(value) {
+            return value && typeof value === 'string' ? value.trim().toLowerCase() : '';
+        }
     
     // Fungsi untuk menghitung total berdasarkan tipe dan metode pembayaran
     function calculateTotal(type, paymentMethod = null) {
@@ -1210,6 +1217,7 @@ function updateReportUI(transactions, dateRange, reportType) {
     // Calculate report metrics
     const totalIncome = calculateTotal('pemasukan');
     const totalExpense = calculateTotal('pengeluaran');
+    const totalModal = calculateTotal('modal awal');
     
 
         
@@ -1284,12 +1292,12 @@ function updateReportUI(transactions, dateRange, reportType) {
             if (reportForecast) reportForecast.classList.remove('hidden');
             
             // Update semua metrik laporan
-            updateBasicReportMetrics();
+            updateBasicReportMetrics(totalModal);
             updateAnalyticReportMetrics();
         }
         else if (reportType === 'basic' && reportBasic) {
             reportBasic.classList.remove('hidden');
-            updateBasicReportMetrics();
+            updateBasicReportMetrics(totalModal);
         } 
         else if (reportType === 'analytic' && reportAnalytic) {
             reportAnalytic.classList.remove('hidden');
@@ -1322,6 +1330,7 @@ function updateReportUI(transactions, dateRange, reportType) {
                 if (cardType === 'expense') prefix = 'Pengeluaran: ';
                 if (cardType === 'profit-loss') prefix = 'Laba / Rugi: ';
                 
+                // Menghilangkan emoji/ikon pada teks
                 valueEl.textContent = `${prefix}${formatCurrency(value)}`;
             }
             
@@ -1494,14 +1503,32 @@ function updateReportUI(transactions, dateRange, reportType) {
             // Coba ambil data dari Google Sheets
             const sheetData = await fetchDataFromGoogleSheets();
             
+            // Pastikan totalModal, cashModal, dan nonCashModal adalah angka yang valid
+            totalModal = parseFloat(totalModal) || 0;
+            cashModal = parseFloat(cashModal) || 0;
+            nonCashModal = parseFloat(nonCashModal) || 0;
+            
+            // Verifikasi bahwa total modal sesuai dengan jumlah tunai dan non tunai
+            if (Math.abs((cashModal + nonCashModal) - totalModal) > 0.01) {
+                // Jika tidak sesuai, sesuaikan total
+                totalModal = cashModal + nonCashModal;
+            }
+            
             if (sheetData && sheetData['modal awal']) {
                 // Gunakan data dari Google Sheets
                 const modalData = sheetData['modal awal'];
-                updateReportCard('modal', modalData.total, modalData.tunai, modalData.nonTunai);
-            } else {
-                // Fallback ke data lokal
-                updateReportCard('modal', totalModal, cashModal, nonCashModal);
+                // Pastikan data valid sebelum menggunakannya
+                if (modalData.total && modalData.tunai && modalData.nonTunai) {
+                    updateReportCard('modal', modalData.total, modalData.tunai, modalData.nonTunai);
+                    return; // Keluar dari fungsi jika data Google Sheets berhasil digunakan
+                }
             }
+            
+            // Fallback ke data lokal
+            updateReportCard('modal', totalModal, cashModal, nonCashModal);
+            
+            // Debug: Log nilai untuk memastikan pembaruan
+            console.log('Update Modal Card:', { totalModal, cashModal, nonCashModal });
         }
         
         // Fungsi untuk mengelola card Pemasukan
@@ -1509,14 +1536,32 @@ function updateReportUI(transactions, dateRange, reportType) {
             // Coba ambil data dari Google Sheets
             const sheetData = await fetchDataFromGoogleSheets();
             
+            // Pastikan totalIncome, cashIncome, dan nonCashIncome adalah angka yang valid
+            totalIncome = parseFloat(totalIncome) || 0;
+            cashIncome = parseFloat(cashIncome) || 0;
+            nonCashIncome = parseFloat(nonCashIncome) || 0;
+            
+            // Verifikasi bahwa total pemasukan sesuai dengan jumlah tunai dan non tunai
+            if (Math.abs((cashIncome + nonCashIncome) - totalIncome) > 0.01) {
+                // Jika tidak sesuai, sesuaikan total
+                totalIncome = cashIncome + nonCashIncome;
+            }
+            
             if (sheetData && sheetData['pemasukan']) {
                 // Gunakan data dari Google Sheets
                 const incomeData = sheetData['pemasukan'];
-                updateReportCard('income', incomeData.total, incomeData.tunai, incomeData.nonTunai);
-            } else {
-                // Fallback ke data lokal
-                updateReportCard('income', totalIncome, cashIncome, nonCashIncome);
+                // Pastikan data valid sebelum menggunakannya
+                if (incomeData.total && incomeData.tunai && incomeData.nonTunai) {
+                    updateReportCard('income', incomeData.total, incomeData.tunai, incomeData.nonTunai);
+                    return; // Keluar dari fungsi jika data Google Sheets berhasil digunakan
+                }
             }
+            
+            // Fallback ke data lokal jika data Google Sheets tidak tersedia atau tidak valid
+            updateReportCard('income', totalIncome, cashIncome, nonCashIncome);
+            
+            // Debug: Log nilai untuk memastikan pembaruan
+            console.log('Update Income Card:', { totalIncome, cashIncome, nonCashIncome });
         }
         
         // Fungsi untuk mengelola card Pengeluaran
@@ -1549,7 +1594,7 @@ function updateReportUI(transactions, dateRange, reportType) {
                     const valueEl = profitLossCard.querySelector('.report-card-value');
                     const detailEl = profitLossCard.querySelector('.report-card-detail');
                     
-                    if (valueEl) valueEl.textContent = `💹 Laba / Rugi: ${formatCurrency(profitData.total)}`;
+                    if (valueEl) valueEl.textContent = `Laba / Rugi: ${formatCurrency(profitData.total)}`;
                     if (detailEl) detailEl.textContent = `(${profitData.persentase.toFixed(1)}% dari Pemasukan)`;
                 }
             } else {
@@ -1560,34 +1605,12 @@ function updateReportUI(transactions, dateRange, reportType) {
                     const valueEl = profitLossCard.querySelector('.report-card-value');
                     const detailEl = profitLossCard.querySelector('.report-card-detail');
                     
-                    if (valueEl) valueEl.textContent = `💹 Laba / Rugi: ${formatCurrency(netProfit)}`;
+                    if (valueEl) valueEl.textContent = `Laba / Rugi: ${formatCurrency(netProfit)}`;
                     if (detailEl) detailEl.textContent = `(${profitPercentage.toFixed(1)}% dari Pemasukan)`;
                 }
             }
         }
         
-        // Fungsi untuk mengelola card Distribusi Metode
-        async function updateDistributionCard(totalCash, totalNonCash) {
-            // Coba ambil data dari Google Sheets
-            const sheetData = await fetchDataFromGoogleSheets();
-            
-            const distributionCard = document.querySelector('.report-card.distribution');
-            if (distributionCard) {
-                const valueEls = distributionCard.querySelectorAll('.report-card-value');
-                if (valueEls.length >= 2) {
-                    if (sheetData && sheetData['distribusi metode']) {
-                        // Gunakan data dari Google Sheets
-                        const distData = sheetData['distribusi metode'];
-                        valueEls[0].textContent = `💵 Tunai: ${formatCurrency(distData.tunai)}`;
-                        valueEls[1].textContent = `💳 Non Tunai: ${formatCurrency(distData.nonTunai)}`;
-                    } else {
-                        // Fallback ke data lokal
-                        valueEls[0].textContent = `💵 Tunai: ${formatCurrency(totalCash)}`;
-                        valueEls[1].textContent = `💳 Non Tunai: ${formatCurrency(totalNonCash)}`;
-                    }
-                }
-            }
-        }
         
         // Fungsi untuk mengelola card Pengeluaran Terbesar
         async function updateTopExpenseCard(transactions) {
@@ -1619,10 +1642,10 @@ function updateReportUI(transactions, dateRange, reportType) {
                 
                 // Tampilkan 2 pengeluaran terbesar jika ada
                 if (expenses.length > 0 && valueEls.length >= 1) {
-                    valueEls[0].textContent = `🏆 ${expenses[0].description}: ${formatCurrency(parseFloat(expenses[0].amount))}`;
+                    valueEls[0].textContent = `🏆 ${expenses[0].description} (${formatDate(expenses[0].date)}): ${formatCurrency(parseFloat(expenses[0].amount))}`;
                     
                     if (expenses.length > 1 && valueEls.length >= 2) {
-                        valueEls[1].textContent = `🥈 ${expenses[1].description}: ${formatCurrency(parseFloat(expenses[1].amount))}`;
+                        valueEls[1].textContent = `🥈 ${expenses[1].description} (${formatDate(expenses[1].date)}): ${formatCurrency(parseFloat(expenses[1].amount))}`;
                     } else if (valueEls.length >= 2) {
                         valueEls[1].textContent = '🥈 Tidak ada data';
                     }
@@ -1663,10 +1686,10 @@ function updateReportUI(transactions, dateRange, reportType) {
                 
                 // Tampilkan 2 pemasukan terbesar jika ada
                 if (incomes.length > 0 && valueEls.length >= 1) {
-                    valueEls[0].textContent = `🏆 ${incomes[0].description}: ${formatCurrency(parseFloat(incomes[0].amount))}`;
+                    valueEls[0].textContent = `🏆 ${incomes[0].description} (${formatDate(incomes[0].date)}): ${formatCurrency(parseFloat(incomes[0].amount))}`;
                     
                     if (incomes.length > 1 && valueEls.length >= 2) {
-                        valueEls[1].textContent = `🥈 ${incomes[1].description}: ${formatCurrency(parseFloat(incomes[1].amount))}`;
+                        valueEls[1].textContent = `🥈 ${incomes[1].description} (${formatDate(incomes[1].date)}): ${formatCurrency(parseFloat(incomes[1].amount))}`;
                     } else if (valueEls.length >= 2) {
                         valueEls[1].textContent = '🥈 Tidak ada data';
                     }
@@ -1698,7 +1721,7 @@ function updateReportUI(transactions, dateRange, reportType) {
             }
         }
         
-        async function updateBasicReportMetrics() {
+        async function updateBasicReportMetrics(totalModal) {
             // Update basic report metrics
             const totalIncomeEl = document.getElementById('total-income');
             const totalExpenseEl = document.getElementById('total-expense');
@@ -1715,8 +1738,8 @@ function updateReportUI(transactions, dateRange, reportType) {
             const nonCashExpenseEl = document.getElementById('non-cash-expense');
             const totalAmountEl = document.getElementById('total-amount');
             
-            // Hitung modal awal (semua metode)
-            const totalModal = calculateTotal('modal awal');
+            // Gunakan totalModal yang sudah dihitung di updateReportUI
+            // Hanya hitung cashModal dan nonCashModal
             const cashModal = calculateTotal('modal awal', 'tunai');
             const nonCashModal = calculateTotal('modal awal', 'non tunai');
             
@@ -1769,7 +1792,6 @@ function updateReportUI(transactions, dateRange, reportType) {
             await updateIncomeCard(totalIncome, cashIncome, nonCashIncome);
             await updateExpenseCard(totalExpense, cashExpense, nonCashExpense);
             await updateProfitLossCard(netProfit, profitPercentage);
-            await updateDistributionCard(totalCash, totalNonCash);
             await updateTopExpenseCard(transactions);
             await updateTopIncomeCard(transactions);
             await updateTransactionCountCard(transactions.length);
@@ -1891,15 +1913,18 @@ function updateReportUI(transactions, dateRange, reportType) {
                     
                     const card = document.createElement('div');
                     card.className = 'transaction-card';
+                    // Tambahkan kelas income atau expense untuk styling
+                    card.classList.add(transaction.type === 'Pemasukan' ? 'income' : 'expense');
+                    
                     card.innerHTML = `
                         <div class="transaction-card-header">
-                            <span class="transaction-date">${formatDate(new Date(transaction.date))}</span>
+                            <span class="transaction-date"><i class="bi bi-calendar3"></i> ${formatDate(new Date(transaction.date))}</span>
                             <span class="transaction-type ${transaction.type === 'Pemasukan' ? 'income' : 'expense'}">${transaction.type}</span>
                         </div>
-                        <div class="transaction-description">${transaction.description}</div>
+                        <div class="transaction-description"><i class="bi bi-card-text"></i> ${transaction.description}</div>
                         <div class="transaction-details">
-                            <span>${transaction.method}</span>
-                            <span class="${transaction.type === 'Pemasukan' ? 'text-success' : 'text-danger'}">${formatCurrency(amount)}</span>
+                            <span><i class="bi bi-wallet2"></i> ${transaction.method}</span>
+                            <span class="transaction-amount ${transaction.type === 'Pemasukan' ? 'income' : 'expense'}"><i class="bi ${transaction.type === 'Pemasukan' ? 'bi-graph-up-arrow' : 'bi-graph-down-arrow'}"></i> ${formatCurrency(amount)}</span>
                         </div>
                     `;
                     if (cardsContainer) cardsContainer.appendChild(card);
@@ -2032,6 +2057,41 @@ function updateReportUI(transactions, dateRange, reportType) {
                 </div>
             `;
             paymentMethodAnalysis.appendChild(nonCashElement);
+            
+            // Buat elemen untuk Total Keseluruhan
+            const totalElement = document.createElement('div');
+            totalElement.className = 'payment-method-item total-payment-method';
+            totalElement.innerHTML = `
+                <div class="payment-method-header">
+                    <div class="payment-method-name">
+                        <div class="payment-method-icon">∑</div>
+                        Total Keseluruhan
+                    </div>
+                    <div class="payment-method-percentage">100%</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill total" style="width: 100%"></div>
+                </div>
+                <div class="payment-method-stats">
+                    <div class="payment-stat">
+                        <div class="stat-label">Pemasukan</div>
+                        <div class="stat-value">${formatCurrency(paymentMethodsIncome['Tunai'] + paymentMethodsIncome['Non Tunai'])}</div>
+                    </div>
+                    <div class="payment-stat">
+                        <div class="stat-label">Pengeluaran</div>
+                        <div class="stat-value">${formatCurrency(paymentMethodsExpense['Tunai'] + paymentMethodsExpense['Non Tunai'])}</div>
+                    </div>
+                    <div class="payment-stat">
+                        <div class="stat-label">Modal Awal</div>
+                        <div class="stat-value">${formatCurrency(paymentMethodsModal['Tunai'] + paymentMethodsModal['Non Tunai'])}</div>
+                    </div>
+                    <div class="payment-stat">
+                        <div class="stat-label">Total</div>
+                        <div class="stat-value">${formatCurrency(totalKas)}</div>
+                    </div>
+                </div>
+            `;
+            paymentMethodAnalysis.appendChild(totalElement);
         } 
         // Group transactions by type for comparison report
         else if (reportType === 'comparison') {
@@ -2098,6 +2158,10 @@ function updateReportUI(transactions, dateRange, reportType) {
                 tableBody.appendChild(row);
             });
         }
+    }
+    } catch (error) {
+        console.error('Error dalam updateReportUI:', error);
+        showError('Terjadi kesalahan saat memperbarui laporan. Silakan coba lagi.');
     }
 }
 
@@ -3034,6 +3098,22 @@ function updateBarChart(data, reportType, selectedPeriod = 'monthly') {
         // Destroy existing chart if it exists
         if (barChart) {
             barChart.destroy();
+        }
+        
+        // Pastikan semua data amount valid (bukan NaN)
+        if (data && data.length > 0) {
+            data = data.map(item => ({
+                ...item,
+                income: parseFloat(item.income) || 0,
+                expense: parseFloat(item.expense) || 0,
+                modal: parseFloat(item.modal) || 0,
+                cashIncome: parseFloat(item.cashIncome) || 0,
+                nonCashIncome: parseFloat(item.nonCashIncome) || 0,
+                cashExpense: parseFloat(item.cashExpense) || 0,
+                nonCashExpense: parseFloat(item.nonCashExpense) || 0,
+                cashModal: parseFloat(item.cashModal) || 0,
+                nonCashModal: parseFloat(item.nonCashModal) || 0
+            }));
         }
         
         // Periksa apakah data kosong atau tidak ada

@@ -481,12 +481,66 @@ a { color: var(--accent); text-decoration: none; }
     font-weight: 500;
 }
 
-/* Tables */
-.table-container { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; }
-th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
-th { background: var(--muted); color: var(--text-secondary); font-weight: 500; }
-tr:hover { background: var(--glass); }
+/* Tables - Modern Design */
+.table-container { 
+    overflow-x: auto; 
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--border);
+    background: var(--glass);
+    margin-bottom: 1.5rem;
+}
+
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+}
+
+th, td { 
+    padding: 1rem; 
+    text-align: left; 
+    border-bottom: 1px solid var(--border); 
+}
+
+th { 
+    background: var(--card); 
+    color: var(--text-secondary); 
+    font-weight: 600; 
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+tr:hover { 
+    background: var(--glass); 
+}
+
+.transaction-table td {
+    vertical-align: middle;
+}
+
+.transaction-table .badge {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.transaction-table .badge.income {
+    background: rgba(76, 222, 128, 0.15);
+    color: var(--success);
+}
+
+.transaction-table .badge.expense {
+    background: rgba(248, 113, 113, 0.15);
+    color: var(--danger);
+}
 
 /* Responsive table for reports */
 #report-table th, #report-table td {
@@ -507,18 +561,119 @@ tr:hover { background: var(--glass); }
 .pagination-button:disabled { opacity: 0.5; cursor: not-allowed; }
 .pagination-info { color: var(--text-secondary); font-size: 0.875rem; margin: 0 0.5rem; }
 
-/* Cards for mobile transactions */
+/* Cards for mobile transactions - Modern Design */
 .cards-container { display: none; }
-.transaction-card { background: var(--muted); border-radius: var(--border-radius); padding: 1rem; margin-bottom: 0.75rem; }
-.transaction-card-header { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
-.transaction-date { color: var(--text-secondary); font-size: 0.875rem; }
-.transaction-type { padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 500; }
-.transaction-type.income { background: rgba(76, 222, 128, 0.15); color: var(--success); }
-.transaction-type.expense { background: rgba(248, 113, 113, 0.15); color: var(--danger); }
-.transaction-id { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
-.transaction-description { margin-bottom: 0.5rem; font-weight: 500; }
-.transaction-details { display: flex; justify-content: space-between; color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.75rem; }
-.transaction-actions { display: flex; justify-content: flex-end; gap: 0.5rem; }
+
+/* Modern Transaction Card */
+.transaction-card {
+    background: var(--glass);
+    border-radius: var(--border-radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.transaction-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    z-index: 1;
+}
+
+.transaction-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(2,6,23,0.7);
+}
+
+.transaction-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.transaction-date {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.transaction-type {
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.transaction-type.income {
+    background: rgba(76, 222, 128, 0.15);
+    color: var(--success);
+}
+
+.transaction-type.expense {
+    background: rgba(248, 113, 113, 0.15);
+    color: var(--danger);
+}
+
+.transaction-card.income::before {
+    background: var(--success);
+}
+
+.transaction-card.expense::before {
+    background: var(--danger);
+}
+
+.transaction-id {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.transaction-description {
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.transaction-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin-bottom: 0.75rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.transaction-amount {
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.transaction-amount.income {
+    color: var(--success);
+}
+
+.transaction-amount.expense {
+    color: var(--danger);
+}
+
+.transaction-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
 
 /* Forms */
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
@@ -542,15 +697,15 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 /* Report Styles - Modern Cards */
 .report-cards-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .report-card {
     background: var(--glass);
     border-radius: var(--border-radius-lg);
-    padding: 1rem;
+    padding: 1.5rem;
     display: flex;
     align-items: center;
     box-shadow: var(--shadow);
@@ -558,7 +713,9 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     border-left: 4px solid transparent;
     position: relative;
     overflow: hidden;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0;
+    height: 100%;
+    min-height: 120px; /* Memastikan tinggi minimum yang sama */
 }
 
 .report-card::before {
@@ -580,8 +737,9 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 
 .report-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(2,6,23,0.7);
-    border-color: rgba(255,255,255,0.2);
+    box-shadow: 0 10px 28px rgba(2,6,23,0.75);
+    border-color: rgba(255,255,255,0.25);
+    background: var(--glass-blur);
 }
 
 .report-card.income {
@@ -602,13 +760,12 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 
 .report-card.modal {
     border-left-color: var(--accent);
-    /* Menghapus properti yang mungkin menyebabkan perbedaan ukuran */
-    /* Memastikan ukuran sama dengan card lainnya */
+    height: 100%; /* Memastikan tinggi sama dengan card lainnya */
+    display: flex; /* Menggunakan flexbox untuk layout konsisten */
+    align-items: center; /* Menyelaraskan konten secara vertikal */
 }
 
-.report-card.distribution {
-    border-left-color: var(--info);
-}
+
 
 .report-card.top-expense {
     border-left-color: var(--danger);
@@ -619,24 +776,26 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 }
 
 .report-card-icon {
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
     background: var(--glass-blur);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 0.75rem;
-    font-size: 1.25rem;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin-right: 1rem;
+    font-size: 1.35rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     position: relative;
     z-index: 1;
     transition: all 0.3s ease;
+    border: 1px solid rgba(255,255,255,0.1);
 }
 
 .report-card:hover .report-card-icon {
-    transform: scale(1.1);
-    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+    transform: scale(1.15);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+    background: rgba(255,255,255,0.1);
 }
 
 .income .report-card-icon {
@@ -691,9 +850,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     color: var(--accent);
 }
 
-.distribution .report-card-icon {
-    color: var(--info);
-}
+
 
 .top-expense .report-card-icon {
     color: var(--danger);
@@ -705,6 +862,9 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 
 .report-card-content {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .report-card-content h4 {
@@ -718,26 +878,29 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 }
 
 .report-card-value {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 700;
     display: block;
     position: relative;
     z-index: 1;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.4px;
     transition: all 0.3s ease;
-    line-height: 1.3;
+    line-height: 1.4;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
 }
 
 .report-card-detail {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 500;
     display: block;
     position: relative;
     z-index: 1;
     color: var(--text-secondary);
-    margin-top: 0.15rem;
-    letter-spacing: 0.2px;
-    line-height: 1.2;
+    margin-top: 0.25rem;
+    letter-spacing: 0.3px;
+    line-height: 1.3;
+    opacity: 0.9;
 }
 
 .report-card:hover .report-card-value {
@@ -747,16 +910,19 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 
 /* Additional Report Styles */
 .report-section {
-    margin-bottom: 1.5rem;
+    margin-bottom: 3rem;
+    position: relative;
+    padding: 0.5rem;
 }
 
 .report-section h3 {
-    margin-top: 1rem;
-    margin-bottom: 0.75rem;
-    font-size: 1.1rem;
+    margin-top: 1.25rem;
+    margin-bottom: 1rem;
+    font-size: 1.15rem;
     color: var(--text-primary);
     border-bottom: 1px solid var(--border);
-    padding-bottom: 0.4rem;
+    padding-bottom: 0.5rem;
+    font-weight: 600;
 }
 
 .report-card.clickable {
@@ -819,6 +985,16 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 
 .forecast-card.profit {
     border-left-color: var(--info);
+}
+
+/* Styling untuk headings pada visualisasi */
+.report-section h5 {
+    font-size: 1rem;
+    margin: 1.5rem 0 1rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    padding-left: 0.5rem;
+    border-left: 3px solid var(--accent);
 }
 
 /* Styling untuk chart forecast */
@@ -903,21 +1079,22 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 /* Charts Styles */
 .charts-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-    gap: 1.25rem;
-    margin: 1rem 0 1.5rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin: 1.5rem 0 2rem;
     width: 100%;
 }
 
 .chart-card {
     background: var(--glass);
     border-radius: var(--border-radius-lg);
-    padding: 1.25rem;
+    padding: 1.5rem;
     box-shadow: var(--shadow);
     width: 100%;
     overflow: hidden;
     transition: transform 0.3s, box-shadow 0.3s;
     border: 1px solid var(--border);
+    height: 100%;
 }
 
 .chart-card:hover {
@@ -1070,6 +1247,22 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     box-shadow: 0 8px 24px rgba(2,6,23,0.5);
 }
 
+.total-payment-method {
+    grid-column: 1 / -1;
+    background: var(--card);
+    border: 1px solid var(--accent);
+}
+
+.total-payment-method .payment-method-icon {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--accent);
+    font-weight: bold;
+}
+
+.total-payment-method .progress-fill.total {
+    background: linear-gradient(90deg, var(--success) 0%, var(--info) 100%);
+}
+
 .payment-method-header {
     display: flex;
     justify-content: space-between;
@@ -1164,7 +1357,8 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     }
     
     .charts-container {
-        gap: 1rem;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
     }
 }
 
@@ -1228,6 +1422,42 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
         display: block;
     }
     
+    /* Modern Transaction Card for Mobile */
+    .transaction-card {
+        background: var(--glass);
+        border-radius: var(--border-radius-lg);
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .transaction-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        z-index: 1;
+    }
+    
+    .transaction-card.income::before {
+        background: var(--success);
+    }
+    
+    .transaction-card.expense::before {
+        background: var(--danger);
+    }
+    
+    .transaction-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(2,6,23,0.7);
+    }
+    
     .form-grid {
         grid-template-columns: 1fr;
     }
@@ -1240,25 +1470,31 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     }
     
     .report-card {
-        padding: 0.75rem;
-        margin-bottom: 0.25rem;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        border-left-width: 5px;
     }
     
     .report-card-content h4 {
-        font-size: 0.8rem;
-        margin-bottom: 0.3rem;
+        font-size: 0.85rem;
+        margin-bottom: 0.4rem;
+        letter-spacing: 0.3px;
     }
     
     .report-card-value {
-        font-size: 0.95rem;
-        line-height: 1.2;
+        font-size: 1rem;
+        line-height: 1.3;
+        font-weight: 600;
     }
     
     /* Responsive Charts */
 .charts-container {
+    display: grid;
     grid-template-columns: 1fr;
+    gap: 1.5rem;
     width: 100%;
-    overflow-x: auto;
+    overflow-x: hidden;
+    margin: 1.5rem 0;
 }
     
     /* Responsive Forecast Metrics */
@@ -1305,13 +1541,14 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
         padding: 0.75rem;
     }
     
-    .transaction-table th,
-    .transaction-table td {
-        padding: 0.5rem 0.25rem;
+    /* Hide tables on mobile and show cards instead */
+    .table-container {
+        display: none;
     }
     
-    .transaction-table .amount {
-        font-size: 0.8rem;
+    .cards-container {
+        display: block;
+        margin-top: 1rem;
     }
     
     /* Hide less important columns on mobile */
@@ -1319,39 +1556,48 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
         display: none;
     }
     
-    /* Special handling for report tables */
-    #report-details .table-container {
-        display: none;
-    }
-    
-    /* Create mobile cards for report details */
-    #report-details .cards-container {
-        display: block;
-        margin-top: 1rem;
-    }
-    
     /* Report pagination styling */
-    #report-details .pagination {
+    .pagination {
         margin-top: 1.5rem;
     }
     
-    /* Improve transaction cards for report */
-    #report-cards-container .transaction-card {
+    /* Modern Transaction Card for Mobile */
+    .transaction-card {
         background: var(--glass);
         border-radius: var(--border-radius-lg);
         padding: 1.25rem;
         margin-bottom: 1rem;
         border: 1px solid var(--border);
         box-shadow: var(--shadow);
-        transition: transform 0.3s, box-shadow 0.3s;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
     }
     
-    #report-cards-container .transaction-card:hover {
+    .transaction-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        z-index: 1;
+    }
+    
+    .transaction-card.income::before {
+        background: var(--success);
+    }
+    
+    .transaction-card.expense::before {
+        background: var(--danger);
+    }
+    
+    .transaction-card:hover {
         transform: translateY(-3px);
         box-shadow: 0 8px 24px rgba(2,6,23,0.7);
     }
     
-    #report-cards-container .transaction-card-header {
+    .transaction-card-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -1409,6 +1655,12 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
         padding: 0 1rem;
     }
     
+    /* Improve report cards for very small screens */
+    .report-cards-container {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
     .page-content {
         padding: 1rem;
     }
@@ -1430,8 +1682,13 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     }
     
     .report-section h4 {
-        font-size: 0.9rem;
-        margin-bottom: 0.75rem;
+        font-size: 1rem;
+        margin-bottom: 1rem;
+        margin-top: 1.25rem;
+        color: var(--text-primary);
+        font-weight: 600;
+        padding-bottom: 0.4rem;
+        border-bottom: 1px solid var(--border);
     }
     
     /* Make report cards container single column on mobile */
@@ -1492,40 +1749,58 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
     /* Improve chart responsiveness */
     .charts-container {
         grid-template-columns: 1fr;
-        gap: 1.5rem;
-        margin: 1rem 0 2rem;
+        gap: 1.75rem;
+        margin: 1.25rem 0 2rem;
+        overflow-x: hidden;
     }
     
     .chart-card {
-        padding: 1rem;
+        padding: 1.25rem;
+        border-radius: var(--border-radius-lg);
     }
     
     .chart-card h4 {
-        font-size: 1rem;
-        margin-bottom: 1rem;
+        font-size: 0.95rem;
+        margin-bottom: 0.75rem;
         padding-bottom: 0.5rem;
+        font-weight: 600;
     }
     
     .chart-wrapper {
-        height: 220px;
-        width: 100%;
-        max-width: 100%;
-        overflow: hidden;
-        padding: 0.25rem;
-    }
+    height: 300px;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    padding: 0.75rem;
+    margin-top: 0.75rem;
+    position: relative;
+}
     
     .chart-card {
-        padding: 1rem;
-        margin-bottom: 1rem;
-        width: 100%;
-        box-sizing: border-box;
-    }
-    
-    .chart-card h4 {
-        font-size: 0.9rem;
-        margin-bottom: 0.75rem;
-        text-align: center;
-    }
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--glass);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+}
+
+.chart-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(2,6,23,0.6);
+}
+
+.chart-card h4 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    color: var(--text-primary);
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.75rem;
+}
     
     /* Improve table title */
     .table-title {
