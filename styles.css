@@ -684,6 +684,7 @@ tr:hover {
 .form-actions { display: flex; align-items: flex-end; }
 label { margin-bottom: 0.5rem; color: var(--text-secondary); font-weight: 500; }
 input, select, textarea { background: rgba(255,255,255,0.02); border: 1px solid var(--border); color: var(--text-primary); padding: 0.75rem; border-radius: var(--border-radius); font-family: inherit; font-size: inherit; }
+input[type="date"] { min-width: 100%; width: 100%; box-sizing: border-box; -webkit-appearance: none; appearance: none; }
 select option { background-color: var(--surface); color: var(--text-primary); }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(156,175,170,0.12); }
 
@@ -1529,6 +1530,16 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 
 /* Extra small devices (phones) */
 @media (max-width: 480px) {
+    /* Fix date input on mobile */
+    input[type="date"] {
+        min-width: 100%;
+        width: 100%;
+        box-sizing: border-box;
+        -webkit-appearance: none;
+        appearance: none;
+        padding: 0.75rem;
+    }
+    
     .metrics-grid {
         grid-template-columns: 1fr;
         gap: 0.5rem;

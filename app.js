@@ -194,6 +194,9 @@ function setupEventListeners() {
     // Close error
     elements.closeError.addEventListener('click', hideError);
     
+    // Set default date to today for all date inputs
+    setDefaultDateToToday();
+    
     // Transaction Shortcut Button sudah ditambahkan di atas
     
     // Close Transaction Modal event listener sudah ditambahkan di atas
@@ -582,6 +585,20 @@ async function handleAddTransaction(e) {
 }
 
 // ... kode lain tetap sama di bawah
+
+// Set default date to today for all date inputs
+function setDefaultDateToToday() {
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Set default date for all date inputs
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    dateInputs.forEach(input => {
+        if (!input.value) {
+            input.value = today;
+        }
+    });
+}
 
 // Open Transaction Modal
 function openTransactionModal() {
