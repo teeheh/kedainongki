@@ -47,7 +47,8 @@ const CONFIG = {
     discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
     scope: 'https://www.googleapis.com/auth/spreadsheets',
     sheetName: 'Transaksi', // Nama sheet untuk data laporan keuangan dasar (sesuaikan dengan nama sheet yang benar)
-    sheetRange: 'A1:F20000' // Range data yang diambil (bisa disesuaikan)
+    sheetRange: 'A1:F20000', // Range data yang diambil (bisa disesuaikan)
+    RANGE: 'Table1' // Nama tabel di Google Sheets
 };
 
 // Helper Functions
@@ -537,19 +538,25 @@ async function handleAddTransaction(e) {
     
     showLoading();
     try {
+        // Format data sebelum dikirim ke Google Sheets
+        const formattedData = [
+            transaction.id,
+            formatDate(transaction.date),
+            transaction.description,
+            transaction.type,
+            transaction.method,
+            transaction.amount
+        ];
+        
+        console.table([formattedData]);
+        
         await gapi.client.sheets.spreadsheets.values.append({
             spreadsheetId: CONFIG.spreadsheetId,
-            range: 'Transaksi!A:F',
-            valueInputOption: 'USER_ENTERED',
+            range: `${CONFIG.sheetName}!A:F`,
+            valueInputOption: "USER_ENTERED",
+            insertDataOption: "INSERT_ROWS",
             resource: {
-                values: [[
-                    transaction.id,
-                    transaction.date,
-                    transaction.description,
-                    transaction.type,
-                    transaction.method,
-                    transaction.amount
-                ]]
+                values: [formattedData]
             }
         });
 
@@ -642,19 +649,25 @@ async function handleQuickAddTransaction(e) {
     
     showLoading();
     try {
+        // Format data sebelum dikirim ke Google Sheets
+        const formattedData = [
+            transaction.id,
+            formatDate(transaction.date),
+            transaction.description,
+            transaction.type,
+            transaction.method,
+            transaction.amount
+        ];
+        
+        console.table([formattedData]);
+        
         await gapi.client.sheets.spreadsheets.values.append({
             spreadsheetId: CONFIG.spreadsheetId,
-            range: 'Transaksi!A:F',
-            valueInputOption: 'USER_ENTERED',
+            range: `${CONFIG.sheetName}!A:F`,
+            valueInputOption: "USER_ENTERED",
+            insertDataOption: "INSERT_ROWS",
             resource: {
-                values: [[
-                    transaction.id,
-                    transaction.date,
-                    transaction.description,
-                    transaction.type,
-                    transaction.method,
-                    transaction.amount
-                ]]
+                values: [formattedData]
             }
         });
 
@@ -1189,8 +1202,12 @@ let incomeExpensePieChart = null;
 let dailyTransactionsBarChart = null;
 let paymentMethodBarChart = null;
 let topExpenseBarChart = null;
+let topIncomeBarChart = null;
 let barChart = null;
 let pieChart = null;
+
+// Variabel global untuk metrik laporan
+let totalAmount = 0;
 
 
 // Update report UI
@@ -1203,37 +1220,59 @@ function updateReportUI(transactions, dateRange, reportType) {
             return value && typeof value === 'string' ? value.trim().toLowerCase() : '';
         }
     
-    // Fungsi untuk menghitung total berdasarkan tipe dan metode pembayaran
-    function calculateTotal(type, paymentMethod = null) {
-        return transactions
-            .filter(t => {
-                const typeMatch = safeGetLowerCase(t.type) === safeGetLowerCase(type);
-                if (paymentMethod === null) return typeMatch;
-                return typeMatch && safeGetLowerCase(t.method) === safeGetLowerCase(paymentMethod);
-            })
-            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-    }
-    
-    // Calculate report metrics
-    const totalIncome = calculateTotal('pemasukan');
-    const totalExpense = calculateTotal('pengeluaran');
-    const totalModal = calculateTotal('modal awal');
-    
+    // Hitung total pemasukan & pengeluaran (sama dengan updateDashboard)
+    const totalIncome = transactions
+        .filter(t => safeGetLowerCase(t.type) === 'pemasukan')
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
 
-        
-    // Hitung Pemasukan dan Pengeluaran berdasarkan metode pembayaran
-    const cashIncome = calculateTotal('pemasukan', 'tunai');
-    const nonCashIncome = calculateTotal('pemasukan', 'non tunai');
-    const cashExpense = calculateTotal('pengeluaran', 'tunai');
-    const nonCashExpense = calculateTotal('pengeluaran', 'non tunai');
-        
-    // Hitung Total Tunai (pemasukan tunai - pengeluaran tunai)
-    const totalCash = cashIncome - cashExpense;
-    
-    // Hitung Total Non Tunai (pemasukan non tunai - pengeluaran non tunai)
-    const totalNonCash = nonCashIncome - nonCashExpense;
-    
+    const totalExpense = transactions
+        .filter(t => safeGetLowerCase(t.type) === 'pengeluaran')
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+
+    // Hitung modal awal (semua metode) - sama dengan updateDashboard
+    const totalModal = transactions
+        .filter(t => safeGetLowerCase(t.type) === 'modal awal')
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+
+    // Net Profit (sesuai konsep laba bersih) - sama dengan updateDashboard
     const netProfit = totalIncome - totalExpense;
+    
+    // Hitung breakdown kas: tunai - sama dengan updateDashboard
+    const cashIncome = transactions
+        .filter(t => safeGetLowerCase(t.method) === 'tunai' && safeGetLowerCase(t.type) === 'pemasukan')
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+
+    const cashExpense = transactions
+        .filter(t => safeGetLowerCase(t.method) === 'tunai' && safeGetLowerCase(t.type) === 'pengeluaran')
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+
+    const cashModal = transactions
+        .filter(t => safeGetLowerCase(t.method) === 'tunai' && safeGetLowerCase(t.type) === 'modal awal')
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+
+    // Rumus Kas Tunai: Pemasukan Tunai - Pengeluaran Tunai + Modal Awal Tunai
+    const cashAmount = cashIncome - cashExpense + cashModal;
+
+    // Hitung breakdown kas: non tunai - sama dengan updateDashboard
+    const nonCashIncome = transactions
+        .filter(t => safeGetLowerCase(t.method) === 'non tunai' && safeGetLowerCase(t.type) === 'pemasukan')
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+
+    const nonCashExpense = transactions
+        .filter(t => safeGetLowerCase(t.method) === 'non tunai' && safeGetLowerCase(t.type) === 'pengeluaran')
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+
+    const nonCashModal = transactions
+        .filter(t => safeGetLowerCase(t.method) === 'non tunai' && safeGetLowerCase(t.type) === 'modal awal')
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+
+    // Rumus Kas Non Tunai: Pemasukan Non Tunai - Pengeluaran Non Tunai + Modal Awal Non Tunai
+    const nonCashAmount = nonCashIncome - nonCashExpense + nonCashModal;
+    
+    // Total kas akhir
+    const totalKas = cashAmount + nonCashAmount;
+    
+    // Persentase dan rasio - sama dengan updateDashboard
     const profitPercentage = totalIncome > 0 ? (netProfit / totalIncome) * 100 : 0;
     const expenseRatio = totalIncome > 0 ? (totalExpense / totalIncome) * 100 : 0;
     
@@ -1310,7 +1349,7 @@ function updateReportUI(transactions, dateRange, reportType) {
             reportForecast.classList.remove('hidden');
         }
         
-        // Fungsi untuk memperbarui metrik laporan dasar
+        // Fungsi untuk memperbarui metrik laporan dasar - disesuaikan dengan format Dashboard
         // Fungsi untuk menampilkan hasil laporan untuk setiap card
         function updateReportCard(cardType, value, cashValue, nonCashValue) {
             // Temukan elemen card berdasarkan tipe
@@ -1322,16 +1361,26 @@ function updateReportUI(transactions, dateRange, reportType) {
             const valueEl = card.querySelector('.report-card-value');
             const detailEl = card.querySelector('.report-card-detail');
             
-            // Update nilai dan detail
+            // Update nilai dan detail - format sesuai dengan Dashboard
             if (valueEl) {
                 let prefix = '';
-                if (cardType === 'modal') prefix = 'Modal Awal: ';
-                if (cardType === 'income') prefix = 'Pemasukan: ';
-                if (cardType === 'expense') prefix = 'Pengeluaran: ';
-                if (cardType === 'profit-loss') prefix = 'Laba / Rugi: ';
+                let suffix = '';
                 
-                // Menghilangkan emoji/ikon pada teks
-                valueEl.textContent = `${prefix}${formatCurrency(value)}`;
+                if (cardType === 'modal') prefix = '💰 Modal Awal: ';
+                if (cardType === 'income') prefix = '📈 Pemasukan: ';
+                if (cardType === 'expense') prefix = '📉 Pengeluaran: ';
+                if (cardType === 'profit-loss') {
+                    prefix = '🔄 Laba / Rugi: ';
+                    // Tambahkan suffix untuk nilai negatif
+                    if (value < 0) suffix = ' (defisit)';
+                }
+                
+                // Format sesuai dengan Dashboard
+                if (typeof value === 'number' && cardType.includes('percentage')) {
+                    valueEl.textContent = `${prefix}${value.toFixed(1)}%${suffix}`;
+                } else {
+                    valueEl.textContent = `${prefix}${formatCurrency(value)}${suffix}`;
+                }
             }
             
             if (detailEl) {
@@ -1579,7 +1628,7 @@ function updateReportUI(transactions, dateRange, reportType) {
             }
         }
         
-        // Fungsi untuk mengelola card Laba/Rugi
+        // Fungsi untuk mengelola card Laba/Rugi - disesuaikan dengan format Dashboard
         async function updateProfitLossCard(netProfit, profitPercentage) {
             // Coba ambil data dari Google Sheets
             const sheetData = await fetchDataFromGoogleSheets();
@@ -1587,26 +1636,32 @@ function updateReportUI(transactions, dateRange, reportType) {
             if (sheetData && sheetData['laba/rugi']) {
                 // Gunakan data dari Google Sheets
                 const profitData = sheetData['laba/rugi'];
-                // Menggunakan kelas profit yang sesuai dengan HTML
-                const profitLossCard = document.querySelector('.report-card.profit');
+                // Gunakan updateReportCard untuk konsistensi format dengan Dashboard
+                updateReportCard('profit-loss', profitData.total, 0, 0);
                 
+                // Update detail persentase
+                const profitLossCard = document.querySelector('.report-card.profit');
                 if (profitLossCard) {
-                    const valueEl = profitLossCard.querySelector('.report-card-value');
                     const detailEl = profitLossCard.querySelector('.report-card-detail');
-                    
-                    if (valueEl) valueEl.textContent = `Laba / Rugi: ${formatCurrency(profitData.total)}`;
                     if (detailEl) detailEl.textContent = `(${profitData.persentase.toFixed(1)}% dari Pemasukan)`;
                 }
             } else {
                 // Fallback ke data lokal
-                // Menggunakan kelas profit yang sesuai dengan HTML
+                // Gunakan updateReportCard untuk konsistensi format dengan Dashboard
+                updateReportCard('profit-loss', netProfit, 0, 0);
+                
+                // Update detail persentase
                 const profitLossCard = document.querySelector('.report-card.profit');
                 if (profitLossCard) {
-                    const valueEl = profitLossCard.querySelector('.report-card-value');
                     const detailEl = profitLossCard.querySelector('.report-card-detail');
-                    
-                    if (valueEl) valueEl.textContent = `Laba / Rugi: ${formatCurrency(netProfit)}`;
                     if (detailEl) detailEl.textContent = `(${profitPercentage.toFixed(1)}% dari Pemasukan)`;
+                    
+                    // Pastikan nilai laba bersih diformat dengan benar
+                    const valueEl = profitLossCard.querySelector('.report-card-value');
+                    if (valueEl) {
+                        const prefix = netProfit >= 0 ? '🔄 Laba / Rugi: ' : '🔄 Laba / Rugi: ';
+                        valueEl.textContent = `${prefix}${formatCurrency(netProfit)}${netProfit < 0 ? ' (defisit)' : ''}`;
+                    }
                 }
             }
         }
@@ -1722,7 +1777,7 @@ function updateReportUI(transactions, dateRange, reportType) {
         }
         
         async function updateBasicReportMetrics(totalModal) {
-            // Update basic report metrics
+            // Update basic report metrics - disesuaikan dengan updateDashboard
             const totalIncomeEl = document.getElementById('total-income');
             const totalExpenseEl = document.getElementById('total-expense');
             const profitLossEl = document.getElementById('profit-loss');
@@ -1738,26 +1793,54 @@ function updateReportUI(transactions, dateRange, reportType) {
             const nonCashExpenseEl = document.getElementById('non-cash-expense');
             const totalAmountEl = document.getElementById('total-amount');
             
-            // Gunakan totalModal yang sudah dihitung di updateReportUI
-            // Hanya hitung cashModal dan nonCashModal
-            const cashModal = calculateTotal('modal awal', 'tunai');
-            const nonCashModal = calculateTotal('modal awal', 'non tunai');
+            // Gunakan nilai yang sudah dihitung di updateReportUI
+            // Nilai cashModal dan nonCashModal sudah dihitung di updateReportUI
+            // Gunakan cashAmount dan nonCashAmount yang sudah dihitung di updateReportUI
+            const totalCash = cashAmount;
+            const totalNonCash = nonCashAmount;
             
-            // Update metrik dasar
+            // Update metrik dasar - disesuaikan dengan format Dashboard
             if (totalIncomeEl) totalIncomeEl.textContent = formatCurrency(totalIncome);
             if (totalExpenseEl) totalExpenseEl.textContent = formatCurrency(totalExpense);
             if (profitLossEl) profitLossEl.textContent = formatCurrency(netProfit);
             if (transactionCountEl) transactionCountEl.textContent = transactions.length;
             if (avgTransactionEl) avgTransactionEl.textContent = avgTransactionsPerDay.toFixed(1);
             
-            // Update metrik baru
+            // Update metrik baru dengan format yang sama dengan Dashboard
+            totalAmount = totalCash + totalNonCash; // Ubah menjadi variabel global untuk digunakan di updateAnalyticReportMetrics
             if (totalCashEl) totalCashEl.textContent = formatCurrency(totalCash);
             if (totalNonCashEl) totalNonCashEl.textContent = formatCurrency(totalNonCash);
             if (cashIncomeEl) cashIncomeEl.textContent = formatCurrency(cashIncome);
             if (nonCashIncomeEl) nonCashIncomeEl.textContent = formatCurrency(nonCashIncome);
             if (cashExpenseEl) cashExpenseEl.textContent = formatCurrency(cashExpense);
             if (nonCashExpenseEl) nonCashExpenseEl.textContent = formatCurrency(nonCashExpense);
-            if (totalAmountEl) totalAmountEl.textContent = formatCurrency(totalCash + totalNonCash);
+            if (totalAmountEl) totalAmountEl.textContent = formatCurrency(totalAmount);
+            
+            // Update persentase dengan format yang sama dengan Dashboard
+            const cashPercentageEl = document.getElementById('cash-percentage');
+            const nonCashPercentageEl = document.getElementById('non-cash-percentage');
+            const profitPercentageEl = document.getElementById('profit-percentage');
+            const expensePercentageEl = document.getElementById('expense-percentage');
+            
+            if (cashPercentageEl && totalAmount > 0) {
+                const cashPercent = (totalCash / totalAmount) * 100;
+                cashPercentageEl.textContent = cashPercent.toFixed(1) + '%';
+            }
+            
+            if (nonCashPercentageEl && totalAmount > 0) {
+                const nonCashPercent = (totalNonCash / totalAmount) * 100;
+                nonCashPercentageEl.textContent = nonCashPercent.toFixed(1) + '%';
+            }
+            
+            if (profitPercentageEl && totalIncome > 0) {
+                const profitPercent = (netProfit / totalIncome) * 100;
+                profitPercentageEl.textContent = profitPercent.toFixed(1) + '%';
+            }
+            
+            if (expensePercentageEl && totalIncome > 0) {
+                const expensePercent = (totalExpense / totalIncome) * 100;
+                expensePercentageEl.textContent = expensePercent.toFixed(1) + '%';
+            }
             
             // Update elemen laporan Breakdown Kas
             const reportCashIncomeEl = document.getElementById('report-cash-income');
@@ -1797,19 +1880,39 @@ function updateReportUI(transactions, dateRange, reportType) {
             await updateTransactionCountCard(transactions.length);
         }
         
-        // Fungsi untuk memperbarui metrik laporan analitis
+        // Fungsi untuk memperbarui metrik laporan analitis - disesuaikan dengan format Dashboard
         function updateAnalyticReportMetrics() {
-            // Update analytic report metrics
+            // Update analytic report metrics dengan format yang sama dengan Dashboard
             const profitMarginEl = document.getElementById('profit-margin');
             const profitMarginBarEl = document.getElementById('profit-margin-bar');
             const expenseRatioEl = document.getElementById('expense-ratio-analytics');
             const expenseRatioBarEl = document.getElementById('expense-ratio-bar');
             
+            // Gunakan format yang sama dengan Dashboard (toFixed(1) + '%')
             if (profitMarginEl) profitMarginEl.textContent = profitPercentage.toFixed(1) + '%';
-            if (profitMarginBarEl) profitMarginBarEl.style.width = Math.min(100, profitPercentage) + '%';
+            if (profitMarginBarEl) profitMarginBarEl.style.width = Math.min(100, Math.abs(profitPercentage)) + '%';
             
             if (expenseRatioEl) expenseRatioEl.textContent = expenseRatio.toFixed(1) + '%';
             if (expenseRatioBarEl) expenseRatioBarEl.style.width = Math.min(100, expenseRatio) + '%';
+            
+            // Update persentase kas dan non-kas
+            const cashPercentageAnalyticsEl = document.getElementById('cash-percentage-analytics');
+            const nonCashPercentageAnalyticsEl = document.getElementById('non-cash-percentage-analytics');
+            
+            // Gunakan cashAmount dan nonCashAmount yang sudah dihitung di updateReportUI
+            const totalCash = cashAmount;
+            const totalNonCash = nonCashAmount;
+            // totalAmount sudah didefinisikan di updateBasicReportMetrics
+            
+            if (cashPercentageAnalyticsEl && totalAmount > 0) {
+                const cashPercent = (totalCash / totalAmount) * 100;
+                cashPercentageAnalyticsEl.textContent = cashPercent.toFixed(1) + '%';
+            }
+            
+            if (nonCashPercentageAnalyticsEl && totalAmount > 0) {
+                const nonCashPercent = (totalNonCash / totalAmount) * 100;
+                nonCashPercentageAnalyticsEl.textContent = nonCashPercent.toFixed(1) + '%';
+            }
             
             // Tampilkan elemen analisis metode pembayaran
             document.getElementById('payment-method-analysis').style.display = 'grid';
@@ -2201,6 +2304,7 @@ function updateCharts(transactions, dateRange, reportType, selectedPeriod = 'mon
             updateDailyTransactionsBarChart(transactions);
             updatePaymentMethodBarChart(transactions);
             updateTopExpenseBarChart(transactions);
+            updateTopIncomeBarChart(transactions);
         }
     } catch (error) {
         console.error('Error in updateCharts:', error);
@@ -3077,6 +3181,140 @@ function updateTopExpenseBarChart(transactions) {
         });
     } catch (error) {
         console.error("Gagal memperbarui top expense bar chart:", error);
+    }
+}
+
+// Fungsi untuk memperbarui bar chart top pemasukan harian
+function updateTopIncomeBarChart(transactions) {
+    try {
+        const chartElement = document.getElementById('top-income-bar-chart');
+        if (!chartElement) return; // Hindari error jika elemen tidak ditemukan
+        
+        // Tambahkan atribut willReadFrequently untuk meningkatkan performa
+        chartElement.setAttribute('willReadFrequently', 'true');
+        
+        const ctx = chartElement.getContext('2d');
+        
+        // Destroy existing chart if it exists
+        if (topIncomeBarChart) {
+            topIncomeBarChart.destroy();
+        }
+        
+        // Filter hanya transaksi pemasukan
+        const incomeTransactions = transactions.filter(t => t.type.trim().toLowerCase() === 'pemasukan');
+        
+        // Kelompokkan berdasarkan deskripsi (kategori)
+        const incomeCategories = {};
+        incomeTransactions.forEach(transaction => {
+            // Gunakan deskripsi sebagai kategori
+            const category = transaction.description.trim();
+            if (!incomeCategories[category]) {
+                incomeCategories[category] = 0;
+            }
+            incomeCategories[category] += parseFloat(transaction.amount) || 0;
+        });
+        
+        // Konversi ke array untuk chart dan urutkan dari terbesar ke terkecil
+        const sortedIncomes = Object.entries(incomeCategories)
+            .map(([category, amount]) => ({ category, amount }))
+            .sort((a, b) => b.amount - a.amount)
+            .slice(0, 10); // Ambil 10 pemasukan terbesar
+        
+        // Prepare data for chart
+        const labels = sortedIncomes.map(item => item.category);
+        const amounts = sortedIncomes.map(item => item.amount);
+        
+        // Generate warna dinamis
+        const backgroundColors = [
+            'rgba(74, 222, 128, 0.8)',  // green
+            'rgba(34, 211, 238, 0.8)',  // cyan
+            'rgba(59, 130, 246, 0.8)',  // blue
+            'rgba(147, 51, 234, 0.8)',  // purple
+            'rgba(236, 72, 153, 0.8)',  // pink
+            'rgba(248, 113, 113, 0.8)', // red
+            'rgba(251, 146, 60, 0.8)',  // orange
+            'rgba(234, 179, 8, 0.8)',   // yellow
+            'rgba(132, 204, 22, 0.8)',  // lime
+            'rgba(74, 222, 128, 0.8)',  // green (repeat)
+        ];
+        
+        const borderColors = [
+            'rgba(74, 222, 128, 1)',
+            'rgba(34, 211, 238, 1)',
+            'rgba(59, 130, 246, 1)',
+            'rgba(147, 51, 234, 1)',
+            'rgba(236, 72, 153, 1)',
+            'rgba(248, 113, 113, 1)',
+            'rgba(251, 146, 60, 1)',
+            'rgba(234, 179, 8, 1)',
+            'rgba(132, 204, 22, 1)',
+            'rgba(74, 222, 128, 1)',
+        ];
+        
+        // Create new chart
+        topIncomeBarChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Nominal Pemasukan',
+                        data: amounts,
+                        backgroundColor: backgroundColors,
+                        borderColor: borderColors,
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y', // Horizontal bar chart
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'rgb(230, 240, 242)',
+                            callback: function(value) {
+                                return formatCurrency(value);
+                            }
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'rgb(230, 240, 242)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += formatCurrency(context.raw);
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error("Gagal memperbarui top income bar chart:", error);
     }
 }
 
@@ -4102,14 +4340,14 @@ async function deleteTransaction(index) {
 }
 
 // Helper function: Format date
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    // Format tanggal seperti di Google Sheet: DD/MM/YYYY
-    return date.toLocaleDateString('id-ID', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-    }).replace(/-/g, '/');
+function formatDate(value) {
+    const d = new Date(value);
+    if (isNaN(d)) return value; // kalau gagal parsing, kembalikan aslinya
+
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
 }
 
 // Dummy data for fallback
