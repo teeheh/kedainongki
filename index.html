@@ -13,6 +13,7 @@
     <link rel="manifest" href="site.webmanifest">
 
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="transaction-card.css">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
@@ -98,10 +99,7 @@
                     <i class="bi bi-bar-chart"></i>
                     <span>Laporan</span>
                 </a>
-                <a href="https://docs.google.com/spreadsheets/d/1gd1JcYiuUsPXO1xbwKHJomnLxMdK7s7xfJ60l3p7WKw/edit?gid=0#gid=0" target="_blank" class="nav-item">
-                    <i class="bi bi-printer"></i>
-                    <span>Sheet</span>
-                </a>     
+  
             </nav>
             <div class="sidebar-footer">
                 <button id="logout-btn" class="logout-btn">
@@ -489,8 +487,20 @@
                                     </div>
                                     <div class="report-card-content">
                                         <h4>Pengeluaran Terbesar</h4>
-                                        <span class="report-card-value">🏆 Bayar Scan Mamah: Rp 1.503.000</span>
-                                        <span class="report-card-value">🥈 Bayar Shopee: Rp 935.000</span>
+                                        <div class="transaction-detail">
+                                            <div class="transaction-rank">🏆</div>
+                                            <div class="transaction-info">
+                                                <div class="transaction-description">Bayar Scan Mamah</div>
+                                                <div class="transaction-amount">Rp 1.503.000</div>
+                                            </div>
+                                        </div>
+                                        <div class="transaction-detail">
+                                            <div class="transaction-rank">🥈</div>
+                                            <div class="transaction-info">
+                                                <div class="transaction-description">Bayar Shopee</div>
+                                                <div class="transaction-amount">Rp 935.000</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 
@@ -501,8 +511,22 @@
                                     </div>
                                     <div class="report-card-content">
                                         <h4>Pemasukan Terbesar</h4>
-                                        <span class="report-card-value">🏆 Pendapatan Cash (2025-09-02): Rp 435.000</span>
-                                        <span class="report-card-value">🥈 Pendapatan Cash (2025-09-01): Rp 360.000</span>
+                                        <div class="transaction-detail">
+                                            <div class="transaction-rank">🏆</div>
+                                            <div class="transaction-info">
+                                                <div class="transaction-description">Pendapatan Cash</div>
+                                                <div class="transaction-date">2025-09-02</div>
+                                                <div class="transaction-amount">Rp 435.000</div>
+                                            </div>
+                                        </div>
+                                        <div class="transaction-detail">
+                                            <div class="transaction-rank">🥈</div>
+                                            <div class="transaction-info">
+                                                <div class="transaction-description">Pendapatan Cash</div>
+                                                <div class="transaction-date">2025-09-01</div>
+                                                <div class="transaction-amount">Rp 360.000</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 
@@ -733,7 +757,7 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="quick-amount">Nominal (Rp)</label>
-                            <input type="number" id="amount" name="amount" placeholder="0" min="0" required>
+                            <input type="number" id="quick-amount" name="amount" placeholder="0" min="0" required>
                         </div>
                         <div class="form-group form-actions">
                             <button type="submit" class="btn-primary">
@@ -824,5 +848,4 @@
     <!-- App Scripts -->
     <script src="app.js"></script>
 </body>
-
 </html>

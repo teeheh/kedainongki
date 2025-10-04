@@ -4181,37 +4181,43 @@ async function editTransaction(index) {
                 <button class="btn-icon close-modal">&times;</button>
             </div>
             <form id="edit-transaction-form">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="edit-date">Tanggal</label>
-                        <input type="date" id="edit-date" name="date" value="${transaction.date}" required>
+                <div class="form-container">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-date">Tanggal</label>
+                            <input type="date" id="edit-date" name="date" value="${formatDateForInput(transaction.date)}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-description">Deskripsi</label>
+                            <input type="text" id="edit-description" name="description" value="${transaction.description}" required>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="edit-description">Deskripsi</label>
-                        <input type="text" id="edit-description" name="description" value="${transaction.description}" required>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-type">Jenis</label>
+                            <select id="edit-type" name="type" required>
+                                <option value="Pemasukan" ${transaction.type === 'Pemasukan' ? 'selected' : ''}>Pemasukan</option>
+                                <option value="Pengeluaran" ${transaction.type === 'Pengeluaran' ? 'selected' : ''}>Pengeluaran</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-method">Metode</label>
+                            <select id="edit-method" name="method" required>
+                                <option value="Tunai" ${transaction.method === 'Tunai' ? 'selected' : ''}>Tunai</option>
+                                <option value="Non Tunai" ${transaction.method === 'Non Tunai' ? 'selected' : ''}>Non Tunai</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="edit-type">Jenis</label>
-                        <select id="edit-type" name="type" required>
-                            <option value="Pemasukan" ${transaction.type === 'Pemasukan' ? 'selected' : ''}>Pemasukan</option>
-                            <option value="Pengeluaran" ${transaction.type === 'Pengeluaran' ? 'selected' : ''}>Pengeluaran</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-method">Metode</label>
-                        <select id="edit-method" name="method" required>
-                            <option value="Tunai" ${transaction.method === 'Tunai' ? 'selected' : ''}>Tunai</option>
-                            <option value="Non Tunai" ${transaction.method === 'Non Tunai' ? 'selected' : ''}>Non Tunai</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="edit-amount">Nominal (Rp)</label>
-                        <input type="number" id="edit-amount" name="amount" value="${transaction.amount}" min="0" required>
-                    </div>
-                    <div class="form-group">
-                        <button type="submit" class="btn-primary">
-                            <i class="bi bi-save"></i> Simpan Perubahan
-                        </button>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-amount">Nominal (Rp)</label>
+                            <input type="number" id="edit-amount" name="amount" value="${transaction.amount}" min="0" required>
+                        </div>
+                        <div class="form-group form-actions">
+                            <button type="submit" class="btn-primary">
+                                <i class="bi bi-save"></i> Simpan Perubahan
+                            </button>
+                        </div>
                     </div>
                 </div>
             </form>
@@ -4365,6 +4371,17 @@ function formatDate(value) {
     const month = String(d.getMonth() + 1).padStart(2, "0");
     const year = d.getFullYear();
     return `${day}/${month}/${year}`;
+}
+
+// Format date for input type="date" (YYYY-MM-DD)
+function formatDateForInput(value) {
+    const d = new Date(value);
+    if (isNaN(d)) return value; // kalau gagal parsing, kembalikan aslinya
+    
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
 }
 
 // Dummy data for fallback
