@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="img-src 'self' data: https://*.googleusercontent.com https://*.gstatic.com https://ui-avatars.com https://lh3.googleusercontent.com">
+    <meta http-equiv="Content-Security-Policy"
+        content="img-src 'self' data: https://*.googleusercontent.com https://*.gstatic.com https://ui-avatars.com https://lh3.googleusercontent.com">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kedai Nongki - Sistem Manajemen Kas</title>
@@ -16,53 +18,64 @@
     <link rel="stylesheet" href="transaction-card.css">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com" rel="preconnect"/>
-    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-    <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@400;500;700&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <!-- Chart.js untuk visualisasi grafik -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 </head>
+
 <body>
     <!-- Modal Login -->
     <div id="login-modal">
-    <div class="login-wrap">
-        <header class="login-header">
-        <div class="login-brand">
-            <img src="kedai-02-03.svg" alt="Kedai Logo" class="login-logo">
-            <!-- <svg class="login-logo" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+        <div class="login-wrap">
+            <header class="login-header">
+                <div class="login-brand">
+                    <img src="kedai-02-03.svg" alt="Kedai Logo" class="login-logo">
+                    <!-- <svg class="login-logo" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
             <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
             </svg> -->
-            <h1 class="login-title">Kedai Nongki</h1>
-        </div>
-        </header>
-        
+                    <h1 class="login-title">Kedai Nongki</h1>
+                </div>
+            </header>
 
-        <main class="login-main">
-        <div class="login-panel">
-            <!-- <div class="login-logo-container">
+
+            <main class="login-main">
+                <div class="login-panel">
+                    <!-- <div class="login-logo-container">
                 <img src="kedai1-04.png" alt="Kedai Logo" class="kedai-logo">
             </div> -->
-            <div class="login-text">
-            <h2 class="login-heading">Welcome Back</h2>
-            <p class="login-subtitle">Sign in to manage your cash flow efficiently.</p>
-            </div>
+                    <div class="login-text">
+                        <h2 class="login-heading">Welcome Back</h2>
+                        <p class="login-subtitle">Sign in to manage your cash flow efficiently.</p>
+                    </div>
 
-            <div class="login-btn-wrap">
-            <button id="google-login-button" class="google-btn">
-                <svg class="google-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <path d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" fill="#4285F4"/>
-                <path d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z" fill="#EA4335"/>
-                <path d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0124 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z" fill="#34A853"/>
-                <path d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 01-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" fill="#FBBC05"/>
-                </svg>
-                <span>Sign in with Google</span>
-            </button>
-            </div>
+                    <div class="login-btn-wrap">
+                        <button id="google-login-button" class="google-btn">
+                            <svg class="google-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"
+                                aria-hidden="true">
+                                <path
+                                    d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"
+                                    fill="#4285F4" />
+                                <path
+                                    d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"
+                                    fill="#EA4335" />
+                                <path
+                                    d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0124 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"
+                                    fill="#34A853" />
+                                <path
+                                    d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 01-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"
+                                    fill="#FBBC05" />
+                            </svg>
+                            <span>Sign in with Google</span>
+                        </button>
+                    </div>
+                </div>
+            </main>
         </div>
-        </main>
-    </div>
     </div>
 
 
@@ -73,7 +86,7 @@
         <!-- Sidebar for Desktop -->
         <aside id="sidebar" class="sidebar">
             <div class="sidebar-header">
-                 <!-- <div class="login-logo-container">
+                <!-- <div class="login-logo-container">
                     <img src="kedai1-04.png" alt="Kedai Logo" class="kedai-logo">
                 </div> -->
                 <div class="login-brand">
@@ -83,8 +96,8 @@
                     </svg> -->
                     <h1 class="login-title">Kedai Nongki</h1>
                 </div>
-                
-                
+
+
             </div>
             <nav class="sidebar-nav">
                 <a href="#dashboard" class="nav-item active" data-page="dashboard">
@@ -99,7 +112,7 @@
                     <i class="bi bi-bar-chart"></i>
                     <span>Laporan</span>
                 </a>
-  
+
             </nav>
             <div class="sidebar-footer">
                 <button id="logout-btn" class="logout-btn">
@@ -118,7 +131,7 @@
                 </button>
                 <h2 id="page-title">Dashboard</h2>
                 <button id="add-transaction-btn" class="btn-primary add-transaction-btn">
-                    <i class="bi bi-plus-circle" alt="Transaksi Baru"></i> 
+                    <i class="bi bi-plus-circle" alt="Transaksi Baru"></i>
                 </button>
                 <div class="user-profile">
                     <img id="user-avatar" src="" alt="Avatar" class="avatar">
@@ -269,7 +282,8 @@
                                     </div>
                                     <div class="form-group">
                                         <label for="description">Deskripsi</label>
-                                        <input type="text" id="description" name="description" placeholder="Masukkan deskripsi" required>
+                                        <input type="text" id="description" name="description"
+                                            placeholder="Masukkan deskripsi" required>
                                     </div>
                                 </div>
                                 <div class="form-row">
@@ -319,8 +333,10 @@
                         <div class="search-container">
                             <div class="search-input-wrapper">
                                 <i class="bi bi-search search-icon"></i>
-                                <input type="text" id="transaction-search" class="search-input" placeholder="Cari transaksi..." autocomplete="off">
-                                <button id="reset-search" class="reset-search-btn" title="Reset pencarian"><i class="bi bi-x"></i></button>
+                                <input type="text" id="transaction-search" class="search-input"
+                                    placeholder="Cari transaksi..." autocomplete="off">
+                                <button id="reset-search" class="reset-search-btn" title="Reset pencarian"><i
+                                        class="bi bi-x"></i></button>
                                 <div id="autocomplete-results" class="autocomplete-results"></div>
                             </div>
                         </div>
@@ -346,7 +362,8 @@
                             <button id="prev-page" class="pagination-button" disabled>
                                 <i class="bi bi-chevron-left"></i>
                             </button>
-                            <span class="pagination-info">Halaman <span id="current-page">1</span> dari <span id="total-pages">1</span></span>
+                            <span class="pagination-info">Halaman <span id="current-page">1</span> dari <span
+                                    id="total-pages">1</span></span>
                             <button id="next-page" class="pagination-button" disabled>
                                 <i class="bi bi-chevron-right"></i>
                             </button>
@@ -424,7 +441,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Laporan Dasar -->
                         <div id="report-basic" class="report-section">
                             <h4>📊 Laporan Keuangan Dasar</h4>
@@ -437,10 +454,11 @@
                                     <div class="report-card-content">
                                         <h4>Saldo Awal / Modal</h4>
                                         <span class="report-card-value">💰 Modal Awal: Rp 4.665.804</span>
-                                        <span class="report-card-detail">(Tunai: Rp 2.002.000 | Non Tunai: Rp 2.663.804)</span>
+                                        <span class="report-card-detail">(Tunai: Rp 2.002.000 | Non Tunai: Rp
+                                            2.663.804)</span>
                                     </div>
                                 </div>
-                                
+
                                 <!-- 2. Total Pemasukan -->
                                 <div class="report-card income">
                                     <div class="report-card-icon">
@@ -449,10 +467,11 @@
                                     <div class="report-card-content">
                                         <h4>Total Pemasukan</h4>
                                         <span class="report-card-value">📈 Pemasukan: Rp 1.950.637</span>
-                                        <span class="report-card-detail">(Tunai: Rp 1.155.000 | Non Tunai: Rp 795.637)</span>
+                                        <span class="report-card-detail">(Tunai: Rp 1.155.000 | Non Tunai: Rp
+                                            795.637)</span>
                                     </div>
                                 </div>
-                                
+
                                 <!-- 3. Total Pengeluaran -->
                                 <div class="report-card expense">
                                     <div class="report-card-icon">
@@ -461,25 +480,27 @@
                                     <div class="report-card-content">
                                         <h4>Total Pengeluaran</h4>
                                         <span class="report-card-value">📉 Pengeluaran: Rp 2.878.000</span>
-                                        <span class="report-card-detail">(Tunai: Rp 435.000 | Non Tunai: Rp 2.443.000)</span>
+                                        <span class="report-card-detail">(Tunai: Rp 435.000 | Non Tunai: Rp
+                                            2.443.000)</span>
                                     </div>
                                 </div>
-                                
+
                                 <!-- 4. Netto (Pemasukan - Pengeluaran) -->
                                 <div class="report-card profit">
                                     <div class="report-card-icon">
                                         <i class="bi bi-cash-coin"></i>
                                     </div>
                                     <div class="report-card-content">
-                                        <h4>Laba Bersih (Pemasukan - Pengeluaran)</h4>
+                                        <h4>Laba Bersih</h4>
                                         <span class="report-card-value">🔄 Laba / Rugi: -Rp 911127.363 (defisit)</span>
+                                        <h4>Pemasukan - Pengeluaran</h4>
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <h4>Transaksi Terbesar</h4>
                             <div class="report-cards-container">
-                                
+
                                 <!-- 6. Pengeluaran Terbesar -->
                                 <div class="report-card top-expense">
                                     <div class="report-card-icon">
@@ -503,7 +524,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <!-- 7. Pemasukan Terbesar -->
                                 <div class="report-card top-income">
                                     <div class="report-card-icon">
@@ -529,7 +550,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Jumlah Transaksi -->
                                 <div class="report-card transaction-count">
                                     <div class="report-card-icon">
@@ -542,7 +563,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Laporan Analitis -->
                         <div id="report-analytic" class="report-section hidden">
                             <h4>Analisis Profitabilitas</h4>
@@ -550,31 +571,33 @@
                                 <div class="report-card">
                                     <h4>Margin Laba (%)</h4>
                                     <div class="progress-bar">
-                                        <div class="progress-fill profit-ratio" id="profit-margin-bar" style="width: 0%"></div>
+                                        <div class="progress-fill profit-ratio" id="profit-margin-bar"
+                                            style="width: 0%"></div>
                                     </div>
                                     <span id="profit-margin" class="report-card-value">0%</span>
                                 </div>
                                 <div class="report-card">
                                     <h4>Rasio Pengeluaran (%)</h4>
                                     <div class="progress-bar">
-                                        <div class="progress-fill expense-ratio" id="expense-ratio-bar" style="width: 0%"></div>
+                                        <div class="progress-fill expense-ratio" id="expense-ratio-bar"
+                                            style="width: 0%"></div>
                                     </div>
                                     <span id="expense-ratio-analytics" class="report-card-value">0%</span>
                                 </div>
                             </div>
-                            
 
-                            
+
+
                             <h4>Analisis Metode Pembayaran</h4>
                             <div id="payment-method-analysis" class="payment-method-analysis">
                                 <!-- Analisis metode pembayaran akan ditampilkan di sini -->
                             </div>
                         </div>
-                        
+
                         <!-- Laporan Visualisasi -->
                         <div id="report-visual" class="report-section hidden">
                             <h4>Visualisasi Data</h4>
-                            
+
                             <!-- Pie Charts -->
                             <h5>📊 Pie Chart (Bagan Lingkaran)</h5>
                             <div class="charts-container">
@@ -584,7 +607,7 @@
                                         <canvas id="transaction-type-pie-chart"></canvas>
                                     </div>
                                 </div>
-                                
+
                                 <div class="chart-card">
                                     <h4>Metode Pembayaran</h4>
                                     <div class="chart-wrapper">
@@ -592,7 +615,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="charts-container">
                                 <div class="chart-card">
                                     <h4>Kategori Pengeluaran</h4>
@@ -600,7 +623,7 @@
                                         <canvas id="expense-category-pie-chart"></canvas>
                                     </div>
                                 </div>
-                                
+
                                 <div class="chart-card">
                                     <h4>Persentase Laba</h4>
                                     <div class="chart-wrapper">
@@ -608,7 +631,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- Bar Charts -->
                             <h5>📊 Bar Chart (Diagram Batang)</h5>
                             <div class="charts-container">
@@ -618,7 +641,7 @@
                                         <canvas id="daily-transactions-bar-chart"></canvas>
                                     </div>
                                 </div>
-                                
+
                                 <div class="chart-card">
                                     <h4>Pemasukan & Pengeluaran per Metode</h4>
                                     <div class="chart-wrapper">
@@ -626,7 +649,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="charts-container">
                                 <div class="chart-card">
                                     <h4>Top Pengeluaran Harian</h4>
@@ -634,7 +657,7 @@
                                         <canvas id="top-expense-bar-chart"></canvas>
                                     </div>
                                 </div>
-                                
+
                                 <div class="chart-card" id="top-income-container">
                                     <h4>Top Pemasukan Harian</h4>
                                     <div class="chart-wrapper">
@@ -643,9 +666,9 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Laporan Forecast dihapus -->
-                        
+
                         <!-- Tabel Detail Laporan -->
                         <div id="report-details">
                             <h4 class="table-title">Detail Transaksi</h4>
@@ -672,13 +695,14 @@
                                 <button id="report-prev-page" class="pagination-button" disabled>
                                     <i class="bi bi-chevron-left"></i>
                                 </button>
-                                <span class="pagination-info">Halaman <span id="report-current-page">1</span> dari <span id="report-total-pages">1</span></span>
+                                <span class="pagination-info">Halaman <span id="report-current-page">1</span> dari <span
+                                        id="report-total-pages">1</span></span>
                                 <button id="report-next-page" class="pagination-button" disabled>
                                     <i class="bi bi-chevron-right"></i>
                                 </button>
                             </div>
                         </div>
-                        
+
                         <div id="empty-state" class="empty-state">
                             <i class="bi bi-bar-chart"></i>
                             <p>Belum ada data laporan. Generate laporan untuk melihat data.</p>
@@ -716,7 +740,7 @@
         <span id="error-text"></span>
         <button id="close-error">&times;</button>
     </div>
-    
+
     <!-- Transaction Shortcut Modal -->
     <div id="transaction-modal" class="modal-container hidden">
         <div class="modal">
@@ -733,7 +757,8 @@
                         </div>
                         <div class="form-group">
                             <label for="quick-description">Deskripsi</label>
-                            <input type="text" id="quick-description" name="quick-description" placeholder="Masukkan deskripsi" required>
+                            <input type="text" id="quick-description" name="quick-description"
+                                placeholder="Masukkan deskripsi" required>
                         </div>
                     </div>
                     <div class="form-row">
@@ -772,11 +797,12 @@
 
     <!-- Chart.js dan Plugin -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
-    
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
+
     <!-- HTML2PDF.js untuk export PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    
+
     <!-- Google API -->
     <script src="https://apis.google.com/js/api.js"></script>
     <script>
@@ -792,25 +818,25 @@
                 console.log('Added CSP meta tag');
             }
         }
-        
+
         // Panggil fungsi untuk menambahkan CSP
         addCSPMetaTag();
     </script>
     <link rel="stylesheet" href="https://accounts.google.com/gsi/style">
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script>
         // Pastikan script Google API dimuat dengan benar
-        window.onload = function() {
+        window.onload = function () {
             console.log('Window loaded');
             // Tambahkan event listener untuk menangkap error
-            window.addEventListener('error', function(event) {
+            window.addEventListener('error', function (event) {
                 console.error('Global error caught:', event.error);
                 if (event.error && event.error.message && event.error.message.includes('google')) {
                     console.error('Google API error detected, attempting to reload');
                     reloadGoogleAPI();
                 }
             });
-            
+
             // Fungsi untuk memuat ulang Google API
             function reloadGoogleAPI() {
                 console.log('Reloading Google API...');
@@ -818,7 +844,7 @@
                 script.src = 'https://accounts.google.com/gsi/client';
                 script.async = true;
                 script.defer = true;
-                script.onload = function() {
+                script.onload = function () {
                     console.log('Google Sign-In API reloaded successfully');
                     setTimeout(() => {
                         if (typeof initApp === 'function') {
@@ -826,7 +852,7 @@
                         }
                     }, 500);
                 };
-                script.onerror = function(error) {
+                script.onerror = function (error) {
                     console.error('Failed to reload Google Sign-In API:', error);
                     if (document.getElementById('error-message') && document.getElementById('error-text')) {
                         document.getElementById('error-text').textContent = 'Gagal memuat Google Sign-In API. Coba muat ulang halaman.';
@@ -835,7 +861,7 @@
                 };
                 document.body.appendChild(script);
             }
-            
+
             // Coba muat ulang script Google Sign-In jika tidak tersedia
             if (typeof google === 'undefined' || typeof google.accounts === 'undefined' || typeof google.accounts.id === 'undefined') {
                 console.log('Google API not loaded or incomplete, trying to reload...');
@@ -844,8 +870,9 @@
 
         };
     </script>
-    
+
     <!-- App Scripts -->
     <script src="app.js"></script>
 </body>
+
 </html>
