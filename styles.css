@@ -4,28 +4,28 @@
  */
 
 :root {
-    /* Layout tokens */
-    --bg: #0F1724;
-    --surface: #0B1220;
-    --card: #0E1A28;
-    --muted: #121826;
-    --glass: rgba(255, 255, 255, 0.03);
+    /* Layout tokens - Slightly lighter background for better contrast */
+    --bg: #121C2E;
+    --surface: #0E1628;
+    --card: #162238;
+    --muted: #1A2A40;
+    --glass: rgba(255, 255, 255, 0.05);
 
-    /* Text */
-    --text-primary: #E6F0F2;
-    --text-secondary: #AFC1C4;
-    --text-muted: #7C8B8E;
+    /* Text - Improved contrast */
+    --text-primary: #F0F5F7;
+    --text-secondary: #C5D5D8;
+    --text-muted: #8A9A9E;
 
-    /* Accents (brand) */
-    --accent: #9CAFAA;
-    --accent-2: #D6A99D;
-    --accent-3: #FBF3D5;
+    /* Accents (brand) - More consistent color scheme */
+    --accent: #38E07B; /* Primary accent (green) */
+    --accent-2: #FF6B6B; /* Secondary accent (red) for negative values */
+    --accent-3: #F5F5F5; /* Neutral accent for backgrounds */
 
-    /* Status colors */
-    --success: #4ADE80;
-    --danger: #F87171;
-    --warning: #FBBF24;
-    --info: #60A5FA;
+    /* Status colors - More vibrant and consistent */
+    --success: #38E07B; /* Same as accent for consistency */
+    --danger: #FF6B6B; /* Same as accent-2 for consistency */
+    --warning: #FFBE0B;
+    --info: #3A86FF;
 
     /* Borders & shadows */
     --border: rgba(255, 255, 255, 0.06);
@@ -36,6 +36,10 @@
     --btn-primary-bg: var(--accent);
     --btn-primary-text: #052318;
     --btn-ghost-bg: transparent;
+    
+    /* Card styles */
+    --card-hover-transform: translateY(-3px);
+    --card-hover-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 
     /* Sizing */
     --sidebar-width: 250px;
@@ -77,7 +81,7 @@
 body {
     background: var(--bg);
     color: var(--text-primary);
-    font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: 'Poppins', 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     font-size: 14px;
     line-height: 1.5;
     overflow-x: hidden;
@@ -87,7 +91,7 @@ body {
     display: none !important;
 }
 
-/* Typography */
+/* Typography - Improved hierarchy */
 h1,
 h2,
 h3,
@@ -96,18 +100,19 @@ h5,
 h6 {
     font-weight: 600;
     margin-bottom: 0.5rem;
+    letter-spacing: -0.01em;
 }
 
 h1 {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
 }
 
 h2 {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
 }
 
 h3 {
-    font-size: 1.1rem;
+    font-size: 1.25rem;
 }
 
 p {

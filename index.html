@@ -16,11 +16,12 @@
 
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="transaction-card.css">
+    <link rel="stylesheet" href="ui-improvements.css">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com" rel="preconnect" />
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
-    <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@400;500;700&amp;display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap"
         rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <!-- Chart.js untuk visualisasi grafik -->
@@ -147,38 +148,39 @@
                         <!-- Metrics Cards -->
                         <div class="metric-card">
                             <div class="metric-icon income">
-                                <i class="bi bi-arrow-down-circle"></i>
+                                <i class="bi bi-cash-coin"></i>
                             </div>
                             <div class="metric-info">
+                                <p id="total-income" class="metric-value">Rp 0</p>
                                 <h3>Pemasukan</h3>
-                                <p id="total-income">Rp 0</p>
                             </div>
                         </div>
                         <div class="metric-card">
                             <div class="metric-icon expense">
-                                <i class="bi bi-arrow-up-circle"></i>
+                                <i class="bi bi-cart-dash"></i>
                             </div>
                             <div class="metric-info">
+                                <p id="total-expense" class="metric-value">Rp 0</p>
                                 <h3>Pengeluaran</h3>
-                                <p id="total-expense">Rp 0</p>
                             </div>
                         </div>
                         <div class="metric-card">
                             <div class="metric-icon profit">
-                                <i class="bi bi-graph-up"></i>
+                                <i class="bi bi-gem"></i>
                             </div>
                             <div class="metric-info">
+                                <p id="net-profit" class="metric-value">Rp 0</p>
                                 <h3>Laba Bersih</h3>
-                                <p id="net-profit">Rp 0</p>
+                                <span id="profit-change" class="change-indicator"></span>
                             </div>
                         </div>
                         <div class="metric-card">
                             <div class="metric-icon transaction">
-                                <i class="bi bi-receipt"></i>
+                                <i class="bi bi-file-earmark-text"></i>
                             </div>
                             <div class="metric-info">
+                                <p id="total-transactions" class="metric-value">0</p>
                                 <h3>Jumlah Transaksi</h3>
-                                <p id="total-transactions">0</p>
                             </div>
                         </div>
                     </div>

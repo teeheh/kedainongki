@@ -1,0 +1,151 @@
+/* UI Improvements for Kedai Nongki Dashboard */
+
+/* Metric Cards - Improved Layout */
+.metric-card {
+  display: flex;
+  flex-direction: column !important;
+  padding: 1.5rem !important;
+  border-radius: 12px !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid var(--border);
+}
+
+.metric-card:hover {
+  transform: var(--card-hover-transform);
+  box-shadow: var(--card-hover-shadow);
+}
+
+.metric-icon {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 12px !important;
+  margin-bottom: 1rem !important;
+  margin-right: 0 !important;
+  font-size: 1.5rem !important;
+}
+
+.metric-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-info h3 {
+  font-size: 0.9rem !important;
+  color: var(--text-secondary);
+  margin-top: 0.25rem !important;
+  font-weight: 500;
+  order: 2;
+}
+
+.metric-value {
+  font-size: 1.75rem !important;
+  font-weight: 700 !important;
+  margin: 0 !important;
+  letter-spacing: -0.02em;
+  order: 1;
+}
+
+.change-indicator {
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+/* Progress Bars - Improved Visualization */
+.progress-bar {
+  height: 10px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-radius: 999px !important;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progress-fill.cash {
+  background: var(--accent) !important;
+}
+
+.progress-fill.non-cash {
+  background: var(--info) !important;
+}
+
+.progress-fill.profit-ratio {
+  background: var(--accent) !important;
+}
+
+.progress-fill.expense-ratio {
+  background: var(--accent-2) !important;
+}
+
+/* Transaction Table - Enhanced Styling */
+.transaction-table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  transition: background 0.2s ease;
+}
+
+.transaction-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.transaction-table th,
+.transaction-table td {
+  padding: 0.75rem 1rem;
+}
+
+/* Transaction Tags */
+.transaction-tag {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.transaction-tag.income {
+  background: rgba(56, 224, 123, 0.15);
+  color: var(--success);
+}
+
+.transaction-tag.expense {
+  background: rgba(255, 107, 107, 0.15);
+  color: var(--danger);
+}
+
+/* Sidebar Navigation - Improved */
+.nav-item {
+  border-radius: 6px;
+  margin: 0.25rem 0.5rem;
+}
+
+.nav-item i {
+  font-size: 1.25rem;
+  min-width: 24px;
+  text-align: center;
+}
+
+.nav-item.active {
+  background: rgba(56, 224, 123, 0.1);
+  color: var(--accent);
+}
+
+/* Card Styling */
+.card {
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--border);
+  transition: transform 0.1s ease;
+}
+
+/* Add Transaction Button */
+.add-transaction-btn {
+  background: var(--accent);
+  color: var(--btn-primary-text);
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.add-transaction-btn i {
+  font-size: 1.25rem;
+}
