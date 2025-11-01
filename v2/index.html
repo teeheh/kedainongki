@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy"
+        content="img-src 'self' data: https://*.googleusercontent.com https://*.gstatic.com https://ui-avatars.com https://lh3.googleusercontent.com">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kedai Nongki - Sistem Manajemen Kas</title>
+    <link rel="icon" href="favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="manifest" href="site.webmanifest">
+
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="transaction-card.css">
+    <link rel="stylesheet" href="ui-improvements.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <!-- Chart.js untuk visualisasi grafik -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+    <!-- Modal Login -->
+    <div id="login-modal">
+        <div class="login-wrap">
+            <header class="login-header">
+                <div class="login-brand">
+                    <img src="kedai-02-03.svg" alt="Kedai Logo" class="login-logo">
+                    <!-- <svg class="login-logo" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+            <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
+            </svg> -->
+                    <h1 class="login-title">Kedai Nongki</h1>
+                </div>
+            </header>
+
+
+            <main class="login-main">
+                <div class="login-panel">
+                    <!-- <div class="login-logo-container">
+                <img src="kedai1-04.png" alt="Kedai Logo" class="kedai-logo">
+            </div> -->
+                    <div class="login-text">
+                        <h2 class="login-heading">Welcome Back</h2>
+                        <p class="login-subtitle">Sign in to manage your cash flow efficiently.</p>
+                    </div>
+
+                    <div class="login-btn-wrap">
+                        <button id="google-login-button" class="google-btn">
+                            <svg class="google-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"
+                                aria-hidden="true">
+                                <path
+                                    d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"
+                                    fill="#4285F4" />
+                                <path
+                                    d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"
+                                    fill="#EA4335" />
+                                <path
+                                    d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0124 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"
+                                    fill="#34A853" />
+                                <path
+                                    d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 01-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"
+                                    fill="#FBBC05" />
+                            </svg>
+                            <span>Sign in with Google</span>
+                        </button>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+
+    <!-- Main Layout -->
+    <div id="app" class="hidden">
+        <!-- Sidebar Overlay untuk Mobile -->
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+        <!-- Sidebar for Desktop -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <!-- <div class="login-logo-container">
+                    <img src="kedai1-04.png" alt="Kedai Logo" class="kedai-logo">
+                </div> -->
+                <div class="login-brand">
+                    <img src="kedai-02-03.svg" alt="Kedai Logo" class="login-logo">
+                    <!-- <svg class="login-logo" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
+                    </svg> -->
+                    <h1 class="login-title">Kedai Nongki</h1>
+                </div>
+
+
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#dashboard" class="nav-item active" data-page="dashboard">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#transactions" class="nav-item" data-page="transactions">
+                    <i class="bi bi-wallet2"></i>
+                    <span>Transaksi</span>
+                </a>
+                <a href="#reports" class="nav-item" data-page="reports">
+                    <i class="bi bi-bar-chart"></i>
+                    <span>Laporan</span>
+                </a>
+
+            </nav>
+            <div class="sidebar-footer">
+                <button id="logout-btn" class="logout-btn">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Keluar</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <button id="sidebar-toggle" class="sidebar-toggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h2 id="page-title">Dashboard</h2>
+                <button id="add-transaction-btn" class="btn-primary add-transaction-btn">
+                    <i class="bi bi-plus-circle" alt="Transaksi Baru"></i>
+                </button>
+                <div class="user-profile">
+                    <img id="user-avatar" src="" alt="Avatar" class="avatar">
+                    <span id="user-name"></span>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="page-content">
+                <!-- Dashboard Page -->
+                <div id="dashboard-page" class="page active">
+                    <div class="metrics-grid">
+                        <!-- Metrics Cards -->
+                        <div class="metric-card">
+                            <div class="metric-icon income">
+                                <i class="bi bi-cash-coin"></i>
+                            </div>
+                            <div class="metric-info">
+                                <p id="total-income" class="metric-value">Rp 0</p>
+                                <h3>Pemasukan</h3>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon expense">
+                                <i class="bi bi-cart-dash"></i>
+                            </div>
+                            <div class="metric-info">
+                                <p id="total-expense" class="metric-value">Rp 0</p>
+                                <h3>Pengeluaran</h3>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon profit">
+                                <i class="bi bi-gem"></i>
+                            </div>
+                            <div class="metric-info">
+                                <p id="net-profit" class="metric-value">Rp 0</p>
+                                <h3>Laba Bersih</h3>
+                                <span id="profit-change" class="change-indicator"></span>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon transaction">
+                                <i class="bi bi-file-earmark-text"></i>
+                            </div>
+                            <div class="metric-info">
+                                <p id="total-transactions" class="metric-value">0</p>
+                                <h3>Jumlah Transaksi</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="breakdown-section">
+                        <div class="card">
+                            <h3>Breakdown Kas</h3>
+                            <div class="progress-container">
+                                <div class="progress-info">
+                                    <span>Kas Tunai</span>
+                                    <span id="cash-percentage">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill cash" style="width: 0%"></div>
+                                </div>
+                                <p id="cash-amount" class="amount">Rp 0</p>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-info">
+                                    <span>Kas Non Tunai</span>
+                                    <span id="non-cash-percentage">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill non-cash" style="width: 0%"></div>
+                                </div>
+                                <p id="non-cash-amount" class="amount">Rp 0</p>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-info">
+                                    <span><strong>Total</strong></span>
+                                </div>
+                                <p id="total-kas" class="amount total-amount">Rp 0</p>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3>Rasio Profitabilitas</h3>
+                            <div class="progress-container">
+                                <div class="progress-info">
+                                    <span>Rasio Laba</span>
+                                    <span id="profit-ratio">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill profit-ratio" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-info">
+                                    <span>Rasio Pengeluaran</span>
+                                    <span id="expense-ratio">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill expense-ratio" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="recent-transactions">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Transaksi Terbaru</h3>
+                                <a href="#transactions" class="view-all">Lihat Semua</a>
+                            </div>
+                            <div class="table-container">
+                                <table id="recent-transactions-table" class="transaction-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="hide-on-mobile">ID</th>
+                                            <th>Tanggal</th>
+                                            <th>Deskripsi</th>
+                                            <th class="hide-on-mobile">Jenis</th>
+                                            <th class="hide-on-mobile">Metode</th>
+                                            <th>Nominal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Data will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="recent-transactions-cards" class="cards-container">
+                                <!-- Mobile cards will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transactions Page -->
+                <div id="transactions-page" class="page">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Tambah Transaksi Baru</h3>
+                        </div>
+                        <form id="transaction-form">
+                            <div class="form-container">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="date">Tanggal</label>
+                                        <input type="date" id="date" name="date" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="description">Deskripsi</label>
+                                        <input type="text" id="description" name="description"
+                                            placeholder="Masukkan deskripsi" required>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="type"><i class="bi bi-tags"></i> Jenis</label>
+                                        <div class="option-buttons">
+                                            <button type="button" class="option-btn" data-value="Pemasukan"
+                                                data-field="type">
+                                                <i class="bi bi-arrow-up-circle"></i>
+                                                <span>Pemasukan</span>
+                                            </button>
+                                            <button type="button" class="option-btn" data-value="Pengeluaran"
+                                                data-field="type">
+                                                <i class="bi bi-arrow-down-circle"></i>
+                                                <span>Pengeluaran</span>
+                                            </button>
+                                        </div>
+                                        <input type="hidden" id="type" name="type" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="method"><i class="bi bi-credit-card"></i> Metode</label>
+                                        <div class="option-buttons">
+                                            <button type="button" class="option-btn" data-value="Tunai"
+                                                data-field="method">
+                                                <i class="bi bi-cash-coin"></i>
+                                                <span>Tunai</span>
+                                            </button>
+                                            <button type="button" class="option-btn" data-value="Non Tunai"
+                                                data-field="method">
+                                                <i class="bi bi-credit-card"></i>
+                                                <span>Non Tunai</span>
+                                            </button>
+                                        </div>
+                                        <input type="hidden" id="method" name="method" required>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="amount">Nominal (Rp)</label>
+                                        <input type="number" id="amount" name="amount" placeholder="0" min="0" required>
+                                    </div>
+                                    <div class="form-group form-actions">
+                                        <button type="submit" class="btn-primary">
+                                            <i class="bi bi-plus-circle"></i> Tambah Transaksi
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Daftar Transaksi</h3>
+                            <div class="filter-container">
+                                <select id="transactions-filter">
+                                    <option value="all">Semua Transaksi</option>
+                                    <option value="income">Pemasukan</option>
+                                    <option value="expense">Pengeluaran</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="search-container">
+                            <div class="search-input-wrapper">
+                                <i class="bi bi-search search-icon"></i>
+                                <input type="text" id="transaction-search" class="search-input"
+                                    placeholder="Cari transaksi..." autocomplete="off">
+                                <button id="reset-search" class="reset-search-btn" title="Reset pencarian"><i
+                                        class="bi bi-x"></i></button>
+                                <div id="autocomplete-results" class="autocomplete-results"></div>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table id="transactions-table" class="transaction-table">
+                                <thead>
+                                    <tr>
+                                        <th class="hide-on-mobile">ID</th>
+                                        <th>Tanggal</th>
+                                        <th>Deskripsi</th>
+                                        <th class="hide-on-mobile">Jenis</th>
+                                        <th class="hide-on-mobile">Metode</th>
+                                        <th>Nominal</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Data will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="pagination">
+                            <button id="prev-page" class="pagination-button" disabled>
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <span class="pagination-info">Halaman <span id="current-page">1</span> dari <span
+                                    id="total-pages">1</span></span>
+                            <button id="next-page" class="pagination-button" disabled>
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                        <div id="transactions-cards" class="cards-container">
+                            <!-- Mobile cards will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports Page -->
+                <div id="reports-page" class="page">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Generate Laporan</h3>
+                        </div>
+                        <form id="report-form">
+                            <div class="form-container">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="period">Periode</label>
+                                        <select id="period" name="period" required>
+                                            <option value="daily">Harian</option>
+                                            <option value="weekly" selected>Mingguan</option>
+                                            <option value="monthly">Bulanan</option>
+                                            <option value="quarterly">Kuartalan</option>
+                                            <option value="yearly">Tahunan</option>
+                                            <option value="custom">Kustom</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="report-type">Jenis Laporan</label>
+                                        <select id="report-type" name="report-type" required>
+                                            <option value="all">Semua Jenis</option>
+                                            <option value="basic">Laporan Dasar</option>
+                                            <option value="analytic">Laporan Analitis</option>
+                                            <option value="visual">Laporan Visualisasi</option>
+                                            <option value="forecast">Forecast Keuangan</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row" id="custom-date-range" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="start-date">Tanggal Mulai</label>
+                                        <input type="date" id="start-date" name="start-date">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="end-date">Tanggal Akhir</label>
+                                        <input type="date" id="end-date" name="end-date">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group form-actions">
+                                        <button type="submit" class="btn-primary">
+                                            <i class="bi bi-file-earmark-text"></i> Generate Laporan
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Hasil Laporan</h3>
+                            <div class="report-header-actions">
+                                <span id="report-range">Minggu Ini</span>
+                                <div class="export-actions">
+                                    <button id="export-report" class="btn-icon" title="Print Laporan">
+                                        <i class="bi bi-printer"></i>
+                                    </button>
+                                    <button id="export-pdf" class="btn-icon" title="Download PDF">
+                                        <i class="bi bi-file-earmark-pdf"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Laporan Dasar -->
+                        <div id="report-basic" class="report-section">
+                            <h4>📊 Laporan Keuangan Dasar</h4>
+                            <div class="report-cards-container">
+                                <!-- 1. Saldo Awal / Modal -->
+                                <div class="report-card modal">
+                                    <div class="report-card-icon">
+                                        <i class="bi bi-wallet2"></i>
+                                    </div>
+                                    <div class="report-card-content">
+                                        <h4>Saldo Awal / Modal</h4>
+                                        <span class="report-card-value">💰 Modal Awal: Rp 4.665.804</span>
+                                        <span class="report-card-detail">(Tunai: Rp 2.002.000 | Non Tunai: Rp
+                                            2.663.804)</span>
+                                    </div>
+                                </div>
+
+                                <!-- 2. Total Pemasukan -->
+                                <div class="report-card income">
+                                    <div class="report-card-icon">
+                                        <i class="bi bi-graph-up-arrow"></i>
+                                    </div>
+                                    <div class="report-card-content">
+                                        <h4>Total Pemasukan</h4>
+                                        <span class="report-card-value">📈 Pemasukan: Rp 1.950.637</span>
+                                        <span class="report-card-detail">(Tunai: Rp 1.155.000 | Non Tunai: Rp
+                                            795.637)</span>
+                                    </div>
+                                </div>
+
+                                <!-- 3. Total Pengeluaran -->
+                                <div class="report-card expense">
+                                    <div class="report-card-icon">
+                                        <i class="bi bi-graph-down-arrow"></i>
+                                    </div>
+                                    <div class="report-card-content">
+                                        <h4>Total Pengeluaran</h4>
+                                        <span class="report-card-value">📉 Pengeluaran: Rp 2.878.000</span>
+                                        <span class="report-card-detail">(Tunai: Rp 435.000 | Non Tunai: Rp
+                                            2.443.000)</span>
+                                    </div>
+                                </div>
+
+                                <!-- 4. Netto (Pemasukan - Pengeluaran) -->
+                                <div class="report-card profit">
+                                    <div class="report-card-icon">
+                                        <i class="bi bi-cash-coin"></i>
+                                    </div>
+                                    <div class="report-card-content">
+                                        <h4>Laba Bersih</h4>
+                                        <span class="report-card-value">🔄 Laba / Rugi: -Rp 911127.363 (defisit)</span>
+                                        <h4>Pemasukan - Pengeluaran</h4>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h4>Transaksi Terbesar</h4>
+                            <div class="report-cards-container">
+
+                                <!-- 6. Pengeluaran Terbesar -->
+                                <div class="report-card top-expense">
+                                    <div class="report-card-icon">
+                                        <i class="bi bi-trophy"></i>
+                                    </div>
+                                    <div class="report-card-content">
+                                        <h4>Pengeluaran Terbesar</h4>
+                                        <div class="transaction-detail">
+                                            <div class="transaction-rank">🏆</div>
+                                            <div class="transaction-info">
+                                                <div class="transaction-description">Bayar Scan Mamah</div>
+                                                <div class="transaction-amount">Rp 1.503.000</div>
+                                            </div>
+                                        </div>
+                                        <div class="transaction-detail">
+                                            <div class="transaction-rank">🥈</div>
+                                            <div class="transaction-info">
+                                                <div class="transaction-description">Bayar Shopee</div>
+                                                <div class="transaction-amount">Rp 935.000</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 7. Pemasukan Terbesar -->
+                                <div class="report-card top-income">
+                                    <div class="report-card-icon">
+                                        <i class="bi bi-trophy"></i>
+                                    </div>
+                                    <div class="report-card-content">
+                                        <h4>Pemasukan Terbesar</h4>
+                                        <div class="transaction-detail">
+                                            <div class="transaction-rank">🏆</div>
+                                            <div class="transaction-info">
+                                                <div class="transaction-description">Pendapatan Cash</div>
+                                                <div class="transaction-date">2025-09-02</div>
+                                                <div class="transaction-amount">Rp 435.000</div>
+                                            </div>
+                                        </div>
+                                        <div class="transaction-detail">
+                                            <div class="transaction-rank">🥈</div>
+                                            <div class="transaction-info">
+                                                <div class="transaction-description">Pendapatan Cash</div>
+                                                <div class="transaction-date">2025-09-01</div>
+                                                <div class="transaction-amount">Rp 360.000</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Jumlah Transaksi -->
+                                <div class="report-card transaction-count">
+                                    <div class="report-card-icon">
+                                        <i class="bi bi-receipt"></i>
+                                    </div>
+                                    <div class="report-card-content">
+                                        <h4>Jumlah Transaksi</h4>
+                                        <span id="report-transaction-count" class="report-card-value">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Laporan Analitis -->
+                        <div id="report-analytic" class="report-section hidden">
+                            <h4>Analisis Profitabilitas</h4>
+                            <div class="report-cards-container">
+                                <div class="report-card">
+                                    <h4>Margin Laba (%)</h4>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill profit-ratio" id="profit-margin-bar"
+                                            style="width: 0%"></div>
+                                    </div>
+                                    <span id="profit-margin" class="report-card-value">0%</span>
+                                </div>
+                                <div class="report-card">
+                                    <h4>Rasio Pengeluaran (%)</h4>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill expense-ratio" id="expense-ratio-bar"
+                                            style="width: 0%"></div>
+                                    </div>
+                                    <span id="expense-ratio-analytics" class="report-card-value">0%</span>
+                                </div>
+                            </div>
+
+
+
+                            <h4>Analisis Metode Pembayaran</h4>
+                            <div id="payment-method-analysis" class="payment-method-analysis">
+                                <!-- Analisis metode pembayaran akan ditampilkan di sini -->
+                            </div>
+                        </div>
+
+                        <!-- Laporan Visualisasi -->
+                        <div id="report-visual" class="report-section hidden">
+                            <h4>Visualisasi Data</h4>
+
+                            <!-- Pie Charts -->
+                            <h5>📊 Pie Chart (Bagan Lingkaran)</h5>
+                            <div class="charts-container">
+                                <div class="chart-card">
+                                    <h4>Distribusi Jenis Transaksi</h4>
+                                    <div class="chart-wrapper">
+                                        <canvas id="transaction-type-pie-chart"></canvas>
+                                    </div>
+                                </div>
+
+                                <div class="chart-card">
+                                    <h4>Metode Pembayaran</h4>
+                                    <div class="chart-wrapper">
+                                        <canvas id="payment-method-pie-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="charts-container">
+                                <div class="chart-card">
+                                    <h4>Kategori Pengeluaran</h4>
+                                    <div class="chart-wrapper">
+                                        <canvas id="expense-category-pie-chart"></canvas>
+                                    </div>
+                                </div>
+
+                                <div class="chart-card">
+                                    <h4>Persentase Laba</h4>
+                                    <div class="chart-wrapper">
+                                        <canvas id="income-expense-pie-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bar Charts -->
+                            <h5>📊 Bar Chart (Diagram Batang)</h5>
+                            <div class="charts-container">
+                                <div class="chart-card">
+                                    <h4>Total Transaksi Harian</h4>
+                                    <div class="chart-wrapper">
+                                        <canvas id="daily-transactions-bar-chart"></canvas>
+                                    </div>
+                                </div>
+
+                                <div class="chart-card">
+                                    <h4>Pemasukan & Pengeluaran per Metode</h4>
+                                    <div class="chart-wrapper">
+                                        <canvas id="payment-method-bar-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="charts-container">
+                                <div class="chart-card">
+                                    <h4>Top Pengeluaran Harian</h4>
+                                    <div class="chart-wrapper">
+                                        <canvas id="top-expense-bar-chart"></canvas>
+                                    </div>
+                                </div>
+
+                                <div class="chart-card" id="top-income-container">
+                                    <h4>Top Pemasukan Harian</h4>
+                                    <div class="chart-wrapper">
+                                        <canvas id="top-income-bar-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Laporan Forecast dihapus -->
+
+                        <!-- Tabel Detail Laporan -->
+                        <div id="report-details">
+                            <h4 class="table-title">Detail Transaksi</h4>
+                            <div class="table-container">
+                                <table id="report-table" class="transaction-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tanggal</th>
+                                            <th>Deskripsi</th>
+                                            <th class="hide-on-mobile">Jenis</th>
+                                            <th class="hide-on-mobile">Metode</th>
+                                            <th>Nominal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Data will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="report-cards-container" class="cards-container">
+                                <!-- Mobile cards will be populated by JavaScript -->
+                            </div>
+                            <div class="pagination">
+                                <button id="report-prev-page" class="pagination-button" disabled>
+                                    <i class="bi bi-chevron-left"></i>
+                                </button>
+                                <span class="pagination-info">Halaman <span id="report-current-page">1</span> dari <span
+                                        id="report-total-pages">1</span></span>
+                                <button id="report-next-page" class="pagination-button" disabled>
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="empty-state" class="empty-state">
+                            <i class="bi bi-bar-chart"></i>
+                            <p>Belum ada data laporan. Generate laporan untuk melihat data.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation for Mobile -->
+        <nav id="bottom-nav" class="bottom-nav">
+            <a href="#dashboard" class="nav-item active" data-page="dashboard">
+                <i class="bi bi-speedometer2"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#transactions" class="nav-item" data-page="transactions">
+                <i class="bi bi-wallet2"></i>
+                <span>Transaksi</span>
+            </a>
+            <a href="#reports" class="nav-item" data-page="reports">
+                <i class="bi bi-bar-chart"></i>
+                <span>Laporan</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p>Memuat data...</p>
+    </div>
+
+    <!-- Error Message -->
+    <div id="error-message" class="error-message hidden">
+        <span id="error-text"></span>
+        <button id="close-error">&times;</button>
+    </div>
+
+    <!-- Transaction Shortcut Modal -->
+    <div id="transaction-modal" class="modal-container hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="bi bi-plus-circle-fill"></i> Tambah Transaksi</h3>
+                <button id="close-transaction-modal" class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="quick-transaction-form">
+                    <div class="form-container">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="quick-date"><i class="bi bi-calendar"></i> Tanggal</label>
+                                <input type="date" id="quick-date" name="quick-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="quick-description"><i class="bi bi-pencil"></i> Deskripsi</label>
+                                <input type="text" id="quick-description" name="quick-description"
+                                    placeholder="Masukkan deskripsi" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="quick-type"><i class="bi bi-tags"></i> Jenis</label>
+                                <div class="option-buttons">
+                                    <button type="button" class="option-btn" data-value="Pemasukan"
+                                        data-field="quick-type">
+                                        <span>Pemasukan</span>
+                                    </button>
+                                    <button type="button" class="option-btn" data-value="Pengeluaran"
+                                        data-field="quick-type">
+                                        <span>Pengeluaran</span>
+                                    </button>
+                                </div>
+                                <input type="hidden" id="quick-type" name="quick-type" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="quick-method"><i class="bi bi-credit-card"></i> Metode</label>
+                                <div class="option-buttons">
+                                    <button type="button" class="option-btn" data-value="Tunai"
+                                        data-field="quick-method">
+                                        <span>Tunai</span>
+                                    </button>
+                                    <button type="button" class="option-btn" data-value="Non Tunai"
+                                        data-field="quick-method">
+                                        <span>Non Tunai</span>
+                                    </button>
+                                </div>
+                                <input type="hidden" id="quick-method" name="quick-method" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="quick-amount"><i class="bi bi-cash"></i> Nominal (Rp)</label>
+                                <input type="number" id="quick-amount" name="amount" placeholder="0" min="0" required>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="close-transaction-modal" class="btn-secondary">Batal</button>
+                <button type="submit" form="quick-transaction-form" class="btn-primary">
+                    <i class="bi bi-plus-circle"></i> Tambah Transaksi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Transaction Modal -->
+    <div id="edit-transaction-modal" class="modal-container hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="bi bi-pencil-fill"></i> Edit Transaksi</h3>
+                <button id="close-edit-transaction-modal" class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-transaction-form">
+                    <div class="form-container">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="edit-date"><i class="bi bi-calendar"></i> Tanggal</label>
+                                <input type="date" id="edit-date" name="date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-description"><i class="bi bi-pencil"></i> Deskripsi</label>
+                                <input type="text" id="edit-description" name="description"
+                                    placeholder="Masukkan deskripsi" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="edit-type"><i class="bi bi-tags"></i> Jenis</label>
+                                <div class="option-buttons">
+                                    <button type="button" class="option-btn" data-value="Pemasukan"
+                                        data-field="edit-type">
+                                        <span>Pemasukan</span>
+                                    </button>
+                                    <button type="button" class="option-btn" data-value="Pengeluaran"
+                                        data-field="edit-type">
+                                        <span>Pengeluaran</span>
+                                    </button>
+                                </div>
+                                <input type="hidden" id="edit-type" name="type" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="edit-method"><i class="bi bi-credit-card"></i> Metode</label>
+                                <div class="option-buttons">
+                                    <button type="button" class="option-btn" data-value="Tunai"
+                                        data-field="edit-method">
+                                        <span>Tunai</span>
+                                    </button>
+                                    <button type="button" class="option-btn" data-value="Non Tunai"
+                                        data-field="edit-method">
+                                        <span>Non Tunai</span>
+                                    </button>
+                                </div>
+                                <input type="hidden" id="edit-method" name="method" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="edit-amount"><i class="bi bi-cash"></i> Nominal (Rp)</label>
+                                <input type="number" id="edit-amount" name="amount" placeholder="0" min="0" required>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="cancel-edit-transaction" class="btn-secondary">Batal</button>
+                <button type="submit" form="edit-transaction-form" class="btn-primary">
+                    <i class="bi bi-save"></i> Simpan Perubahan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js dan Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
+
+    <!-- HTML2PDF.js untuk export PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- Google API -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script>
+        // Tambahkan meta tag untuk Content Security Policy
+        function addCSPMetaTag() {
+            // Periksa apakah meta tag CSP sudah ada
+            const existingCSP = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+            if (!existingCSP) {
+                const meta = document.createElement('meta');
+                meta.httpEquiv = 'Content-Security-Policy';
+                meta.content = "default-src 'self' https://accounts.google.com https://apis.google.com https://*.googleapis.com https://*.gstatic.com; script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://*.googleapis.com https://*.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://accounts.google.com/gsi/style; img-src 'self' data: https://*.googleusercontent.com https://*.gstatic.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; connect-src 'self' https://*.googleapis.com https://accounts.google.com https://accounts.google.com/gsi/fedcm.json https://accounts.google.com/gsi/log https://apis.google.com/js/gen_204";
+                document.head.appendChild(meta);
+                console.log('Added CSP meta tag');
+            }
+        }
+
+        // Panggil fungsi untuk menambahkan CSP
+        addCSPMetaTag();
+    </script>
+    <link rel="stylesheet" href="https://accounts.google.com/gsi/style">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+        // Pastikan script Google API dimuat dengan benar
+        window.onload = function () {
+            console.log('Window loaded');
+            // Tambahkan event listener untuk menangkap error
+            window.addEventListener('error', function (event) {
+                console.error('Global error caught:', event.error);
+                if (event.error && event.error.message && event.error.message.includes('google')) {
+                    console.error('Google API error detected, attempting to reload');
+                    reloadGoogleAPI();
+                }
+            });
+
+            // Fungsi untuk memuat ulang Google API
+            function reloadGoogleAPI() {
+                console.log('Reloading Google API...');
+                const script = document.createElement('script');
+                script.src = 'https://accounts.google.com/gsi/client';
+                script.async = true;
+                script.defer = true;
+                script.onload = function () {
+                    console.log('Google Sign-In API reloaded successfully');
+                    setTimeout(() => {
+                        if (typeof initApp === 'function') {
+                            initApp();
+                        }
+                    }, 500);
+                };
+                script.onerror = function (error) {
+                    console.error('Failed to reload Google Sign-In API:', error);
+                    if (document.getElementById('error-message') && document.getElementById('error-text')) {
+                        document.getElementById('error-text').textContent = 'Gagal memuat Google Sign-In API. Coba muat ulang halaman.';
+                        document.getElementById('error-message').classList.remove('hidden');
+                    }
+                };
+                document.body.appendChild(script);
+            }
+
+            // Coba muat ulang script Google Sign-In jika tidak tersedia
+            if (typeof google === 'undefined' || typeof google.accounts === 'undefined' || typeof google.accounts.id === 'undefined') {
+                console.log('Google API not loaded or incomplete, trying to reload...');
+                reloadGoogleAPI();
+            }
+
+        };
+    </script>
+
+    <!-- App Scripts -->
+    <script src="app.js"></script>
+</body>
+
+</html>
