@@ -16,11 +16,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const modal = document.getElementById("transaction-modal");
     const openBtn = document.getElementById("add-transaction-btn"); // tombol di header
+    const floatingBtn = document.getElementById("floating-add-transaction-btn"); // tombol floating desktop
     const closeBtn = document.getElementById("close-transaction-modal");
 
     // Buka modal
     if (openBtn && modal) {
-        openBtn.addEventListener("click", () => {
+        openBtn.addEventListener("click", (e) => {
+            e.preventDefault(); // Prevent link navigation
+            modal.classList.remove("hidden");
+        });
+    }
+
+    // Buka modal dari floating button
+    if (floatingBtn && modal) {
+        floatingBtn.addEventListener("click", () => {
             modal.classList.remove("hidden");
         });
     }
@@ -169,11 +178,14 @@ function initApp() {
 function setupEventListeners() {
     // Navigation
     document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            const page = item.getAttribute('data-page');
-            navigateTo(page);
-        });
+        // Skip buttons that don't have data-page attribute (like add-transaction-btn and logout-btn-mobile)
+        if (item.hasAttribute('data-page')) {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = item.getAttribute('data-page');
+                navigateTo(page);
+            });
+        }
     });
 
     // Sidebar toggle
@@ -190,6 +202,12 @@ function setupEventListeners() {
 
     // Logout
     elements.logoutButton.addEventListener('click', logout);
+
+    // Logout mobile button
+    const logoutBtnMobile = document.getElementById('logout-btn-mobile');
+    if (logoutBtnMobile) {
+        logoutBtnMobile.addEventListener('click', logout);
+    }
 
     // Close error
     elements.closeError.addEventListener('click', hideError);
@@ -239,7 +257,8 @@ function setupEventListeners() {
 
     // Initialize modal form options on modal open
     document.addEventListener('click', function (e) {
-        if (e.target.id === 'add-transaction-btn') {
+        const addTransactionBtn = e.target.closest('#add-transaction-btn');
+        if (addTransactionBtn) {
             // Reset option buttons when opening modal
             setTimeout(() => {
                 document.querySelectorAll('.option-btn').forEach(btn => {
