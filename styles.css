@@ -61,19 +61,19 @@
 
 /* Light mode (optional) */
 :root.light {
-    --bg: #FBF3D5;
-    --surface: #D6DAC8;
+    --bg: #F8FAFC;
+    --surface: #F1F5F9;
     --card: #FFFFFF;
-    --muted: #E8E8E8;
-    --glass: rgba(0, 0, 0, 0.03);
+    --muted: #F8FAFC;
+    --glass: rgba(0, 0, 0, 0.02);
 
-    --text-primary: #0B1220;
-    --text-secondary: #4A5568;
-    --text-muted: #718096;
+    --text-primary: #1E293B;
+    --text-secondary: #475569;
+    --text-muted: #64748B;
 
-    --border: rgba(0, 0, 0, 0.1);
-    --shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
-    --glass-blur: rgba(0, 0, 0, 0.025);
+    --border: rgba(0, 0, 0, 0.08);
+    --shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    --glass-blur: rgba(0, 0, 0, 0.015);
 }
 
 /* Base Styles */
@@ -333,8 +333,8 @@ a {
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
+    justify-content: space-between;
     padding: 0 1.5rem;
-    gap: 1rem;
 }
 
 .sidebar-toggle {
@@ -381,11 +381,10 @@ a {
     display: flex !important;
     align-items: center;
     gap: 0.75rem;
-    margin-left: auto;
     /* background: var(--glass); */
     padding: 0.5rem 0.75rem;
-    border-radius: var(--border-radius);
     /* border: 1px solid var(--border); */
+    height: 100%;
 }
 
 .avatar {
@@ -400,6 +399,116 @@ a {
 #user-name {
     font-weight: 500;
     color: var(--text-primary);
+}
+
+/* Modern Theme Toggle Switch */
+.theme-toggle {
+    display: flex !important;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    height: 100%;
+}
+
+.theme-switch-checkbox {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.theme-switch-label {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.theme-switch-slider {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 2px;
+    bottom: 2px;
+    background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.9) 100%);
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.theme-switch-slider::before {
+    content: "🌙";
+    font-size: 10px;
+    transition: all 0.3s ease;
+}
+
+.theme-switch-checkbox:checked+.theme-switch-label {
+    background: linear-gradient(135deg, var(--accent) 0%, rgba(56, 224, 123, 0.8) 100%);
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(56, 224, 123, 0.3);
+}
+
+.theme-switch-checkbox:checked+.theme-switch-label .theme-switch-slider {
+    transform: translateX(26px);
+}
+
+.theme-switch-checkbox:checked+.theme-switch-label .theme-switch-slider::before {
+    content: "☀️";
+}
+
+.theme-switch-label:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Light mode adjustments */
+:root.light .theme-switch-label {
+    background-color: rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+:root.light .theme-switch-slider {
+    background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.95) 100%);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Chart.js text color improvements for light mode */
+:root.light .chart-wrapper canvas {
+    filter: brightness(0.9) contrast(1.1);
+}
+
+:root.light .chart-card h4 {
+    color: var(--text-primary);
+}
+
+:root.light .chart-card {
+    background: var(--glass);
+    border: 1px solid var(--border);
+}
+
+/* Override Chart.js default text colors for light mode */
+:root.light .chart-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    background: rgba(255, 255, 255, 0.01);
+    z-index: 1;
 }
 
 .page-content {
@@ -756,6 +865,7 @@ a {
     background: rgba(255, 255, 255, 0.03);
     border-radius: var(--border-radius);
     border-left: 3px solid;
+    border: 1px solid var(--border);
 }
 
 #cash-amount {
@@ -1116,10 +1226,37 @@ tr:hover {
     margin-bottom: 1rem;
 }
 
+.form-group label {
+    color: var(--text-primary);
+}
+
 .option-buttons {
     display: flex;
     gap: 0.5rem;
     margin-top: 0.5rem;
+}
+
+/* Light mode form adjustments */
+:root.light .form-group label {
+    color: var(--text-primary);
+}
+
+:root.light .option-btn {
+    background: linear-gradient(135deg, var(--card) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 2px solid var(--border);
+    color: var(--text-secondary);
+}
+
+:root.light .option-btn:hover {
+    border-color: var(--accent);
+    background: linear-gradient(135deg, rgba(56, 224, 123, 0.1) 0%, rgba(56, 224, 123, 0.05) 100%);
+    color: var(--accent);
+}
+
+:root.light .option-btn.active {
+    background: linear-gradient(135deg, var(--accent) 0%, rgba(56, 224, 123, 0.9) 100%);
+    border-color: var(--accent);
+    color: var(--btn-primary-text);
 }
 
 .option-btn {
@@ -1383,6 +1520,7 @@ textarea:focus {
 .report-card {
     background: var(--glass);
     border-radius: var(--border-radius-lg);
+    border: 1px solid var(--border);
     padding: 1.5rem;
     display: flex;
     align-items: center;
@@ -2043,6 +2181,29 @@ textarea:focus {
     padding: 1rem;
 }
 
+/* Light mode modal adjustments */
+:root.light .modal-container {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+:root.light .modal-header {
+    border-bottom: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+:root.light .modal-header h3 {
+    color: var(--text-primary);
+}
+
+:root.light .modal-body {
+    background: var(--glass);
+}
+
+:root.light .modal-footer {
+    border-top: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.02);
+}
+
 @keyframes modalFadeIn {
     from {
         opacity: 0;
@@ -2055,17 +2216,6 @@ textarea:focus {
     }
 }
 
-/* .modal {
-    background: var(--card);
-    border-radius: var(--border-radius-lg);
-    width: 90%;
-    max-width: 600px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    overflow: hidden;
-    animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(20px);
-} */
 
 @keyframes modalSlideIn {
     from {
@@ -2252,7 +2402,7 @@ textarea:focus {
     }
 
     .sidebar-toggle {
-        display: flex;
+        display: none;
     }
 
     .main-content {

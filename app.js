@@ -7,8 +7,55 @@
  * 3. Pastikan spreadsheet sudah dibagikan (share) ke email layanan dari Google Cloud Console
  */
 
+// Theme switching functionality
+function initTheme() {
+    const themeSwitch = document.getElementById('theme-switch');
+    if (!themeSwitch) return;
+
+    // Load saved theme preference
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    const isLight = savedTheme === 'light';
+
+    // Set initial state
+    themeSwitch.checked = isLight;
+    document.documentElement.classList.toggle('light', isLight);
+
+    // Add event listener for theme toggle
+    themeSwitch.addEventListener('change', function () {
+        const isLightMode = this.checked;
+        document.documentElement.classList.toggle('light', isLightMode);
+
+        // Save preference
+        localStorage.setItem('theme', isLightMode ? 'light' : 'dark');
+
+        // Re-render charts with new theme colors for light mode
+        if (isLightMode) {
+            setTimeout(() => {
+                // Re-render all charts with light theme colors
+                if (typeof updateCharts === 'function' && state.transactions && state.transactions.length > 0) {
+                    const dateRange = calculateDateRange('all-time');
+                    updateCharts(state.transactions, dateRange, 'all', 'monthly');
+                }
+            }, 100);
+        }
+    });
+}
+
+// Helper function to get theme-appropriate chart colors
+function getChartColors() {
+    const isLightMode = document.documentElement.classList.contains('light');
+    return {
+        textPrimary: isLightMode ? 'rgb(11, 22, 32)' : 'rgb(230, 240, 242)', // Dark blue for light mode, light for dark mode
+        textSecondary: isLightMode ? 'rgb(74, 85, 104)' : 'rgb(175, 193, 196)', // Darker gray for light mode
+        gridLines: isLightMode ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.05)', // Dark lines for light mode
+        gridLinesMain: isLightMode ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.1)', // Lighter grid for light mode
+        forecastText: isLightMode ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)'
+    };
+}
+
 // Inisialisasi aplikasi saat dokumen dimuat
 document.addEventListener('DOMContentLoaded', function () {
+    initTheme();
     initApp();
     checkGoogleAPILoaded();
     window.addEventListener('resize', handleResize);
@@ -54,7 +101,7 @@ const CONFIG = {
     clientId: '883588123458-kc7p924f89q7dtg4ape0u8lslqjqvmrt.apps.googleusercontent.com', // Ganti dengan Client ID Anda
     spreadsheetId: '1gd1JcYiuUsPXO1xbwKHJomnLxMdK7s7xfJ60l3p7WKw', // Ganti dengan Spreadsheet ID Anda
     discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
-    scope: 'https://www.googleapis.com/auth/spreadsheets',
+    scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
     sheetName: 'Transaksi', // Nama sheet untuk data laporan keuangan dasar (sesuaikan dengan nama sheet yang benar)
     sheetRange: 'A1:F20000', // Range data yang diambil (bisa disesuaikan)
     RANGE: 'Table1' // Nama tabel di Google Sheets
@@ -96,7 +143,6 @@ const elements = {
     loginModal: document.getElementById('login-modal'),
     app: document.getElementById('app'),
     sidebar: document.getElementById('sidebar'),
-    sidebarToggle: document.getElementById('sidebar-toggle'),
     sidebarOverlay: document.getElementById('sidebar-overlay'),
     bottomNav: document.getElementById('bottom-nav'),
     pageTitle: document.getElementById('page-title'),
@@ -188,8 +234,6 @@ function setupEventListeners() {
         }
     });
 
-    // Sidebar toggle
-    elements.sidebarToggle.addEventListener('click', toggleSidebar);
 
     // Tambahkan event listener untuk overlay
     elements.sidebarOverlay.addEventListener('click', function () {
@@ -420,6 +464,21 @@ function initGoogleSignIn() {
     }
 }
 
+// Fetch user info from Google API
+async function fetchUserInfoFromGoogleAPI(accessToken) {
+    const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: {
+            'Authorization': `Bearer ${accessToken}`
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch user info');
+    }
+
+    return await response.json();
+}
+
 // Handle Google Sign In Response
 function handleCredentialResponse(response) {
     console.log("Received credential response:", response);
@@ -433,29 +492,26 @@ function handleCredentialResponse(response) {
         localStorage.setItem('access_token', state.token);
         localStorage.setItem('token_expiry', expiryTime.toString());
 
-        // Coba dapatkan info user dari ID token jika ada
-        if (response.id_token) {
-            const payload = parseJwt(response.id_token);
-            if (payload) {
-                state.user = {
-                    name: payload.name || "Google User",
-                    email: payload.email || "-",
-                    picture: payload.picture || ""
-                };
-                localStorage.setItem('user', JSON.stringify(state.user));
-            } else {
-                // Fallback jika tidak bisa decode ID token
-                state.user = { name: "Google User", email: "-", picture: "" };
-                localStorage.setItem('user', JSON.stringify(state.user));
-            }
-        } else {
-            // Fallback jika tidak ada ID token
+        // Fetch user info from Google API
+        fetchUserInfoFromGoogleAPI(response.access_token).then(userInfo => {
+            state.user = {
+                name: userInfo.name || "Google User",
+                email: userInfo.email || "-",
+                picture: userInfo.picture || ""
+            };
+            localStorage.setItem('user', JSON.stringify(state.user));
+
+            state.loggedIn = true;
+            showApp();
+        }).catch(error => {
+            console.error('Error fetching user info:', error);
+            // Fallback jika tidak bisa ambil info user
             state.user = { name: "Google User", email: "-", picture: "" };
             localStorage.setItem('user', JSON.stringify(state.user));
-        }
+            state.loggedIn = true;
+            showApp();
+        });
 
-        state.loggedIn = true;
-        showApp();
         return;
     }
 
@@ -2542,7 +2598,7 @@ function updateTransactionTypePieChart(modal, income, expense) {
                     legend: {
                         position: 'bottom',
                         labels: {
-                            color: 'rgb(230, 240, 242)',
+                            color: getChartColors().textPrimary,
                             usePointStyle: true,
                             pointStyle: 'circle',
                             padding: 15
@@ -2632,7 +2688,7 @@ function updatePaymentMethodPieChart(transactions) {
                     legend: {
                         position: 'bottom',
                         labels: {
-                            color: 'rgb(230, 240, 242)',
+                            color: getChartColors().textPrimary,
                             usePointStyle: true,
                             pointStyle: 'circle',
                             padding: 15
@@ -2756,7 +2812,7 @@ function updateExpenseCategoryPieChart(transactions) {
                     legend: {
                         position: 'bottom',
                         labels: {
-                            color: 'rgb(230, 240, 242)',
+                            color: getChartColors().textPrimary,
                             usePointStyle: true,
                             pointStyle: 'circle',
                             padding: 15
@@ -2826,7 +2882,7 @@ function updateIncomeExpensePieChart(income, expense) {
                     legend: {
                         position: 'bottom',
                         labels: {
-                            color: 'rgb(230, 240, 242)',  // text-primary color
+                            color: getChartColors().textPrimary,
                             usePointStyle: true,
                             pointStyle: 'circle',
                             padding: 15
@@ -2851,7 +2907,7 @@ function updateIncomeExpensePieChart(income, expense) {
                     },
                     title: {
                         display: true,
-                        color: 'rgb(230, 240, 242)',
+                        color: getChartColors().textPrimary,
                         font: {
                             size: 16
                         },
@@ -2963,32 +3019,11 @@ function updateDailyTransactionsBarChart(transactions) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        },
-                        ticks: {
-                            color: 'rgb(230, 240, 242)'
-                        }
-                    },
-                    y: {
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        },
-                        ticks: {
-                            color: 'rgb(230, 240, 242)',
-                            callback: function (value) {
-                                return formatCurrency(value);
-                            }
-                        }
-                    }
-                },
                 plugins: {
                     legend: {
                         position: 'bottom',
                         labels: {
-                            color: 'rgb(230, 240, 242)',
+                            color: getChartColors().textPrimary,
                             usePointStyle: true,
                             pointStyle: 'circle',
                             padding: 15
@@ -3078,32 +3113,11 @@ function updatePaymentMethodBarChart(transactions) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        },
-                        ticks: {
-                            color: 'rgb(230, 240, 242)'
-                        }
-                    },
-                    y: {
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
-                        },
-                        ticks: {
-                            color: 'rgb(230, 240, 242)',
-                            callback: function (value) {
-                                return formatCurrency(value);
-                            }
-                        }
-                    }
-                },
                 plugins: {
                     legend: {
                         position: 'bottom',
                         labels: {
-                            color: 'rgb(230, 240, 242)',
+                            color: getChartColors().textPrimary,
                             usePointStyle: true,
                             pointStyle: 'circle',
                             padding: 15
@@ -3221,10 +3235,10 @@ function updateTopExpenseBarChart(transactions) {
                 scales: {
                     x: {
                         grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
+                            color: getChartColors().gridLines
                         },
                         ticks: {
-                            color: 'rgb(230, 240, 242)',
+                            color: getChartColors().textPrimary,
                             callback: function (value) {
                                 return formatCurrency(value);
                             }
@@ -3232,10 +3246,10 @@ function updateTopExpenseBarChart(transactions) {
                     },
                     y: {
                         grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
+                            color: getChartColors().gridLines
                         },
                         ticks: {
-                            color: 'rgb(230, 240, 242)'
+                            color: getChartColors().textPrimary
                         }
                     }
                 },
@@ -3355,10 +3369,10 @@ function updateTopIncomeBarChart(transactions) {
                 scales: {
                     x: {
                         grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
+                            color: getChartColors().gridLines
                         },
                         ticks: {
-                            color: 'rgb(230, 240, 242)',
+                            color: getChartColors().textPrimary,
                             callback: function (value) {
                                 return formatCurrency(value);
                             }
@@ -3366,10 +3380,10 @@ function updateTopIncomeBarChart(transactions) {
                     },
                     y: {
                         grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
+                            color: getChartColors().gridLines
                         },
                         ticks: {
-                            color: 'rgb(230, 240, 242)'
+                            color: getChartColors().textPrimary
                         }
                     }
                 },
@@ -3776,22 +3790,22 @@ function updateBarChart(data, reportType, selectedPeriod = 'monthly') {
                 scales: {
                     x: {
                         ticks: {
-                            color: 'rgb(175, 193, 196)'  // text-secondary color
+                            color: getChartColors().textSecondary
                         },
                         grid: {
-                            color: 'rgba(255, 255, 255, 0.05)'
+                            color: getChartColors().gridLines
                         }
                     },
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            color: 'rgb(175, 193, 196)',  // text-secondary color
+                            color: getChartColors().textSecondary,
                             callback: function (value) {
                                 return formatCurrency(value).split(',')[0]; // Simplified currency format
                             }
                         },
                         grid: {
-                            color: 'rgba(255, 255, 255, 0.05)'
+                            color: getChartColors().gridLines
                         }
                     }
                 },
@@ -3799,7 +3813,7 @@ function updateBarChart(data, reportType, selectedPeriod = 'monthly') {
                     legend: {
                         position: 'bottom',
                         labels: {
-                            color: 'rgb(230, 240, 242)',  // text-primary color
+                            color: getChartColors().textPrimary,
                             padding: 15,
                             usePointStyle: true,
                             pointStyle: 'circle'
@@ -3828,82 +3842,22 @@ function updateBarChart(data, reportType, selectedPeriod = 'monthly') {
 
 // Update user info in header
 function updateUserInfo() {
-    // Debug console dinonaktifkan
+    const userProfile = document.querySelector('.user-profile');
+    const userNameEl = document.getElementById('user-name');
 
-    // Debug elemen DOM dinonaktifkan
+    if (state.user && userNameEl) {
+        // Set nama user dengan fallback jika undefined
+        const userName = state.user.name || 'User';
+        userNameEl.textContent = userName;
+        userNameEl.style.display = 'inline-block';
 
-    if (state.user) {
-        // Pastikan elemen userAvatar dan userName ada
-        if (!elements.userAvatar || !elements.userName) {
-            console.error('User avatar or user name element not found');
-            elements.userAvatar = document.getElementById('user-avatar');
-            elements.userName = document.getElementById('user-name');
-            console.log('Re-assigned elements:', elements.userAvatar, elements.userName);
-        }
-
-        // Set avatar dan nama user
-        if (elements.userAvatar) {
-            // Pastikan URL gambar menggunakan https
-            let pictureUrl = state.user.picture || '';
-            if (pictureUrl && !pictureUrl.startsWith('https://')) {
-                pictureUrl = pictureUrl.replace('http://', 'https://');
-            }
-
-            // Tambahkan cache buster untuk menghindari masalah caching
-            const timestamp = new Date().getTime();
-
-            // Jika URL dari Google, gunakan URL yang lebih sederhana
-            if (pictureUrl && pictureUrl.includes('googleusercontent.com')) {
-                // Ambil URL dasar tanpa parameter
-                const baseUrl = pictureUrl.split('?')[0];
-                pictureUrl = baseUrl + '?v=' + timestamp;
-            }
-
-            // Gunakan URL avatar yang valid atau fallback ke ui-avatars
-            const avatarSrc = pictureUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(state.user.name) + '&background=9CAFAA&color=0F1724&v=' + timestamp;
-            console.log('Setting user avatar src to:', avatarSrc);
-
-            // Tambahkan event listener untuk debugging
-            elements.userAvatar.onerror = function () {
-                console.error('Failed to load avatar image:', avatarSrc);
-                // Fallback ke avatar default dengan cache buster
-                const timestamp = new Date().getTime();
-                this.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(state.user.name) + '&background=9CAFAA&color=0F1724&v=' + timestamp;
-            };
-
-            elements.userAvatar.onload = function () {
-                console.log('Avatar image loaded successfully');
-            };
-
-            // Set src setelah event listener untuk menangkap error
-            elements.userAvatar.src = avatarSrc;
-
-            // Pastikan avatar terlihat
-            elements.userAvatar.style.display = 'block';
-        }
-
-        if (elements.userName) {
-            console.log('Setting user name to:', state.user.name);
-            elements.userName.textContent = state.user.name;
-            elements.userName.style.display = 'inline-block';
-        }
-
-        // Tampilkan elemen user-profile
-        const userProfile = document.querySelector('.user-profile');
+        // Tampilkan user profile
         if (userProfile) {
             userProfile.classList.remove('hidden');
             userProfile.style.display = 'flex';
-            console.log('User profile style after update:', window.getComputedStyle(userProfile));
-
-            // Tambahkan inline style untuk memastikan terlihat
-            userProfile.setAttribute('style', 'display: flex !important; visibility: visible !important;');
-        } else {
-            console.error('User profile element not found');
         }
     } else {
-        console.warn('No user data available');
-        // Sembunyikan elemen user-profile jika tidak ada user
-        const userProfile = document.querySelector('.user-profile');
+        // Sembunyikan user profile jika tidak ada user
         if (userProfile) {
             userProfile.classList.add('hidden');
         }
@@ -4013,8 +3967,6 @@ function showLogin() {
 
 // Show app
 function showApp() {
-    // Debug console dinonaktifkan
-
     elements.loginModal.classList.add("hidden");
     elements.app.classList.remove("hidden");
 
@@ -4027,10 +3979,8 @@ function showApp() {
         console.error('User profile element not found in DOM');
     }
 
-    // Pastikan elemen userAvatar dan userName ada
-    if (!elements.userAvatar || !elements.userName) {
-        console.log('Re-initializing user avatar and name elements');
-        elements.userAvatar = document.getElementById('user-avatar');
+    // Pastikan elemen userName ada
+    if (!elements.userName) {
         elements.userName = document.getElementById('user-name');
     }
 
@@ -4039,10 +3989,19 @@ function showApp() {
         updateUserInfo();
     }, 100);
 
-    // jalankan initSheets agar data tampil
+    // Initialize sheets hanya jika Google API sudah siap
     if (state.token && !state.sheetsInitialized) {
-        initSheets();
-        state.sheetsInitialized = true;
+        // Tunggu sampai gapi.client siap
+        const initializeSheetsWhenReady = () => {
+            if (typeof gapi !== 'undefined' && gapi.client) {
+                initSheets();
+                state.sheetsInitialized = true;
+            } else {
+                // Tunggu sebentar dan coba lagi
+                setTimeout(initializeSheetsWhenReady, 100);
+            }
+        };
+        initializeSheetsWhenReady();
     }
 }
 
