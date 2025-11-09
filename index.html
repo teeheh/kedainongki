@@ -273,19 +273,21 @@
                 <div id="transactions-page" class="page">
                     <div class="card">
                         <div class="card-header">
-                            <h3>Tambah Transaksi Baru</h3>
+                            <div class="card-header-content">
+                                <h3>Tambah Transaksi Baru</h3>
+                            </div>
                         </div>
-                        <form id="transaction-form">
+                        <form id="transaction-form" autocomplete="off" class="form-expanded">
                             <div class="form-container">
                                 <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="date">Tanggal</label>
-                                        <input type="date" id="date" name="date" required>
+                                    <div class="form__group">
+                                        <input type="date" class="form__field" id="date" name="date" required>
+                                        <label for="date" class="form__label">Tanggal</label>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="description">Deskripsi</label>
-                                        <input type="text" id="description" name="description"
+                                    <div class="form__group">
+                                        <input type="text" class="form__field" id="description" name="description"
                                             placeholder="Masukkan deskripsi" required>
+                                        <label for="description" class="form__label">Deskripsi</label>
                                     </div>
                                 </div>
                                 <div class="form-row">
@@ -323,10 +325,13 @@
                                     </div>
                                 </div>
                                 <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="amount">Nominal (Rp)</label>
-                                        <input type="number" id="amount" name="amount" placeholder="0" min="0" required>
+                                    <div class="form__group">
+                                        <input type="number" class="form__field" id="amount" name="amount"
+                                            placeholder="0" min="0" required>
+                                        <label for="amount" class="form__label">Nominal (Rp)</label>
                                     </div>
+                                </div>
+                                <div class="form-row">
                                     <div class="form-group form-actions">
                                         <button type="submit" class="btn-primary">
                                             <i class="bi bi-plus-circle"></i> Tambah Transaksi
@@ -405,21 +410,12 @@
                                         <label for="period">Periode</label>
                                         <select id="period" name="period" required>
                                             <option value="daily">Harian</option>
-                                            <option value="weekly" selected>Mingguan</option>
+                                            <option value="weekly">Mingguan</option>
                                             <option value="monthly">Bulanan</option>
                                             <option value="quarterly">Kuartalan</option>
                                             <option value="yearly">Tahunan</option>
                                             <option value="custom">Kustom</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="report-type">Jenis Laporan</label>
-                                        <select id="report-type" name="report-type" required>
-                                            <option value="all">Semua Jenis</option>
-                                            <option value="basic">Laporan Dasar</option>
-                                            <option value="analytic">Laporan Analitis</option>
-                                            <option value="visual">Laporan Visualisasi</option>
-                                            <option value="forecast">Forecast Keuangan</option>
+                                            <option value="all-time" selected>Semua Waktu</option>
                                         </select>
                                     </div>
                                 </div>
@@ -471,9 +467,9 @@
                                     </div>
                                     <div class="report-card-content">
                                         <h4>Saldo Awal / Modal</h4>
-                                        <span class="report-card-value">💰 Modal Awal: Rp 4.665.804</span>
-                                        <span class="report-card-detail">(Tunai: Rp 2.002.000 | Non Tunai: Rp
-                                            2.663.804)</span>
+                                        <span id="report-modal-total" class="report-card-value">Rp 4.665.804</span>
+                                        <span id="report-modal-detail" class="report-card-detail">(Tunai: Rp 2.002.000 |
+                                            Non Tunai: Rp 2.663.804)</span>
                                     </div>
                                 </div>
 
@@ -484,9 +480,9 @@
                                     </div>
                                     <div class="report-card-content">
                                         <h4>Total Pemasukan</h4>
-                                        <span class="report-card-value">📈 Pemasukan: Rp 1.950.637</span>
-                                        <span class="report-card-detail">(Tunai: Rp 1.155.000 | Non Tunai: Rp
-                                            795.637)</span>
+                                        <span id="report-total-income" class="report-card-value">Rp 1.950.637</span>
+                                        <span id="report-income-detail" class="report-card-detail">(Tunai: Rp 1.155.000
+                                            | Non Tunai: Rp 795.637)</span>
                                     </div>
                                 </div>
 
@@ -497,9 +493,9 @@
                                     </div>
                                     <div class="report-card-content">
                                         <h4>Total Pengeluaran</h4>
-                                        <span class="report-card-value">📉 Pengeluaran: Rp 2.878.000</span>
-                                        <span class="report-card-detail">(Tunai: Rp 435.000 | Non Tunai: Rp
-                                            2.443.000)</span>
+                                        <span id="report-total-expense" class="report-card-value">Rp 2.878.000</span>
+                                        <span id="report-expense-detail" class="report-card-detail">(Tunai: Rp 435.000 |
+                                            Non Tunai: Rp 2.443.000)</span>
                                     </div>
                                 </div>
 
@@ -510,15 +506,14 @@
                                     </div>
                                     <div class="report-card-content">
                                         <h4>Laba Bersih</h4>
-                                        <span class="report-card-value">🔄 Laba / Rugi: -Rp 911127.363 (defisit)</span>
-                                        <h4>Pemasukan - Pengeluaran</h4>
+                                        <span id="report-profit-loss" class="report-card-value">Rp -911.127</span>
+                                        <div class="report-card-detail">Pemasukan - Pengeluaran</div>
                                     </div>
                                 </div>
                             </div>
 
                             <h4>Transaksi Terbesar</h4>
                             <div class="report-cards-container">
-
                                 <!-- 6. Pengeluaran Terbesar -->
                                 <div class="report-card top-expense">
                                     <div class="report-card-icon">
@@ -592,7 +587,7 @@
                                         <div class="progress-fill profit-ratio" id="profit-margin-bar"
                                             style="width: 0%"></div>
                                     </div>
-                                    <span id="profit-margin" class="report-card-value">0%</span>
+                                    <span id="report-profit-margin" class="report-card-value">0%</span>
                                 </div>
                                 <div class="report-card">
                                     <h4>Rasio Pengeluaran (%)</h4>
@@ -600,11 +595,9 @@
                                         <div class="progress-fill expense-ratio" id="expense-ratio-bar"
                                             style="width: 0%"></div>
                                     </div>
-                                    <span id="expense-ratio-analytics" class="report-card-value">0%</span>
+                                    <span id="report-expense-ratio" class="report-card-value">0%</span>
                                 </div>
                             </div>
-
-
 
                             <h4>Analisis Metode Pembayaran</h4>
                             <div id="payment-method-analysis" class="payment-method-analysis">
@@ -783,14 +776,14 @@
                 <form id="quick-transaction-form">
                     <div class="form-container">
                         <div class="form-row">
-                            <div class="form-group">
-                                <label for="quick-date"><i class="bi bi-calendar"></i> Tanggal</label>
-                                <input type="date" id="quick-date" name="quick-date" required>
+                            <div class="form__group">
+                                <input type="date" class="form__field" id="quick-date" name="quick-date" required>
+                                <label for="quick-date" class="form__label">Tanggal</label>
                             </div>
-                            <div class="form-group">
-                                <label for="quick-description"><i class="bi bi-pencil"></i> Deskripsi</label>
-                                <input type="text" id="quick-description" name="quick-description"
+                            <div class="form__group">
+                                <input type="text" class="form__field" id="quick-description" name="quick-description"
                                     placeholder="Masukkan deskripsi" required>
+                                <label for="quick-description" class="form__label">Deskripsi</label>
                             </div>
                         </div>
                         <div class="form-row">
@@ -799,10 +792,12 @@
                                 <div class="option-buttons">
                                     <button type="button" class="option-btn" data-value="Pemasukan"
                                         data-field="quick-type">
+                                        <i class="bi bi-arrow-up-circle"></i>
                                         <span>Pemasukan</span>
                                     </button>
                                     <button type="button" class="option-btn" data-value="Pengeluaran"
                                         data-field="quick-type">
+                                        <i class="bi bi-arrow-down-circle"></i>
                                         <span>Pengeluaran</span>
                                     </button>
                                 </div>
@@ -813,10 +808,12 @@
                                 <div class="option-buttons">
                                     <button type="button" class="option-btn" data-value="Tunai"
                                         data-field="quick-method">
+                                        <i class="bi bi-cash-coin"></i>
                                         <span>Tunai</span>
                                     </button>
                                     <button type="button" class="option-btn" data-value="Non Tunai"
                                         data-field="quick-method">
+                                        <i class="bi bi-credit-card"></i>
                                         <span>Non Tunai</span>
                                     </button>
                                 </div>
@@ -824,9 +821,10 @@
                             </div>
                         </div>
                         <div class="form-row">
-                            <div class="form-group">
-                                <label for="quick-amount"><i class="bi bi-cash"></i> Nominal (Rp)</label>
-                                <input type="number" id="quick-amount" name="amount" placeholder="0" min="0" required>
+                            <div class="form__group">
+                                <input type="number" class="form__field" id="quick-amount" name="amount" placeholder="0"
+                                    min="0" required>
+                                <label for="quick-amount" class="form__label">Nominal (Rp)</label>
                             </div>
                         </div>
                     </div>
@@ -849,17 +847,17 @@
                 <button id="close-edit-transaction-modal" class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="edit-transaction-form">
+                <form id="edit-transaction-form" class="form-expanded">
                     <div class="form-container">
                         <div class="form-row">
-                            <div class="form-group">
-                                <label for="edit-date"><i class="bi bi-calendar"></i> Tanggal</label>
-                                <input type="date" id="edit-date" name="date" required>
+                            <div class="form__group">
+                                <input type="date" class="form__field" id="edit-date" name="date" required>
+                                <label for="edit-date" class="form__label">Tanggal</label>
                             </div>
-                            <div class="form-group">
-                                <label for="edit-description"><i class="bi bi-pencil"></i> Deskripsi</label>
-                                <input type="text" id="edit-description" name="description"
+                            <div class="form__group">
+                                <input type="text" class="form__field" id="edit-description" name="description"
                                     placeholder="Masukkan deskripsi" required>
+                                <label for="edit-description" class="form__label">Deskripsi</label>
                             </div>
                         </div>
                         <div class="form-row">
@@ -868,10 +866,12 @@
                                 <div class="option-buttons">
                                     <button type="button" class="option-btn" data-value="Pemasukan"
                                         data-field="edit-type">
+                                        <i class="bi bi-arrow-up-circle"></i>
                                         <span>Pemasukan</span>
                                     </button>
                                     <button type="button" class="option-btn" data-value="Pengeluaran"
                                         data-field="edit-type">
+                                        <i class="bi bi-arrow-down-circle"></i>
                                         <span>Pengeluaran</span>
                                     </button>
                                 </div>
@@ -882,10 +882,12 @@
                                 <div class="option-buttons">
                                     <button type="button" class="option-btn" data-value="Tunai"
                                         data-field="edit-method">
+                                        <i class="bi bi-cash-coin"></i>
                                         <span>Tunai</span>
                                     </button>
                                     <button type="button" class="option-btn" data-value="Non Tunai"
                                         data-field="edit-method">
+                                        <i class="bi bi-credit-card"></i>
                                         <span>Non Tunai</span>
                                     </button>
                                 </div>
@@ -893,9 +895,10 @@
                             </div>
                         </div>
                         <div class="form-row">
-                            <div class="form-group">
-                                <label for="edit-amount"><i class="bi bi-cash"></i> Nominal (Rp)</label>
-                                <input type="number" id="edit-amount" name="amount" placeholder="0" min="0" required>
+                            <div class="form__group">
+                                <input type="number" class="form__field" id="edit-amount" name="amount" placeholder="0"
+                                    min="0" required>
+                                <label for="edit-amount" class="form__label">Nominal (Rp)</label>
                             </div>
                         </div>
                     </div>

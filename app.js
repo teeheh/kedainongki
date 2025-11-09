@@ -110,16 +110,18 @@ const CONFIG = {
 // Helper Functions
 
 /**
- * Menghasilkan ID transaksi unik dengan format: tanggal sekarang + 4 karakter alfanumerik
- * Format: YYYYMMDD + 4 karakter alfanumerik acak
- * @returns {string} ID transaksi unik
+ * Menghasilkan ID transaksi unik berdasarkan tanggal transaksi (bukan tanggal hari ini)
+ * Format: YYYYMMDD + 4 karakter acak
+ * @param {string} dateString - tanggal dari input form (format yyyy-mm-dd)
  */
-function generateTransactionId() {
-    const today = new Date();
-    const dateStr = today.getFullYear().toString() +
-        (today.getMonth() + 1).toString().padStart(2, '0') +
-        today.getDate().toString().padStart(2, '0');
+function generateTransactionId(dateString) {
+    // Gunakan tanggal dari form jika ada, jika tidak pakai hari ini
+    const date = dateString ? new Date(dateString) : new Date();
+    const dateStr = date.getFullYear().toString() +
+        (date.getMonth() + 1).toString().padStart(2, '0') +
+        date.getDate().toString().padStart(2, '0');
 
+    // 4 karakter acak
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let alphanumeric = '';
     for (let i = 0; i < 4; i++) {
@@ -298,6 +300,8 @@ function setupEventListeners() {
     if (transactionForm) {
         transactionForm.addEventListener('submit', handleAddTransaction);
     }
+
+    // Transaction form is always expanded, no toggle needed
 
     // Initialize modal form options on modal open
     document.addEventListener('click', function (e) {
@@ -688,6 +692,10 @@ async function handleAddTransaction(e) {
         // Reset form
         form.reset();
 
+        // Set today's date automatically after reset
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('date').value = today;
+
         // Reload data from sheet untuk memastikan data terbaru
         await loadTransactions();
 
@@ -813,6 +821,10 @@ async function handleQuickAddTransaction(e) {
         // Reset form
         form.reset();
 
+        // Set today's date automatically after reset
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('quick-date').value = today;
+
         // Close modal
         closeModal();
 
@@ -838,19 +850,25 @@ function handleGenerateReport(e) {
     const form = e.target;
     const formData = new FormData(form);
     const period = formData.get('period');
-    const reportType = formData.get('report-type');
 
     // Calculate date range based on period
     const dateRange = calculateDateRange(period);
 
-    // Filter transactions by date range
-    const filteredTransactions = state.transactions.filter(transaction => {
-        const transactionDate = new Date(transaction.date);
-        return transactionDate >= dateRange.start && transactionDate <= dateRange.end;
-    });
+    let filteredTransactions;
 
-    // Update report UI
-    updateReportUI(filteredTransactions, dateRange, reportType);
+    // For all-time period, use all transactions (same as Dashboard) to ensure correct calculations
+    if (period === 'all-time') {
+        filteredTransactions = state.transactions;
+    } else {
+        // Filter transactions by date range for other periods
+        filteredTransactions = state.transactions.filter(transaction => {
+            const transactionDate = new Date(transaction.date);
+            return transactionDate >= dateRange.start && transactionDate <= dateRange.end;
+        });
+    }
+
+    // Update report UI with all report types
+    updateReportUI(filteredTransactions, dateRange, 'all');
 }
 
 // Calculate date range based on period selection
@@ -941,6 +959,7 @@ function updateUI() {
     updateTransactionsUI(state.transactions);
     updateUserInfo();
     setupTransactionSearch();
+    setupDescriptionAutocomplete();
 }
 
 // Update dashboard metrics
@@ -1055,64 +1074,71 @@ function updateDashboard() {
 
 // Update recent transactions
 function updateRecentTransactions() {
-    // Debug console dinonaktifkan
-
-    const recentTransactions = state.transactions
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .slice(0, 5);
-
-    // Debug console dinonaktifkan
-
     const tableBody = document.querySelector('#recent-transactions-table tbody');
     const cardsContainer = document.getElementById('recent-transactions-cards');
 
-    // Clear previous content
     if (tableBody) tableBody.innerHTML = '';
     if (cardsContainer) cardsContainer.innerHTML = '';
 
-    // Add rows to table
-    recentTransactions.forEach(transaction => {
-        // Pastikan amount adalah angka yang valid
-        const amount = parseFloat(transaction.amount) || 0;
-        // Debug console dinonaktifkan
+    // ✅ Parser tanggal fleksibel (dd/mm/yyyy, dd-mm-yyyy, yyyy-mm-dd)
+    const parseDate = (dateStr) => {
+        if (!dateStr) return new Date(0);
+        const parts = dateStr.split(/[\/\-]/);
+        if (parts.length === 3) {
+            const [a, b, c] = parts.map(Number);
+            if (a > 1900) return new Date(a, b - 1, c); // yyyy-mm-dd
+            else if (c > 1900) return new Date(c, b - 1, a); // dd/mm/yyyy
+        }
+        return new Date(dateStr);
+    };
 
+    // ✅ Urutkan transaksi terbaru ke atas
+    const recentTransactions = [...state.transactions]
+        .sort((a, b) => parseDate(b.date) - parseDate(a.date))
+        .slice(0, 5);
+
+    // ✅ Tampilkan di tabel desktop
+    recentTransactions.forEach(transaction => {
+        const amount = parseFloat(transaction.amount) || 0;
         const row = document.createElement('tr');
         row.innerHTML = `
             <td><small class="text-muted">${transaction.id || 'N/A'}</small></td>
             <td>${formatDate(transaction.date)}</td>
             <td>${transaction.description}</td>
-            <td><span class="badge ${transaction.type.trim().toLowerCase() === 'pemasukan' ? 'income' : 'expense'}">${transaction.type}</span></td>
+            <td><span class="badge ${transaction.type.trim().toLowerCase() === 'pemasukan' ? 'income' : 'expense'}">
+                ${transaction.type}</span></td>
             <td>${transaction.method}</td>
             <td>${formatCurrency(amount)}</td>
         `;
         tableBody.appendChild(row);
     });
 
-    // Add cards for mobile view
+    // ✅ Tampilkan versi mobile (cards)
     recentTransactions.forEach(transaction => {
-        // Pastikan amount adalah angka yang valid
         const amount = parseFloat(transaction.amount) || 0;
-
         const card = document.createElement('div');
         card.className = 'transaction-card';
-        // Tambahkan kelas income atau expense untuk styling
         card.classList.add(transaction.type.trim().toLowerCase() === 'pemasukan' ? 'income' : 'expense');
-
         card.innerHTML = `
             <div class="transaction-card-header">
                 <span class="transaction-date"><i class="bi bi-calendar3"></i> ${formatDate(transaction.date)}</span>
-                <span class="transaction-type ${transaction.type.trim().toLowerCase() === 'pemasukan' ? 'income' : 'expense'}">${transaction.type}</span>
+                <span class="transaction-type ${transaction.type.trim().toLowerCase() === 'pemasukan' ? 'income' : 'expense'}">
+                    ${transaction.type}</span>
             </div>
             <div class="transaction-id"><small class="text-muted"><i class="bi bi-hash"></i> ${transaction.id || 'N/A'}</small></div>
             <div class="transaction-description"><i class="bi bi-card-text"></i> ${transaction.description}</div>
             <div class="transaction-details">
                 <span><i class="bi bi-wallet2"></i> ${transaction.method}</span>
-                <span class="transaction-amount ${transaction.type.trim().toLowerCase() === 'pemasukan' ? 'income' : 'expense'}"><i class="bi ${transaction.type.trim().toLowerCase() === 'pemasukan' ? 'bi-graph-up-arrow' : 'bi-graph-down-arrow'}"></i> ${formatCurrency(amount)}</span>
+                <span class="transaction-amount ${transaction.type.trim().toLowerCase() === 'pemasukan' ? 'income' : 'expense'}">
+                    <i class="bi ${transaction.type.trim().toLowerCase() === 'pemasukan' ? 'bi-graph-up-arrow' : 'bi-graph-down-arrow'}"></i>
+                    ${formatCurrency(amount)}
+                </span>
             </div>
         `;
         cardsContainer.appendChild(card);
     });
 }
+
 
 // Update transactions UI
 // Pagination state
@@ -1132,6 +1158,22 @@ function handlePagination(direction) {
 
     // Re-render transactions with new page
     updateTransactionsUI(state.transactions);
+}
+
+// Fungsi untuk mendapatkan deskripsi unik dari transaksi
+function getUniqueDescriptions() {
+    const descriptions = new Map();
+
+    state.transactions.forEach(transaction => {
+        if (transaction.description && transaction.description.trim()) {
+            const key = transaction.description.trim().toLowerCase();
+            if (!descriptions.has(key)) {
+                descriptions.set(key, transaction.description.trim());
+            }
+        }
+    });
+
+    return Array.from(descriptions.values()).sort();
 }
 
 // Fungsi untuk autocomplete pencarian transaksi
@@ -1240,6 +1282,186 @@ function setupTransactionSearch() {
     }
 }
 
+// Fungsi untuk autocomplete input deskripsi (improved)
+function setupDescriptionAutocomplete() {
+    const inputs = [
+        document.getElementById('description'),
+        document.getElementById('quick-description'),
+        document.getElementById('edit-description')
+    ].filter(Boolean);
+
+    if (inputs.length === 0) return;
+
+    // Shared dropdown appended to body supaya tidak terpengaruh parent transform/opacity
+    const dropdown = document.createElement('div');
+    dropdown.className = 'description-autocomplete-dropdown';
+    dropdown.style.display = 'none';
+    dropdown.style.position = 'absolute';
+    dropdown.style.zIndex = '99999';
+    document.body.appendChild(dropdown);
+
+    let currentInput = null;
+    let activeIndex = -1;
+    let currentItems = [];
+
+    function positionDropdownForInput(input) {
+        const rect = input.getBoundingClientRect();
+        const scrollY = window.scrollY || window.pageYOffset;
+        const scrollX = window.scrollX || window.pageXOffset;
+
+        // set min width supaya rapi; bisa juga pakai rect.width
+        dropdown.style.minWidth = rect.width + 'px';
+        dropdown.style.left = (rect.left + scrollX) + 'px';
+        dropdown.style.top = (rect.bottom + scrollY + 6) + 'px';
+    }
+
+    function hideDropdown() {
+        dropdown.style.display = 'none';
+        dropdown.innerHTML = '';
+        activeIndex = -1;
+        currentItems = [];
+    }
+
+    function showSuggestions(input, items, query) {
+        dropdown.innerHTML = '';
+        currentItems = items;
+        activeIndex = -1;
+
+        items.forEach((desc, i) => {
+            const item = document.createElement('div');
+            item.className = 'description-autocomplete-item';
+            item.dataset.index = i;
+            item.innerHTML = highlightMatch(desc, query);
+            // gunakan mousedown supaya tidak dipengaruhi blur
+            item.addEventListener('mousedown', (ev) => {
+                ev.preventDefault(); // hentikan focus change yang tak diinginkan
+                input.value = desc;
+                hideDropdown();
+                input.focus();
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+            dropdown.appendChild(item);
+        });
+
+        positionDropdownForInput(input);
+        dropdown.style.display = 'block';
+    }
+
+    function highlightMatch(text, query) {
+        if (!query) return escapeHtml(text);
+        try {
+            const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
+            return escapeHtml(text).replace(regex, '<strong>$1</strong>');
+        } catch (e) {
+            return escapeHtml(text);
+        }
+    }
+
+    function escapeRegExp(s) {
+        return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+    function escapeHtml(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // keyboard navigation
+    function updateActive(newIndex) {
+        const children = Array.from(dropdown.children);
+        if (children.length === 0) return;
+        if (activeIndex >= 0 && children[activeIndex]) {
+            children[activeIndex].classList.remove('active');
+        }
+        activeIndex = newIndex;
+        if (activeIndex < 0) activeIndex = -1;
+        if (activeIndex >= children.length) activeIndex = children.length - 1;
+        if (activeIndex >= 0 && children[activeIndex]) {
+            children[activeIndex].classList.add('active');
+            // ensure visible
+            const el = children[activeIndex];
+            const ddRect = dropdown.getBoundingClientRect();
+            const elRect = el.getBoundingClientRect();
+            if (elRect.bottom > ddRect.bottom) el.scrollIntoView(false);
+            if (elRect.top < ddRect.top) el.scrollIntoView();
+        }
+    }
+
+    // global click: hide when click di luar dropdown dan bukan input aktif
+    document.addEventListener('click', (ev) => {
+        if (!dropdown.contains(ev.target) && !inputs.includes(ev.target)) {
+            hideDropdown();
+        }
+    });
+
+    // reposition on scroll/resize (bubbling true to capture scroll inside containers)
+    window.addEventListener('resize', () => { if (dropdown.style.display === 'block' && currentInput) positionDropdownForInput(currentInput); });
+    window.addEventListener('scroll', () => { if (dropdown.style.display === 'block' && currentInput) positionDropdownForInput(currentInput); }, true);
+
+    inputs.forEach(input => {
+        // pastikan browser tidak menunjukkan autofill
+        input.setAttribute('autocomplete', 'off');
+        input.setAttribute('autocorrect', 'off');
+        input.setAttribute('autocapitalize', 'off');
+        input.setAttribute('spellcheck', 'false');
+
+        input.addEventListener('input', function () {
+            currentInput = this;
+            const query = this.value.toLowerCase().trim();
+            const uniqueDescriptions = getUniqueDescriptions ? getUniqueDescriptions() : [];
+            if (!query) {
+                hideDropdown();
+                return;
+            }
+
+            const matching = uniqueDescriptions.filter(d => d.toLowerCase().includes(query)).slice(0, 6);
+            if (matching.length > 0) {
+                showSuggestions(this, matching, query);
+            } else {
+                hideDropdown();
+            }
+        });
+
+        // keyboard navigation for input
+        input.addEventListener('keydown', function (ev) {
+            if (dropdown.style.display !== 'block') return;
+            const key = ev.key;
+            if (key === 'ArrowDown') {
+                ev.preventDefault();
+                updateActive(activeIndex + 1);
+            } else if (key === 'ArrowUp') {
+                ev.preventDefault();
+                updateActive(activeIndex - 1);
+            } else if (key === 'Enter') {
+                if (activeIndex >= 0 && currentItems[activeIndex]) {
+                    ev.preventDefault();
+                    const val = currentItems[activeIndex];
+                    this.value = val;
+                    hideDropdown();
+                    this.dispatchEvent(new Event('input', { bubbles: true }));
+                    this.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            } else if (key === 'Escape') {
+                hideDropdown();
+            }
+        });
+
+        // blur: gunakan delay kecil, tetapi karena kita memakai mousedown untuk memilih,
+        // klik item tidak akan hilang sebelum selection.
+        input.addEventListener('blur', function () {
+            setTimeout(() => {
+                // jika fokus pindah ke dropdown (mis. klik), jangan sembunyikan
+                const activeEl = document.activeElement;
+                if (!dropdown.contains(activeEl)) hideDropdown();
+            }, 150);
+        });
+    });
+}
+
 function updateTransactionsUI(transactions) {
     console.log('Updating transactions UI with transactions:', transactions);
 
@@ -1251,7 +1473,21 @@ function updateTransactionsUI(transactions) {
     if (cardsContainer) cardsContainer.innerHTML = '';
 
     // Sort transactions by date (newest first)
-    const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const sortedTransactions = [...transactions].sort((a, b) => {
+        const parseDate = (dateStr) => {
+            if (!dateStr) return new Date(0);
+            // Deteksi format dd/mm/yyyy atau dd-mm-yyyy
+            const parts = dateStr.split(/[\/\-]/);
+            if (parts.length === 3) {
+                const [d, m, y] = parts.map(Number);
+                // Jika format yyyy-mm-dd, urutannya dibalik
+                return y > 1900 ? new Date(y, m - 1, d) : new Date(d, m - 1, y);
+            }
+            return new Date(dateStr);
+        };
+        return parseDate(b.date) - parseDate(a.date);
+    });
+
 
     console.log('Sorted transactions for display:', sortedTransactions);
 
@@ -1278,8 +1514,8 @@ function updateTransactionsUI(transactions) {
         const amount = parseFloat(transaction.amount) || 0;
         console.log('Transaction for UI:', transaction, 'parsed amount:', amount);
 
-        // Calculate the global index for the transaction in the full array
-        const globalIndex = startIndex + index;
+        // Find the actual index in the original state.transactions array
+        const originalIndex = state.transactions.findIndex(t => t.id === transaction.id);
 
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -1290,8 +1526,8 @@ function updateTransactionsUI(transactions) {
             <td>${transaction.method}</td>
             <td>${formatCurrency(amount)}</td>
             <td>
-                <button class="btn-icon" title="Edit" onclick="editTransaction(${globalIndex})"><i class="bi bi-pencil"></i></button>
-                <button class="btn-icon" title="Hapus" onclick="deleteTransaction(${globalIndex})"><i class="bi bi-trash"></i></button>
+                <button class="btn-icon" title="Edit" onclick="editTransaction(${originalIndex})"><i class="bi bi-pencil"></i></button>
+                <button class="btn-icon" title="Hapus" onclick="deleteTransaction(${originalIndex})"><i class="bi bi-trash"></i></button>
             </td>
         `;
         tableBody.appendChild(row);
@@ -1302,8 +1538,8 @@ function updateTransactionsUI(transactions) {
         // Pastikan amount adalah angka yang valid
         const amount = parseFloat(transaction.amount) || 0;
 
-        // Calculate the global index for the transaction in the full array
-        const globalIndex = startIndex + index;
+        // Find the actual index in the original state.transactions array
+        const originalIndex = state.transactions.findIndex(t => t.id === transaction.id);
 
         const card = document.createElement('div');
         card.className = 'transaction-card';
@@ -1322,8 +1558,8 @@ function updateTransactionsUI(transactions) {
                 <span class="transaction-amount ${transaction.type.trim().toLowerCase() === 'pemasukan' ? 'income' : 'expense'}"><i class="bi ${transaction.type.trim().toLowerCase() === 'pemasukan' ? 'bi-graph-up-arrow' : 'bi-graph-down-arrow'}"></i> ${formatCurrency(amount)}</span>
             </div>
             <div class="transaction-actions">
-                <button class="btn-icon" title="Edit" onclick="editTransaction(${globalIndex})"><i class="bi bi-pencil"></i></button>
-                <button class="btn-icon" title="Hapus" onclick="deleteTransaction(${globalIndex})"><i class="bi bi-trash"></i></button>
+                <button class="btn-icon" title="Edit" onclick="editTransaction(${originalIndex})"><i class="bi bi-pencil"></i></button>
+                <button class="btn-icon" title="Hapus" onclick="deleteTransaction(${originalIndex})"><i class="bi bi-trash"></i></button>
             </div>
         `;
         cardsContainer.appendChild(card);
@@ -1458,32 +1694,15 @@ function updateReportUI(transactions, dateRange, reportType) {
             if (emptyState) emptyState.classList.add('hidden');
             if (reportContainer) reportContainer.classList.remove('hidden');
 
-            // Show appropriate report section based on report type
-            // Jika tipe laporan 'all', tampilkan semua jenis laporan
-            if (reportType === 'all') {
-                if (reportBasic) reportBasic.classList.remove('hidden');
-                if (reportAnalytic) reportAnalytic.classList.remove('hidden');
-                if (reportVisual) reportVisual.classList.remove('hidden');
-                if (reportForecast) reportForecast.classList.remove('hidden');
+            // Always show all report sections since report type selection was removed
+            if (reportBasic) reportBasic.classList.remove('hidden');
+            if (reportAnalytic) reportAnalytic.classList.remove('hidden');
+            if (reportVisual) reportVisual.classList.remove('hidden');
+            if (reportForecast) reportForecast.classList.remove('hidden');
 
-                // Update semua metrik laporan
-                updateBasicReportMetrics(totalModal);
-                updateAnalyticReportMetrics();
-            }
-            else if (reportType === 'basic' && reportBasic) {
-                reportBasic.classList.remove('hidden');
-                updateBasicReportMetrics(totalModal);
-            }
-            else if (reportType === 'analytic' && reportAnalytic) {
-                reportAnalytic.classList.remove('hidden');
-                updateAnalyticReportMetrics();
-            }
-            else if (reportType === 'visual' && reportVisual) {
-                reportVisual.classList.remove('hidden');
-            }
-            else if (reportType === 'forecast' && reportForecast) {
-                reportForecast.classList.remove('hidden');
-            }
+            // Update semua metrik laporan
+            updateBasicReportMetrics(totalModal);
+            updateAnalyticReportMetrics();
 
             // Fungsi untuk memperbarui metrik laporan dasar - disesuaikan dengan format Dashboard
             // Fungsi untuk menampilkan hasil laporan untuk setiap card
@@ -1524,12 +1743,6 @@ function updateReportUI(transactions, dateRange, reportType) {
                 }
             }
 
-            // Konfigurasi Google Sheets API
-            const GOOGLE_SHEETS_CONFIG = {
-                apiKey: 'YOUR_API_KEY', // Ganti dengan API key Anda
-                spreadsheetId: 'YOUR_SPREADSHEET_ID', // Ganti dengan ID spreadsheet Anda
-                range: 'LaporanKeuangan!A1:Z100' // Sesuaikan dengan range data Anda
-            };
 
             // Fungsi lama untuk mengambil data dari Google Sheets (tidak digunakan)
             // Digantikan dengan implementasi baru yang menggunakan gapi.client
@@ -1914,9 +2127,13 @@ function updateReportUI(transactions, dateRange, reportType) {
 
             async function updateBasicReportMetrics(totalModal) {
                 // Update basic report metrics - disesuaikan dengan updateDashboard
-                const totalIncomeEl = document.getElementById('total-income');
-                const totalExpenseEl = document.getElementById('total-expense');
-                const profitLossEl = document.getElementById('profit-loss');
+                const totalIncomeEl = document.getElementById('report-total-income');
+                const totalExpenseEl = document.getElementById('report-total-expense');
+                const profitLossEl = document.getElementById('report-profit-loss');
+
+                // const totalIncomeEl = document.getElementById('total-income');
+                // const totalExpenseEl = document.getElementById('total-expense');
+                // const profitLossEl = document.getElementById('profit-loss');
                 const transactionCountEl = document.getElementById('transaction-count');
                 const avgTransactionEl = document.getElementById('avg-transaction');
 
@@ -2072,10 +2289,22 @@ function updateReportUI(transactions, dateRange, reportType) {
                 if (tableBody) tableBody.innerHTML = '';
                 if (cardsContainer) cardsContainer.innerHTML = '';
 
-                // Sort transactions by date (newest first)
-                const sortedTransactions = [...transactions].sort((a, b) => {
-                    return new Date(b.date) - new Date(a.date);
-                });
+                // Sort transactions by date (newest first) — robust & safe
+                const parseDateFlexible = (dateStr) => {
+                    if (!dateStr) return new Date(0);
+                    const parts = dateStr.split(/[\/\-]/).map(Number);
+                    if (parts.length === 3) {
+                        // if first part > 1900 => yyyy-mm-dd
+                        if (parts[0] > 1900) return new Date(parts[0], parts[1] - 1, parts[2]);
+                        // if last part > 1900 => dd/mm/yyyy
+                        if (parts[2] > 1900) return new Date(parts[2], parts[1] - 1, parts[0]);
+                    }
+                    return new Date(dateStr);
+                };
+
+                const sortedTransactions = ((transactions && Array.isArray(transactions)) ? transactions : (state.transactions || [])).slice()
+                    .sort((a, b) => parseDateFlexible(b.date) - parseDateFlexible(a.date));
+
 
                 // Pagination state for report
                 let reportPaginationState = {
@@ -3883,6 +4112,11 @@ function navigateTo(page) {
     });
     elements.pages[page].classList.add('active');
 
+    if (page === 'dashboard') {
+        updateDashboard(); // Pastikan fungsi ini sudah ada
+    }
+
+
     // Update page title
     elements.pageTitle.textContent = document.querySelector(`.nav-item[data-page="${page}"] span`).textContent;
 
@@ -3897,13 +4131,10 @@ function navigateTo(page) {
         // Hitung rentang tanggal untuk keseluruhan data (dari awal hingga sekarang)
         const dateRange = calculateDateRange('all-time');
 
-        // Filter transaksi berdasarkan rentang tanggal
-        const filteredTransactions = state.transactions.filter(transaction => {
-            const transactionDate = new Date(transaction.date);
-            return transactionDate >= dateRange.start && transactionDate <= dateRange.end;
-        });
+        // For all-time reports, use all transactions (same as Dashboard) to ensure correct calculations
+        const filteredTransactions = state.transactions;
 
-        // Update UI laporan dengan data keseluruhan
+        // Update UI laporan dengan semua jenis laporan
         updateReportUI(filteredTransactions, dateRange, 'all');
 
         // Update teks rentang tanggal
@@ -4250,6 +4481,7 @@ async function editTransaction(index) {
 
             const formData = new FormData(form);
             const updatedTransaction = {
+                id: transactionId, // ALWAYS preserve the original ID - never change it during edit
                 date: formData.get('date'),
                 description: formData.get('description'),
                 type: formData.get('type'),
@@ -4263,8 +4495,7 @@ async function editTransaction(index) {
                 // Get the row index (add 2 because of header row and 0-indexing)
                 const rowIndex = currentEditingIndex + 2;
 
-                // Preserve the original transaction ID
-                updatedTransaction.id = transactionId;
+                // ID is already preserved in updatedTransaction object above
 
                 await gapi.client.sheets.spreadsheets.values.update({
                     spreadsheetId: CONFIG.spreadsheetId,
@@ -4399,8 +4630,21 @@ function formatDate(value) {
 
 // Format date for input type="date" (YYYY-MM-DD)
 function formatDateForInput(value) {
+    if (!value) return '';
+
+    // Parse date string assuming DD/MM/YYYY format
+    const parts = value.split(/[\/\-]/);
+    if (parts.length === 3) {
+        const [day, month, year] = parts.map(Number);
+        if (day >= 1 && day <= 31 && month >= 1 && month <= 12 && year >= 1900 && year <= 2100) {
+            // Valid DD/MM/YYYY format
+            return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        }
+    }
+
+    // Fallback to original parsing if not DD/MM/YYYY
     const d = new Date(value);
-    if (isNaN(d)) return value; // kalau gagal parsing, kembalikan aslinya
+    if (isNaN(d)) return value;
 
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -4850,9 +5094,8 @@ function exportToPDF() {
         const reportRangeEl = document.getElementById('report-range');
         const reportRange = reportRangeEl ? reportRangeEl.textContent : 'Periode Tidak Tersedia';
 
-        // Ambil jenis laporan yang sedang aktif
-        const reportTypeEl = document.getElementById('report-type');
-        const reportType = reportTypeEl ? reportTypeEl.value : 'basic';
+        // Set reportType to 'all' since report type selection was removed
+        const reportType = 'all';
 
         // Pastikan semua bagian laporan terlihat untuk PDF
         const reportBasic = document.getElementById('report-basic');
@@ -4866,19 +5109,11 @@ function exportToPDF() {
         const visualHidden = reportVisual ? reportVisual.classList.contains('hidden') : true;
         const forecastHidden = reportForecast ? reportForecast.classList.contains('hidden') : true;
 
-        // Tampilkan semua bagian laporan jika tipe 'all', atau hanya bagian yang sesuai
-        if (reportType === 'all') {
-            if (reportBasic) reportBasic.classList.remove('hidden');
-            if (reportAnalytic) reportAnalytic.classList.remove('hidden');
-            if (reportVisual) reportVisual.classList.remove('hidden');
-            if (reportForecast) reportForecast.classList.remove('hidden');
-        } else {
-            // Jika bukan 'all', pastikan hanya bagian yang sesuai yang terlihat
-            if (reportType === 'basic' && reportBasic) reportBasic.classList.remove('hidden');
-            if (reportType === 'analytic' && reportAnalytic) reportAnalytic.classList.remove('hidden');
-            if (reportType === 'visual' && reportVisual) reportVisual.classList.remove('hidden');
-            if (reportType === 'forecast' && reportForecast) reportForecast.classList.remove('hidden');
-        }
+        // Always show all report sections since report type selection was removed
+        if (reportBasic) reportBasic.classList.remove('hidden');
+        if (reportAnalytic) reportAnalytic.classList.remove('hidden');
+        if (reportVisual) reportVisual.classList.remove('hidden');
+        if (reportForecast) reportForecast.classList.remove('hidden');
 
         // Ambil elemen yang akan dikonversi ke PDF
         const reportContainer = document.querySelector('.card:nth-child(2)');

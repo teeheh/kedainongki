@@ -9,6 +9,7 @@
     --surface: #0E1628;
     --card: #162238;
     --muted: #1A2A40;
+    --bg-secondary: #162238;
     --glass: rgba(255, 255, 255, 0.05);
 
     /* Text - Improved contrast */
@@ -65,6 +66,7 @@
     --surface: #F1F5F9;
     --card: #FFFFFF;
     --muted: #F8FAFC;
+    --bg-secondary: #FFFFFF;
     --glass: rgba(0, 0, 0, 0.02);
 
     --text-primary: #1E293B;
@@ -876,6 +878,31 @@ a {
     border-left-color: var(--info);
 }
 
+/* Description Autocomplete Dropdown */
+.description-autocomplete-dropdown {
+    background: var(--bg-secondary) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--border-radius) !important;
+    box-shadow: var(--shadow) !important;
+}
+
+.description-autocomplete-item {
+    color: var(--text-primary) !important;
+    border-bottom: 1px solid var(--border) !important;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.description-autocomplete-item:hover,
+.description-autocomplete-item:focus {
+    background: var(--glass) !important;
+}
+
+.description-autocomplete-item strong {
+    color: var(--accent) !important;
+    font-weight: 600;
+}
+
 /* Search and Autocomplete */
 .search-container {
     margin-bottom: 1rem;
@@ -1271,7 +1298,7 @@ tr:hover {
     font-weight: 600;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
-    flex-direction: column;
+    /* flex-direction: column; */
     align-items: center;
     justify-content: center;
     text-align: center;
@@ -1379,7 +1406,7 @@ tr:hover {
 }
 
 label {
-    margin-bottom: 0.75rem;
+    /* margin-bottom: 0.75rem; */
     color: var(--text-primary);
     font-weight: 600;
     font-size: 0.9rem;
@@ -3298,4 +3325,50 @@ textarea:focus {
     .payment-method-stats {
         grid-template-columns: 1fr;
     }
+}
+
+.description-autocomplete-dropdown {
+    position: absolute;
+    background: var(--bg-secondary, #fff);
+    /* 💪 warna solid putih */
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    box-shadow: 0 8px 25px rgba(15, 23, 42, 0.12);
+    color: #222;
+    z-index: 999999 !important;
+    /* pastikan di atas semua */
+    opacity: 1 !important;
+    /* pastikan tidak ikut transparan */
+    backdrop-filter: none !important;
+    /* hilangkan efek blur/transparan */
+    -webkit-backdrop-filter: none !important;
+    transform: translateZ(0);
+    /* paksa layer rendering sendiri */
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 6px 4px;
+    min-width: 240px;
+}
+
+
+.description-autocomplete-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-radius: 6px;
+}
+
+.description-autocomplete-item+.description-autocomplete-item {
+    margin-top: 2px;
+}
+
+.description-autocomplete-item:hover,
+.description-autocomplete-item.active {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.description-autocomplete-item strong {
+    font-weight: 700;
 }
