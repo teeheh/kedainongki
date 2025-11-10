@@ -15,10 +15,10 @@
 }
 
 .metric-card:hover {
-  transform: translateY(-4px);
+  /* transform: translateY(-4px);
   box-shadow: 0 12px 32px rgba(2, 6, 23, 0.4);
   border-color: rgba(56, 224, 123, 0.2);
-  background: linear-gradient(135deg, var(--card) 0%, rgba(56, 224, 123, 0.05) 100%) !important;
+  background: linear-gradient(135deg, var(--card) 0%, rgba(56, 224, 123, 0.05) 100%) !important; */
 }
 
 .metric-icon {
@@ -174,8 +174,8 @@
 }
 
 .card:hover {
-  border-color: rgba(56, 224, 123, 0.15) !important;
-  box-shadow: 0 12px 32px rgba(2, 6, 23, 0.5) !important;
+  /* border-color: rgba(56, 224, 123, 0.15) !important; */
+  /* box-shadow: 0 12px 32px rgba(2, 6, 23, 0.5) !important; */
 }
 
 /* Collapsible form styles */
