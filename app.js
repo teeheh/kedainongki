@@ -140,6 +140,9 @@ let state = {
     loading: false
 };
 
+// Flag to prevent multiple event listener setups
+let eventListenersSetup = false;
+
 // DOM Elements
 const elements = {
     loginModal: document.getElementById('login-modal'),
@@ -224,6 +227,12 @@ function initApp() {
 
 // Setup event listeners
 function setupEventListeners() {
+    if (eventListenersSetup) {
+        console.log('Event listeners already setup, skipping');
+        return;
+    }
+    eventListenersSetup = true;
+
     // Navigation
     document.querySelectorAll('.nav-item').forEach(item => {
         // Skip buttons that don't have data-page attribute (like add-transaction-btn and logout-btn-mobile)
@@ -332,7 +341,7 @@ function setupEventListeners() {
         transactionsFilter.addEventListener('change', filterTransactions);
     }
 
-    // Pagination buttons
+    // Pagination buttons - setup once
     const prevPageBtn = document.getElementById('prev-page');
     const nextPageBtn = document.getElementById('next-page');
     if (prevPageBtn && nextPageBtn) {
@@ -942,15 +951,12 @@ function toggleCustomDateRange() {
 // Filter transactions
 function filterTransactions() {
     const filter = document.getElementById('transactions-filter').value;
-    let filteredTransactions = state.transactions;
+    currentFilter = filter;
 
-    if (filter === 'income') {
-        filteredTransactions = state.transactions.filter(t => t.type.trim().toLowerCase() === 'pemasukan');
-    } else if (filter === 'expense') {
-        filteredTransactions = state.transactions.filter(t => t.type.trim().toLowerCase() === 'pengeluaran');
-    }
+    // Reset pagination to first page when filter changes
+    paginationState.currentPage = 1;
 
-    updateTransactionsUI(filteredTransactions);
+    updateTransactionsUI(state.transactions);
 }
 
 // Update all UI components
@@ -1148,12 +1154,19 @@ let paginationState = {
     totalPages: 1
 };
 
+// Filter state
+let currentFilter = 'all'; // 'all', 'income', 'expense'
+
 // Handle pagination navigation
 function handlePagination(direction) {
+    console.log('handlePagination called with direction:', direction, 'currentPage:', paginationState.currentPage, 'totalPages:', paginationState.totalPages);
+
     if (direction === 'prev' && paginationState.currentPage > 1) {
         paginationState.currentPage--;
+        console.log('Decremented to page:', paginationState.currentPage);
     } else if (direction === 'next' && paginationState.currentPage < paginationState.totalPages) {
         paginationState.currentPage++;
+        console.log('Incremented to page:', paginationState.currentPage);
     }
 
     // Re-render transactions with new page
@@ -1472,8 +1485,16 @@ function updateTransactionsUI(transactions) {
     if (tableBody) tableBody.innerHTML = '';
     if (cardsContainer) cardsContainer.innerHTML = '';
 
+    // Apply current filter
+    let filteredTransactions = transactions;
+    if (currentFilter === 'income') {
+        filteredTransactions = transactions.filter(t => t.type.trim().toLowerCase() === 'pemasukan');
+    } else if (currentFilter === 'expense') {
+        filteredTransactions = transactions.filter(t => t.type.trim().toLowerCase() === 'pengeluaran');
+    }
+
     // Sort transactions by date (newest first)
-    const sortedTransactions = [...transactions].sort((a, b) => {
+    const sortedTransactions = [...filteredTransactions].sort((a, b) => {
         const parseDate = (dateStr) => {
             if (!dateStr) return new Date(0);
             // Deteksi format dd/mm/yyyy atau dd-mm-yyyy
@@ -1495,6 +1516,9 @@ function updateTransactionsUI(transactions) {
     paginationState.totalPages = Math.ceil(sortedTransactions.length / paginationState.itemsPerPage) || 1;
     if (paginationState.currentPage > paginationState.totalPages) {
         paginationState.currentPage = paginationState.totalPages;
+    }
+    if (paginationState.currentPage < 1) {
+        paginationState.currentPage = 1;
     }
 
     // Get current page items
