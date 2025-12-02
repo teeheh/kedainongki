@@ -612,7 +612,7 @@ a {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
+    /* box-shadow: var(--shadow); */
     padding: 1.5rem;
     margin-bottom: 1.5rem;
 }
@@ -667,7 +667,7 @@ a {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
+    /* box-shadow: var(--shadow); */
     padding: 1.5rem;
     display: flex;
     align-items: center;
@@ -885,7 +885,7 @@ a {
     background: var(--bg-secondary) !important;
     border: 1px solid var(--border) !important;
     border-radius: var(--border-radius) !important;
-    box-shadow: var(--shadow) !important;
+    /* box-shadow: var(--shadow) !important; */
 }
 
 .description-autocomplete-item {
@@ -1121,7 +1121,7 @@ tr:hover {
     padding: 1.25rem;
     margin-bottom: 1rem;
     border: 1px solid var(--border);
-    box-shadow: var(--shadow);
+    /* box-shadow: var(--shadow); */
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
@@ -1553,7 +1553,7 @@ textarea:focus {
     padding: 1.5rem;
     display: flex;
     align-items: center;
-    box-shadow: var(--shadow);
+    /* box-shadow: var(--shadow); */
     transition: all 0.3s ease;
     border-left: 4px solid transparent;
     position: relative;
@@ -1935,7 +1935,7 @@ textarea:focus {
     background: var(--glass);
     border-radius: var(--border-radius-lg);
     padding: 1.5rem;
-    box-shadow: var(--shadow);
+    /* box-shadow: var(--shadow); */
     width: 100%;
     overflow: hidden;
     transition: transform 0.3s, box-shadow 0.3s;
@@ -2094,7 +2094,7 @@ textarea:focus {
     border-radius: var(--border-radius-lg);
     padding: 1.25rem;
     border: 1px solid var(--border);
-    box-shadow: var(--shadow);
+    /* box-shadow: var(--shadow); */
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
@@ -2507,7 +2507,7 @@ textarea:focus {
         padding: 1.25rem;
         margin-bottom: 1rem;
         border: 1px solid var(--border);
-        box-shadow: var(--shadow);
+        /* box-shadow: var(--shadow); */
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
@@ -2656,7 +2656,7 @@ textarea:focus {
         padding: 1.25rem;
         margin-bottom: 1rem;
         border: 1px solid var(--border);
-        box-shadow: var(--shadow);
+        /* box-shadow: var(--shadow); */
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
@@ -2881,7 +2881,7 @@ textarea:focus {
         box-sizing: border-box;
         background: var(--glass);
         border-radius: var(--border-radius-lg);
-        box-shadow: var(--shadow);
+        /* box-shadow: var(--shadow); */
         transition: all 0.3s ease;
     }
 
