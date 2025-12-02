@@ -1109,7 +1109,7 @@ function updateRecentTransactions() {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td><small class="text-muted">${transaction.id || 'N/A'}</small></td>
-            <td>${formatDate(transaction.date)}</td>
+            <td>${formatDateLong(transaction.date)}</td>
             <td>${transaction.description}</td>
             <td><span class="badge ${transaction.type.trim().toLowerCase() === 'pemasukan' ? 'income' : 'expense'}">
                 ${transaction.type}</span></td>
@@ -1127,7 +1127,7 @@ function updateRecentTransactions() {
         card.classList.add(transaction.type.trim().toLowerCase() === 'pemasukan' ? 'income' : 'expense');
         card.innerHTML = `
             <div class="transaction-card-header">
-                <span class="transaction-date"><i class="bi bi-calendar3"></i> ${formatDate(transaction.date)}</span>
+                <span class="transaction-date"><i class="bi bi-calendar3"></i> ${formatDateLong(transaction.date)}</span>
                 <span class="transaction-type ${transaction.type.trim().toLowerCase() === 'pemasukan' ? 'income' : 'expense'}">
                     ${transaction.type}</span>
             </div>
@@ -1544,7 +1544,7 @@ function updateTransactionsUI(transactions) {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td><small class="text-muted">${transaction.id || 'N/A'}</small></td>
-            <td>${formatDate(transaction.date)}</td>
+            <td>${formatDateLong(transaction.date)}</td>
             <td>${transaction.description}</td>
             <td><span class="badge ${transaction.type.trim().toLowerCase() === 'pemasukan' ? 'income' : 'expense'}">${transaction.type}</span></td>
             <td>${transaction.method}</td>
@@ -1572,7 +1572,7 @@ function updateTransactionsUI(transactions) {
 
         card.innerHTML = `
             <div class="transaction-card-header">
-                <span class="transaction-date"><i class="bi bi-calendar3"></i> ${formatDate(transaction.date)}</span>
+                <span class="transaction-date"><i class="bi bi-calendar3"></i> ${formatDateLong(transaction.date)}</span>
                 <span class="transaction-type ${transaction.type.trim().toLowerCase() === 'pemasukan' ? 'income' : 'expense'}">${transaction.type}</span>
             </div>
             <div class="transaction-id"><small class="text-muted"><i class="bi bi-hash"></i> ${transaction.id || 'N/A'}</small></div>
@@ -1690,7 +1690,7 @@ function updateReportUI(transactions, dateRange, reportType) {
         if (reportProfitPercentEl) reportProfitPercentEl.textContent = profitPercentage.toFixed(1) + '%';
 
         // Update date range display
-        const rangeText = `Periode: ${formatDate(dateRange.start)} - ${formatDate(dateRange.end)}`;
+        const rangeText = `Periode: ${formatDateLong(dateRange.start)} - ${formatDateLong(dateRange.end)}`;
         document.getElementById('report-range').textContent = rangeText;
 
         // Show/hide empty state
@@ -2070,10 +2070,10 @@ function updateReportUI(transactions, dateRange, reportType) {
 
                     // Tampilkan 2 pengeluaran terbesar jika ada
                     if (expenses.length > 0 && valueEls.length >= 1) {
-                        valueEls[0].textContent = `🏆 ${expenses[0].description} (${formatDate(expenses[0].date)}): ${formatCurrency(parseFloat(expenses[0].amount))}`;
+                        valueEls[0].textContent = `🏆 ${expenses[0].description} (${formatDateLong(expenses[0].date)}): ${formatCurrency(parseFloat(expenses[0].amount))}`;
 
                         if (expenses.length > 1 && valueEls.length >= 2) {
-                            valueEls[1].textContent = `🥈 ${expenses[1].description} (${formatDate(expenses[1].date)}): ${formatCurrency(parseFloat(expenses[1].amount))}`;
+                            valueEls[1].textContent = `🥈 ${expenses[1].description} (${formatDateLong(expenses[1].date)}): ${formatCurrency(parseFloat(expenses[1].amount))}`;
                         } else if (valueEls.length >= 2) {
                             valueEls[1].textContent = '🥈 Tidak ada data';
                         }
@@ -2114,10 +2114,10 @@ function updateReportUI(transactions, dateRange, reportType) {
 
                     // Tampilkan 2 pemasukan terbesar jika ada
                     if (incomes.length > 0 && valueEls.length >= 1) {
-                        valueEls[0].textContent = `🏆 ${incomes[0].description} (${formatDate(incomes[0].date)}): ${formatCurrency(parseFloat(incomes[0].amount))}`;
+                        valueEls[0].textContent = `🏆 ${incomes[0].description} (${formatDateLong(incomes[0].date)}): ${formatCurrency(parseFloat(incomes[0].amount))}`;
 
                         if (incomes.length > 1 && valueEls.length >= 2) {
-                            valueEls[1].textContent = `🥈 ${incomes[1].description} (${formatDate(incomes[1].date)}): ${formatCurrency(parseFloat(incomes[1].amount))}`;
+                            valueEls[1].textContent = `🥈 ${incomes[1].description} (${formatDateLong(incomes[1].date)}): ${formatCurrency(parseFloat(incomes[1].amount))}`;
                         } else if (valueEls.length >= 2) {
                             valueEls[1].textContent = '🥈 Tidak ada data';
                         }
@@ -2389,7 +2389,7 @@ function updateReportUI(transactions, dateRange, reportType) {
                     items.forEach(transaction => {
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                        <td>${formatDate(new Date(transaction.date))}</td>
+                        <td>${formatDateLong(new Date(transaction.date))}</td>
                         <td>${transaction.description}</td>
                         <td><span class="badge ${transaction.type === 'Pemasukan' ? 'income' : 'expense'}">${transaction.type}</span></td>
                         <td>${transaction.method}</td>
@@ -2409,7 +2409,7 @@ function updateReportUI(transactions, dateRange, reportType) {
 
                         card.innerHTML = `
                         <div class="transaction-card-header">
-                            <span class="transaction-date"><i class="bi bi-calendar3"></i> ${formatDate(new Date(transaction.date))}</span>
+                            <span class="transaction-date"><i class="bi bi-calendar3"></i> ${formatDateLong(new Date(transaction.date))}</span>
                             <span class="transaction-type ${transaction.type === 'Pemasukan' ? 'income' : 'expense'}">${transaction.type}</span>
                         </div>
                         <div class="transaction-description"><i class="bi bi-card-text"></i> ${transaction.description}</div>
@@ -4641,15 +4641,78 @@ async function deleteTransaction(index) {
     }
 }
 
-// Helper function: Format date
+// Helper function: Format date for Google Sheets (dd/mm/yy)
 function formatDate(value) {
-    const d = new Date(value);
+    // Parse the date flexibly
+    let d;
+    if (typeof value === 'string') {
+        const parts = value.split(/[\/\-]/);
+        if (parts.length === 3) {
+            const [a, b, c] = parts.map(Number);
+            // Check if it's yyyy-mm-dd format
+            if (a > 1900) {
+                d = new Date(a, b - 1, c);
+            }
+            // Check if it's dd/mm/yyyy or dd-mm-yyyy format
+            else if (c > 1900) {
+                d = new Date(c, b - 1, a);
+            } else {
+                d = new Date(value);
+            }
+        } else {
+            d = new Date(value);
+        }
+    } else {
+        d = new Date(value);
+    }
+
     if (isNaN(d)) return value; // kalau gagal parsing, kembalikan aslinya
 
     const day = String(d.getDate()).padStart(2, "0");
     const month = String(d.getMonth() + 1).padStart(2, "0");
-    const year = d.getFullYear();
+    const year = String(d.getFullYear()).slice(-2); // Get last 2 digits of year
     return `${day}/${month}/${year}`;
+}
+
+// Helper function: Format date in long Indonesian format (e.g., "1 Desember 2025")
+function formatDateLong(value) {
+    // Parse the date flexibly
+    let d;
+    if (typeof value === 'string') {
+        const parts = value.split(/[\/\-]/);
+        if (parts.length === 3) {
+            const [a, b, c] = parts.map(Number);
+            // Check if it's yyyy-mm-dd format
+            if (a > 1900) {
+                d = new Date(a, b - 1, c);
+            }
+            // Check if it's dd/mm/yyyy or dd/mm/yy format
+            else if (c > 1900 || c < 100) {
+                // Handle 2-digit year (yy)
+                const fullYear = c < 100 ? (c > 50 ? 1900 + c : 2000 + c) : c;
+                d = new Date(fullYear, b - 1, a);
+            } else {
+                d = new Date(value);
+            }
+        } else {
+            d = new Date(value);
+        }
+    } else {
+        d = new Date(value);
+    }
+
+    if (isNaN(d)) return value; // kalau gagal parsing, kembalikan aslinya
+
+    const monthNames = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+
+    const day = d.getDate();
+    const month = monthNames[d.getMonth()];
+    const year = d.getFullYear();
+
+    return `${day} ${month} ${year}`;
 }
 
 // Format date for input type="date" (YYYY-MM-DD)
