@@ -579,15 +579,20 @@ function initSheets() {
     // Set token untuk autentikasi
     gapi.client.setToken({ access_token: state.token });
 
-    // Tambahkan delay kecil untuk memastikan token sudah diproses
-    setTimeout(() => {
-        loadTransactions();
-    }, 500);
+    // Langsung panggil loadTransactions (delay dikurangi untuk mempercepat loading)
+    loadTransactions();
 }
 
 // Load transactions from Google Sheets
 async function loadTransactions() {
     showLoading();
+
+    // Timeout fallback - sembunyikan loading setelah 10 detik jika ada masalah
+    const loadingTimeout = setTimeout(() => {
+        console.warn('Loading timeout - hiding loading overlay');
+        hideLoading();
+    }, 10000);
+
     try {
         const response = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: CONFIG.spreadsheetId,
@@ -622,6 +627,7 @@ async function loadTransactions() {
         state.transactions = getDummyData();
         updateUI();
     } finally {
+        clearTimeout(loadingTimeout);
         hideLoading();
     }
 }
@@ -1189,13 +1195,26 @@ function getUniqueDescriptions() {
     return Array.from(descriptions.values()).sort();
 }
 
+// Flag to prevent multiple transaction search setup
+let transactionSearchSetup = false;
+
 // Fungsi untuk autocomplete pencarian transaksi
 function setupTransactionSearch() {
+    // Prevent multiple setups
+    if (transactionSearchSetup) {
+        console.log('Transaction search already setup, skipping');
+        return;
+    }
+
     const searchInput = document.getElementById('transaction-search');
     const autocompleteResults = document.getElementById('autocomplete-results');
     const resetButton = document.getElementById('reset-search');
 
     if (!searchInput || !autocompleteResults) return;
+
+    // Mark as setup
+    transactionSearchSetup = true;
+    console.log('Setting up transaction search autocomplete');
 
     // Event listener untuk tombol reset
     if (resetButton) {
@@ -1222,41 +1241,66 @@ function setupTransactionSearch() {
 
         // Cari transaksi yang cocok dengan query
         const matchingTransactions = state.transactions.filter(transaction => {
+            const desc = (transaction.description || '').toLowerCase();
+            const type = (transaction.type || '').toLowerCase();
+            const method = (transaction.method || '').toLowerCase();
+            const id = (transaction.id || '').toLowerCase();
+            const date = formatDateLong(transaction.date || '').toLowerCase();
+            const amount = formatCurrency(transaction.amount || 0).toLowerCase();
+
             return (
-                transaction.description.toLowerCase().includes(query) ||
-                transaction.type.toLowerCase().includes(query) ||
-                transaction.method.toLowerCase().includes(query) ||
-                transaction.id.toLowerCase().includes(query) ||
-                formatDate(transaction.date).toLowerCase().includes(query) ||
-                formatCurrency(transaction.amount).toLowerCase().includes(query)
+                desc.includes(query) ||
+                type.includes(query) ||
+                method.includes(query) ||
+                id.includes(query) ||
+                date.includes(query) ||
+                amount.includes(query)
             );
         });
 
         // Tampilkan hasil autocomplete
         autocompleteResults.innerHTML = '';
 
-        // Batasi hasil autocomplete hingga 5 item
-        const limitedResults = matchingTransactions.slice(0, 5);
+        // Parser tanggal fleksibel untuk sorting
+        const parseDate = (dateStr) => {
+            if (!dateStr) return new Date(0);
+            const parts = dateStr.split(/[\/\-]/);
+            if (parts.length === 3) {
+                const [a, b, c] = parts.map(Number);
+                if (a > 1900) return new Date(a, b - 1, c); // yyyy-mm-dd
+                else if (c > 1900 || c < 100) {
+                    const fullYear = c < 100 ? (c > 50 ? 1900 + c : 2000 + c) : c;
+                    return new Date(fullYear, b - 1, a); // dd/mm/yyyy or dd/mm/yy
+                }
+            }
+            return new Date(dateStr);
+        };
+
+        // Urutkan berdasarkan tanggal terbaru, lalu batasi hingga 5 item
+        const sortedResults = [...matchingTransactions].sort((a, b) =>
+            parseDate(b.date) - parseDate(a.date)
+        );
+        const limitedResults = sortedResults.slice(0, 5);
 
         if (limitedResults.length > 0) {
             limitedResults.forEach(transaction => {
                 const item = document.createElement('div');
                 item.className = 'autocomplete-item';
 
-                // Highlight bagian yang cocok dengan query
-                const description = highlightMatch(transaction.description, query);
-                const date = highlightMatch(formatDate(transaction.date), query);
-                const type = highlightMatch(transaction.type, query);
+                // Highlight bagian yang cocok dengan query (dengan null safety)
+                const description = highlightMatch(transaction.description || '', query);
+                const date = highlightMatch(formatDateLong(transaction.date || ''), query);
+                const type = highlightMatch(transaction.type || '', query);
 
                 item.innerHTML = `
                     <div><strong>${description}</strong></div>
-                    <div>${date} - ${type} - ${formatCurrency(transaction.amount)}</div>
+                    <div>${date} - ${type} - ${formatCurrency(transaction.amount || 0)}</div>
                 `;
 
                 // Event listener untuk item autocomplete
                 item.addEventListener('click', function () {
-                    // Isi input dengan deskripsi transaksi
-                    searchInput.value = transaction.description;
+                    // Isi input dengan deskripsi transaksi (dengan null safety)
+                    searchInput.value = transaction.description || '';
                     // Sembunyikan hasil autocomplete
                     autocompleteResults.classList.remove('show');
                     // Filter transaksi berdasarkan item yang dipilih
@@ -1295,8 +1339,17 @@ function setupTransactionSearch() {
     }
 }
 
+// Flag to prevent multiple description autocomplete setup
+let descriptionAutocompleteSetup = false;
+
 // Fungsi untuk autocomplete input deskripsi (improved)
 function setupDescriptionAutocomplete() {
+    // Prevent multiple setups
+    if (descriptionAutocompleteSetup) {
+        console.log('Description autocomplete already setup, skipping');
+        return;
+    }
+
     const inputs = [
         document.getElementById('description'),
         document.getElementById('quick-description'),
@@ -1304,6 +1357,10 @@ function setupDescriptionAutocomplete() {
     ].filter(Boolean);
 
     if (inputs.length === 0) return;
+
+    // Mark as setup
+    descriptionAutocompleteSetup = true;
+    console.log('Setting up description autocomplete');
 
     // Shared dropdown appended to body supaya tidak terpengaruh parent transform/opacity
     const dropdown = document.createElement('div');
